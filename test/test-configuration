@@ -1,0 +1,17 @@
+<?php
+$includes = array(
+    'test',
+    '/example/absolute/directory',
+    '/another/example/'
+);
+
+$default_cache_interval = 3600;
+
+$db = array(
+    'host'      => 'localhost',
+    'name'      => 'casabrow_main',
+    'username'  => 'casabrow_user',
+    'password'  => 'jghtUIOI3283',
+);
+
+$debug = 1;

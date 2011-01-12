@@ -1,0 +1,97 @@
+<!doctype html>
+<html>
+    <head>
+        <title>PocketKnife: A PHP Tool for Web Development</title>
+        <style>
+            body{
+                font-size: 14px;
+                font-family: 'Georgia', 'Times New Roman', serif;
+                display: block;
+                margin: 0 auto 0;
+                max-width: 1200px;
+                min-width: 600px;
+                width: 72%;
+            }
+            h1{
+                background: url(pocket-knife.jpg) top left no-repeat;
+                padding-left: 150px;
+                line-height: 1.5em;
+                height: 100px;
+            }
+            ul.features{
+                margin: 0;
+                padding: 0;
+            }
+            ul.features li{
+                display: inline;
+                list-style: none;
+                font-size: 2em;
+                background-color: lightpink;
+                padding: 0.1em;
+                padding-right: 2em;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>PocketKnife: A PHP Tool for Web Development</h1>
+        <ul class="features">
+            <li><code>PHP5</code></li>
+            <li><code>PDO</code></li>
+            <li><code>InnoDB</code></li>
+            <li><code>_autoload</code></li>
+        </ul>
+        <h2>Definition</h2>
+        <p>
+            <code>PocketKnife</code> is a mini-framework designed to quickly
+            setup simple web services. The framework is very simple, so it may 
+            need to be modified for production use; however, it does provide the 
+            developer with a solid platform to begin building.
+        </p>
+        <h2>Requirements</h2>
+        <p>
+            The <code>web service</code> uses the following components, for which
+            you may need to have a recent version of PHP:
+        </p>
+        <ul>
+            <li>PHP5 syntax (__construct, public, private, etc.)</li>
+            <li>PDO</li>
+            <li>__autoload function (may need to rewrite this if the service is
+            run within an application using it already)</li>
+            <li>.htaccess rewrites (to set Digest Authentication variables in
+            $_SERVER)</li>
+            <li>mysql</li>
+            <li>transactions (with InnoDB)</li>
+        </ul>
+        <h2>Setup</h2>
+        <p>
+            To set up the <code>web service</code>:
+        </p>
+        <ol>
+            <li>Copy the files to the right directories</li>
+            <li>Configure the <code>/config/main.php</code> file; you may add
+            any additional configuration variables in other files within this
+            folder. Also, you may want to make sure the .htaccess files are
+            configured like you want.</li>
+            <li>Create data objects as extensions of the AbstractObject class
+            and put the path to these classes in the configuration file under
+            <code>$class_paths</code>. You may choose to not extend
+            AbstractObject: if this is the case, note that AbstractAction expects
+            at least these methods: <code>__bind</code>, <code>__getID</code>,
+            and <code>__setID</code>. If you do extend AbstractObject, see
+            its class file for a description of available options.</li>
+            <li>If extending AbstractObject, overload functions (e.g. <code>
+            beforeRead</code>) to change their logic. Also, see the AbstractObject
+            class file for a description of available options.
+            </li>
+        </ol>
+        <h2>Help</h2>
+        <ul>
+            <li><a href="help/json-server.html" title="Example">JSON Server Example</a></li>
+            <li><a href="help/html-server.html" title="Example">HTML Server Example</a></li>
+            <li><a href="help/object.html" title="Example">Object Example</a></li>
+            <li><a href="help/json-client.html" title="Example">JSON Client Example</a></li>
+            <li><a href="help/startup.html" title="Example">What Runs at Startup</a></li>
+            <li><a href="help/license.html" title="Example">License</a></li>
+        </ul>
+    </body>
+</html>
