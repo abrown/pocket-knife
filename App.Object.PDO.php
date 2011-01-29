@@ -168,7 +168,7 @@ class AppObjectPDO extends AppObjectAbstract{
         }
         $fields = implode(', ', $fields);
         // prepare statement
-        $sql = $this->getDatabase()->prepare( "INSERT INTO `{$this->_table}` SET {$fields}" );
+        $sql = $this->getDatabase()->prepare( "INSERT INTO `{$this->__table}` SET {$fields}" );
         // bind values
         foreach($this->getFields() as $field){
             $_token = ':'.$field;
@@ -321,18 +321,18 @@ class AppObjectPDO extends AppObjectAbstract{
     /**
      * Callbacks
      */
-    protected function beforeExists(&$sql){ /* overload */ }
-    protected function afterExists(&$result){ /* overload */ }
-    protected function beforeEnumerate(&$sql){ /* overload */ }
-    protected function afterEnumerate(&$results){ /* overload */ }
-    protected function beforeCreate(){ /* overload */ }
-    protected function afterCreate(){ /* overload */ }
-    protected function beforeRead(&$sql){ /* overload */ }
-    protected function afterRead(){ /* overload */ }
-    protected function beforeUpdate(){ /* overload */ }
-    protected function afterUpdate(){ /* overload */ }
-    protected function beforeDelete(){ /* overload */ }
-    protected function afterDelete(){ /* overload */ }
+    protected function beforeExists(&$sql){ /* override */ }
+    protected function afterExists(&$result){ /* override */ }
+    protected function beforeEnumerate(&$sql){ /* override */ }
+    protected function afterEnumerate(&$results){ /* override */ }
+    protected function beforeCreate(){ /* override */ }
+    protected function afterCreate(){ /* override */ }
+    protected function beforeRead(&$sql){ /* override */ }
+    protected function afterRead(){ /* override */ }
+    protected function beforeUpdate(){ /* override */ }
+    protected function afterUpdate(){ /* override */ }
+    protected function beforeDelete(){ /* override */ }
+    protected function afterDelete(){ /* override */ }
 
     /**
      * Gets field names from DB
