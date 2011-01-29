@@ -1,23 +1,73 @@
 <?php
 class Scheduler{
 
-    public function addMultiple($list){
-        foreach($list as $item){
-            $this->add($item->code, $item->when, $item->callback);
-        }
+    /**
+     * Add a task to a scheduling queue
+     * @param <string> $name
+     * @param <string> $code
+     * @param <string> $when
+     * @param <string> $class
+     */
+    public function add($name, $code, $when, $class = 'SchedulerTask'){
+        $task = new $class($name, $code, $when);
+        $task->__prepare();
+        $task->create();
+        $task->__commit();
     }
-    public function add($code, $when, $callback){
 
-    }
+    /**
+     * Runs all tasks in the specified list
+     * @return <int> number of tasks run
+     */
     public function run(){
-        
+        $count = 0;
+        $t = new SchedulerTask();
+        $tasks = $t->enumerate();
+        foreach($tasks as $task){
+            $t->__bind($task);
+            if( $t->isDue() ){
+                $t->run();
+                $count++;
+            }
+        }
+        $t->__commit();
+        return $count;
     }
 
+    /**
+     * Determines whether a time-string wants recurrence
+     * @param <string> $when
+     * @return <boolean>
+     */
+    public function isRecurring($when){
+        $when = strtolower($when);
+        // every...
+        if( strpos($when, 'every') !== false ) return true;
+        // plural weekdays
+        if( preg_match('/mondays|tuesdays|wednesdays|thursdays|fridays|saturdays|sundays/i', $when) ) return true;
+        // default
+        return false;
+    }
+
+    /**
+     * Attempts to parse a string into a unix time
+     * @param <string> $string
+     * @return <int> unix time
+     */
     public function toTime( $when ){
+        return $this->parse($when);
+    }
+
+    /**
+     * Attempts to parse a string into a unix time
+     * @param <string> $when
+     * @return <int> unix time
+     */
+    public function parse($when){
         // check if set and format
         if( !$when ){ throw new Exception('No string to parse', 400); }
         $when = strtolower( trim($when) );
-        // act on it: try shortcuts or parse
+        // try shortcuts first
         switch( $when ){
             case 'today':
             case 'now':
@@ -46,43 +96,25 @@ class Scheduler{
                 $time = $this->next('year'); // next first at noon
             break;
             default:
-                $time = $this->parse($this->due); // parse
+                // try php parse by default
+                $time = $this->parse($this->due);
+                // normalize to noon
+                if( $time !== false && strpos($string, 'at') === false && !preg_match('/\d{3,}/i', $string) ){
+                    $time = self::at('noon', $time);
+                }
             break;
         }
-        // convert to sql time
-        $this->due = date('Y-m-d H:i:s', $time);
-    }
-
-    /**
-     * Prints the conversion for a given string
-     * @param <string> $string
-     */
-    public function test($string){
-        $this->due = $string;
-        $this->beforeCreate();
-        $time = $this->getFormattedDate($this->due);
-        pr("'$string' => '$this->due' => '$time'");
-    }
-
-    /**
-     * Attempts to parse a string into a unix time
-     * @param <string> $string
-     * @return <int> unix time
-     */
-    public function parse($string){
-        $string = strtolower($string);
-        $time = null;
-        // try php parse
-        $time = strtotime($string);
+        // try to return
         if( $time !== false ){
-            // normalize to noon
-            if( strpos($string, 'at') === false && !preg_match('/\d{3,}/i', $string) ) $time = $this->at('noon', $time);
             return $time;
         }
-        // special cases
+        // begin parsing
+        // special case: a couple (of) -> couple
         if( strpos($string, 'a couple') !== false ){
+            $string = str_replace(' of', '', $string);
             $string = str_replace('a couple', 'couple', $string);
         }
+        // special case: in the -> at
         if( strpos($string, 'in the') !== false ){
             $string = str_replace('in the', 'at', $string);
         }
@@ -102,7 +134,7 @@ class Scheduler{
                 $i++; // consume next token
                 $time = $this->at($tokens[$i], $time);
             }
-            elseif( $token == 'in' ){
+            elseif( $token == 'in' || $token == 'every' ){
                 $i++; $i++; // consume next two tokens
                 // check if first token is numeric
                 $number = $tokens[$i-1];
@@ -297,9 +329,21 @@ class Scheduler{
             case 'hour': $time = $number * 3600; break;
             case 'day': $time = $number * 86400; break;
             case 'week': $time = $number * 604800; break;
+            case 'month': $time = $number * 18144000; break; // calculated for 30-day months
+            case 'year': $time = $number * 31556926; break;
         }
         // return
         return $time;
+    }
+
+    /**
+     * Return a time span in seconds for a number of time intervals
+     * @param <int> $number
+     * @param <string> $interval
+     * @return <int> seconds
+     */
+    public function every($number, $interval){
+        return self::in($number, $interval);
     }
 
     /**
@@ -338,13 +382,82 @@ class Scheduler{
     }
 
     /**
-     * Returns preferred formatting for a unix time
+     * Returns human-readable formatting for a unix time
      * @param <int> $time
      * @return <string>
      */
     public function getFormattedDate($time){
-        if( is_string($time) ) $time = strtotime($time);
         return date('H:i:sa \o\n l, j F Y', $time);
+    }
+
+    /**
+     * Returns sql-readable formatting for a unix time
+     * @param <int> $time
+     * @return <string>
+     */
+    public function getSqlDate($time){
+        return date('Y-m-d H:i:s', $time);
+    }
+}
+
+class SchedulerTask extends AppObjectJson{
+
+    /**
+     * Database path
+     * @var <string>
+     */
+    protected $path = 'scheduler.json';
+
+    /**
+     * Public properties
+     * @var <string>
+     */
+    public $name;
+    public $code;
+    public $when_run;
+    public $last_run;
+    public $next_run;
+
+    /**
+     * Constructor
+     * @param <string> $name
+     * @param <string> $code
+     * @param <string> $when
+     */
+    public function __construct($name, $code, $when){
+        $this->name = $name;
+        $this->code = $code;
+        $this->when_run = $when;
+        // calculate next run
+        $this->next_run = $this->calculateNext();
+        // do parent code
+        parent::__construct();
+    }
+
+    /**
+     * Check if this task is due to run
+     * @return <true>
+     */
+    public function isDue(){
+        return (time() > $this->next_run());
+    }
+
+    /**
+     * Run this task
+     */
+    public function run(){
+        $this->last_run = time();
+        ob_start();
+        eval($this->code);
+        $this->output = ob_end_clean();
+        $this->__changed = true;
+    }
+
+    /**
+     * Calculate next task time
+     */
+    private function calculateNext(){
+        $this->next_run = Scheduler::parse($this->when_run);
     }
 
 }
