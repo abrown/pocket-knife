@@ -3,6 +3,7 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
+// TODO: check if overwriting another class cache with the same name; if so, throw warning
 class Cache{
 
     /**
@@ -10,7 +11,8 @@ class Cache{
      * @return <string>
      */
     function path(){
-        return realpath('../cache/');
+        chdir(dirname(__FILE__));
+        return realpath('./cache');
     }
 
     /**
@@ -56,7 +58,6 @@ class Cache{
      */
     function write($key, $data){
         $file = self::path().DS.$key;
-        pr($file);
         return file_put_contents($file, serialize($data));
     }
 
@@ -67,7 +68,9 @@ class Cache{
      */
     function delete($key){
         $file = self::path().DS.$key;
-        return unlink($file);
+        $success = true;
+        if( is_file($file) ) $success = unlink($file);
+        return $success;
     }
 
     /**
@@ -96,5 +99,21 @@ class Cache{
             $debug = $config['debug'];
         }
         return ($debug) ? true : false;
+    }
+
+    /**
+     * Clear cache folder
+     */
+    function clear(){
+        $handle = opendir(self::path());
+        if( !is_resource($handle) ) throw new Exception('Could not find cache path.', 404);
+        // loop through dir
+        while (false !== ($file = readdir($handle))) {
+            if( $file == '.htaccess' ) continue;
+            if( $file == '.' || $file == '..' ) continue;
+            unlink(self::path().DS.$file);
+        }
+        // close
+        closedir($handle);
     }
 }
