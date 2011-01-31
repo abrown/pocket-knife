@@ -90,10 +90,10 @@ class Template{
      * @return <string>
      */
     private function getAbsolutePath($path){
-        $config = KConfiguration::getInstance();
-        $_path = $config['template_path'].$path;
-        $_path = str_replace('//', '/', $_path);
-        return $_path;
+        $config = Configuration::getInstance();
+        if( array_key_exists('template_path', $config) ) $path = $config['template_path'].$path;
+        $path = str_replace('//', '/', $path);
+        return $path;
     }
 
     /**
