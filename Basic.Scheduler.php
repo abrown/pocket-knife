@@ -400,7 +400,7 @@ class Scheduler{
     }
 }
 
-class SchedulerTask extends AppObjectJson{
+class SchedulerTask extends AppObjectJSON{
 
     /**
      * Database path
