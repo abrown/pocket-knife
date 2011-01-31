@@ -44,7 +44,7 @@ if( !function_exists('__autoload') ){
             $file = 'Security.Authentication.php';
         }
         else{
-            $basic = array('Cache', 'Configuration', 'File', 'Functions', 'Http', 'Inflection', 'Routing', 'Template', 'Test', 'Timer');
+            $basic = array('Cache', 'Configuration', 'File', 'Functions', 'Http', 'Inflection', 'Routing', 'Scheduler', 'Template', 'Test', 'Timer');
             if( in_array($class, $basic) ) $file = 'Basic.'.$class.'.php';
         }
         if( $file ){
@@ -53,20 +53,22 @@ if( !function_exists('__autoload') ){
         }
         // then look in configured directories
         $config = Configuration::getInstance();
-        foreach($config['includes'] as $dir){
-            // create path
-            $last = $dir[ strlen($dir) - 1 ];
-            $dir = $last == DS ? $dir : $dir.DS;
-            $file = $dir.$class.'.php';
-            // include
-            if( is_file($file) ) {
-                require($file);
-                return true;
-            }
-            // include relative paths within pocket-knife
-            elseif( $file[0] != '/' && is_file(get_base_dir().DS.$file) ){
-                require(get_base_dir().DS.$file);
-                return true;
+        if( array_key_exists('includes', $config) ){
+            foreach($config['includes'] as $dir){
+                // create path
+                $last = $dir[ strlen($dir) - 1 ];
+                $dir = $last == DS ? $dir : $dir.DS;
+                $file = $dir.$class.'.php';
+                // include
+                if( is_file($file) ) {
+                    require($file);
+                    return true;
+                }
+                // include relative paths within pocket-knife
+                elseif( $file[0] != '/' && is_file(get_base_dir().DS.$file) ){
+                    require(get_base_dir().DS.$file);
+                    return true;
+                }
             }
         }
         // could not find file
