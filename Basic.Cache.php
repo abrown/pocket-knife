@@ -7,6 +7,11 @@
 class Cache{
 
     /**
+     * Default Cache Interval
+     */
+    const DEFAULT_CACHE_INTERVAL = 86400; // if no configuration set, cache for a day
+
+    /**
      * Get path
      * @return <string>
      */
@@ -82,7 +87,8 @@ class Cache{
         static $interval = null;
         if( !$interval ){
             $config = Configuration::getInstance();
-            $interval = $config['default_cache_interval'];
+            if( array_key_exists('default_cache_interval', $config) ) $interval = $config['default_cache_interval'];
+            else $interval = self::DEFAULT_CACHE_INTERVAL;
         }
         return $interval;
     }
@@ -96,7 +102,7 @@ class Cache{
         static $debug = null;
         if( is_null($debug) ){
             $config = Configuration::getInstance();
-            $debug = $config['debug'];
+            if( array_key_exists('debug', $config) ) $debug = $config['debug'];
         }
         return ($debug) ? true : false;
     }
@@ -108,7 +114,7 @@ class Cache{
         $handle = opendir(self::path());
         if( !is_resource($handle) ) throw new Exception('Could not find cache path.', 404);
         // loop through dir
-        while (false !== ($file = readdir($handle))) {
+        while (false !== ($file = readdir($handle)) ){
             if( $file == '.htaccess' ) continue;
             if( $file == '.' || $file == '..' ) continue;
             unlink(self::path().DS.$file);
