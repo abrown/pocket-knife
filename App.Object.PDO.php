@@ -24,6 +24,12 @@ class AppObjectPDO extends AppObjectAbstract{
     protected $__cache = false;
 
     /**
+     * List of foreign keys, [table=foreign_key, table2=foreign_key]
+     * @var <array>
+     */
+    protected $__foreign = array();
+
+    /**
      * Constructor
      * @param <mixed> $id Object ID
      */
@@ -319,6 +325,46 @@ class AppObjectPDO extends AppObjectAbstract{
     }
 
     /**
+     * With: relates an object to other objects based on a foreign key
+     * Foreign keys are of the form: protected __foreign = array( 'tablename'=>'foreign_key', ...);
+     * @return <Object>
+     */
+    public function with(){
+        if( !$this->__foreign ) throw new Exception('Class is configured without a foreign key.', 500);
+        // get object class
+        $inflector = new Inflection( Routing::getToken(4) );
+        $pluralname = $inflector->toLowerCase()->toString();
+        $classname = $inflector->toSingular()->toCamelCaseStyle()->toString();
+        pr($classname);
+        // get id
+        if( count(Routing::getTokens()) > 4 ) $id = Routing::getToken(5);
+        else $id = null;
+        // check new object
+        $action = new AppAction($classname);
+        $object = $action->getObject();
+        // do foreign key
+        $key = null;
+        foreach($this->__foreign as $table => $_key){
+            if( $table == $object->__table ) $key = $_key;
+        }
+        if( $key === null ) throw new Exception('No foreign key defined for '.$classname.' in '.get_class($this), 500);
+        // get data
+        $this->read();
+        $object->{$key} = $this->id;
+        $result = null;
+        if( $id ){
+            $object->__setID($id);
+            $result = $object->read();
+        }
+        else{
+            $result = $object->enumerate();
+        }
+        $this->{$pluralname} = $result;
+        // return
+        return $this;
+    }
+
+    /**
      * Callbacks
      */
     protected function beforeExists(&$sql){ /* override */ }
@@ -388,7 +434,7 @@ class AppObjectPDO extends AppObjectAbstract{
      * Join SQL array
      * @param <array> $array
      */
-    private function toSql($array){
+    protected function toSql($array){
         if( !is_array($array) ) throw new Exception('Incorrect SQL', 500);
         $sql = array();
         // add select
@@ -415,7 +461,7 @@ class AppObjectPDO extends AppObjectAbstract{
      * @staticvar string $instance
      * @return PDO
      */
-    private function &getDatabase(){
+    protected function &getDatabase(){
         static $instance = null;
         if( !$instance ) {
             // get configuration
