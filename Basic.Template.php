@@ -16,9 +16,9 @@ class Template{
      * Constructor
      * @param <string> Path/Text
      */
-    public function __construct($string = null){
+    public function __construct($string = null, $is_path = false){
         if( !$string ) return;
-        if( $this->isPath($string) ){
+        if( $this->isPath($string) || $is_path ){
             $this->text = $this->getTextFromPath($string);
         }
         else{
@@ -92,6 +92,7 @@ class Template{
     private function getAbsolutePath($path){
         $config = Configuration::getInstance();
         if( array_key_exists('template_path', $config) ) $path = $config['template_path'].$path;
+        else throw new Exception('No template path defined', 400);
         $path = str_replace('//', '/', $path);
         return $path;
     }
