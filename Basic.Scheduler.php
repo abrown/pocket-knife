@@ -3,16 +3,18 @@ class Scheduler{
 
     /**
      * Add a task to a scheduling queue
-     * @param <string> $name
+     * @param <string> $id (probably name)
      * @param <string> $code
      * @param <string> $when
      * @param <string> $class
+     * @return <mixed> Task
      */
-    public function add($name, $code, $when, $class = 'SchedulerTask'){
-        $task = new $class($name, $code, $when);
+    public function add($id, $code, $when, $class = 'SchedulerTask'){
+        $task = new $class($id, $code, $when);
         $task->__prepare();
         $task->create();
         $task->__commit();
+        return $task;
     }
 
     /**
@@ -32,6 +34,28 @@ class Scheduler{
         }
         $t->__commit();
         return $count;
+    }
+
+    /**
+     * Launches a recurring event by adding it and running it
+     * @param <string> $id
+     * @param <string> $code
+     * @param <string> $when
+     * @return <boolean> if run
+     */
+    public function launch($id, $code, $when){
+        // check
+        if( !$this->isRecurring($when) ) throw new Exception('Launch() only uses recurring events.', 400);
+        // create if necessary
+        $t = new SchedulerTask();
+        $t->id = $id;
+        if(!$t->exists()){
+            $t = $this->add($id, $code, $when);
+        }
+        else $t->read();
+        // run if necessary
+        if( $t->isDue() ) return $t->run();
+        else return false;
     }
 
     /**
@@ -74,30 +98,30 @@ class Scheduler{
                 $time = time(); // now
             break;
             case 'tomorrow':
-                $time = $this->next('noon'); // tomorrow at noon
+                $time = self::next('noon'); // tomorrow at noon
             break;
             case 'yesterday':
-                $time = $this->last('noon'); // yesterday at noon
+                $time = self::last('noon'); // yesterday at noon
             break;
             case 'this week':
             case 'next week':
-                $time = $this->next('week'); // monday at noon
+                $time = self::next('week'); // monday at noon
             break;
             case 'last week':
-                $time = $this->last('week'); // last monday at noon
+                $time = self::last('week'); // last monday at noon
             break;
             case '':
             case 'later':
             case 'next month':
-                $time = $this->next('month'); // next first at noon
+                $time = self::next('month'); // next first at noon
             break;
             case 'way later':
             case 'next year':
-                $time = $this->next('year'); // next first at noon
+                $time = self::next('year'); // next first at noon
             break;
             default:
                 // try php parse by default
-                $time = $this->parse($this->due);
+                $time = strtotime($when);
                 // normalize to noon
                 if( $time !== false && strpos($string, 'at') === false && !preg_match('/\d{3,}/i', $string) ){
                     $time = self::at('noon', $time);
@@ -110,16 +134,16 @@ class Scheduler{
         }
         // begin parsing
         // special case: a couple (of) -> couple
-        if( strpos($string, 'a couple') !== false ){
-            $string = str_replace(' of', '', $string);
-            $string = str_replace('a couple', 'couple', $string);
+        if( strpos($when, 'a couple') !== false ){
+            $when = str_replace(' of', '', $when);
+            $when = str_replace('a couple', 'couple', $when);
         }
         // special case: in the -> at
-        if( strpos($string, 'in the') !== false ){
-            $string = str_replace('in the', 'at', $string);
+        if( strpos($when, 'in the') !== false ){
+            $when = str_replace('in the', 'at', $when);
         }
         // tokenize and compute
-        $tokens = preg_split('/ |,/i', $string);
+        $tokens = preg_split('/ |,/i', $when);
         $max = count($tokens);
         for($i = 0; $i < $max; $i++){
             $token = $tokens[$i];
@@ -128,54 +152,55 @@ class Scheduler{
             }
             elseif( $token == 'next' ){
                 $i++; // consume next token
-                $time = $this->next($tokens[$i]);
+                $time = self::next($tokens[$i]);
             }
             elseif( $token == 'at' ){
                 $i++; // consume next token
-                $time = $this->at($tokens[$i], $time);
+                $time = self::at($tokens[$i], $time);
             }
             elseif( $token == 'in' || $token == 'every' ){
                 $i++; $i++; // consume next two tokens
                 // check if first token is numeric
                 $number = $tokens[$i-1];
                 if( !is_numeric($number) ){
-                    $number = $this->getNumber($number);
+                    $number = self::getNumber($number);
                     if( $number === false ){
                         $erroneous = $tokens[$i-1];
                         throw new Exception("'$erroneous' should be a number");
                     }
                 }
-                $time = time() + $this->in($number, $tokens[$i]);
-                // normalize to noon
-                if( strpos($string, 'at') === false  ) $time = $this->at('noon', $time);
+                $in = self::in($number, $tokens[$i]);
+                $time = time() + $in;
+                // normalize to noon if no 'at' reference and time is 'in' more than a day
+                if( strpos($when, 'at') === false && $in > 24*3600 ) $time = self::at('noon', $time);
             }
             elseif( is_numeric($token) ){
                 // is 'in' case
                 if( isset($tokens[$i+1]) && preg_match('/sec|min|hou|day|wee|mon|yea/i', $tokens[$i+1]) ){
                     $i++;
                     $number = (int) $token;
-                    $time = time() + $this->in($number, $tokens[$i]);
+                    $time = time() + self::in($number, $tokens[$i]);
                     // normalize to noon
-                    if( strpos($string, 'at') === false ) $time = $this->at('noon', $time);
+                    if( strpos($when, 'at') === false ) $time = self::at('noon', $time);
                 }
                 // is 'at' case
                 else{
-                    $time = $this->at($token);
-                    if( $time < time() ) $time += $this->in(1, 'day');
+                    $time = self::at($token);
+                    if( $time < time() ) $time += self::in(1, 'day');
                 }
             }
-            elseif( $this->getNumber($token) ){
+            elseif( self::getNumber($token) ){
                 $i++;
-                $number = $this->getNumber($token);
-                $time = time() + $this->in($number, $tokens[$i]);
+                $number = self::getNumber($token);
+                $time = time() + self::in($number, $tokens[$i]);
                 // normalize to noon
-                if( strpos($string, 'at') === false ) $time = $this->at('noon', $time);
+                if( strpos($when, 'at') === false ) $time = self::at('noon', $time);
             }
             elseif( preg_match('/mon|tue|wed|thu|fri|sat|sun/i', $token) ){
-                $time = $this->next($token);
+                $time = self::next($token);
             }
             elseif( preg_match('/dawn|morn|break|noon|lunch|after|night|dinner|midn/i', $token) ){
-                $time = $this->at($token);
+                $time = self::at($token);
             }
         }
         // return
@@ -406,14 +431,15 @@ class SchedulerTask extends AppObjectJSON{
      * Database path
      * @var <string>
      */
-    protected $path = 'scheduler.json';
+    protected $__path = 'scheduler.json';
 
     /**
      * Public properties
      * @var <string>
      */
-    public $name;
+    public $id;
     public $code;
+    public $output;
     public $when_run;
     public $last_run;
     public $next_run;
@@ -424,12 +450,12 @@ class SchedulerTask extends AppObjectJSON{
      * @param <string> $code
      * @param <string> $when
      */
-    public function __construct($name, $code, $when){
-        $this->name = $name;
+    public function __construct($id = null, $code = null, $when = null){
+        $this->id = $id;
         $this->code = $code;
         $this->when_run = $when;
         // calculate next run
-        $this->next_run = $this->calculateNext();
+        if( !is_null($this->when_run) ) $this->next_run = $this->calculateNext();
         // do parent code
         parent::__construct();
     }
@@ -439,7 +465,7 @@ class SchedulerTask extends AppObjectJSON{
      * @return <true>
      */
     public function isDue(){
-        return (time() > $this->next_run());
+        return (time() > $this->next_run);
     }
 
     /**
@@ -447,17 +473,24 @@ class SchedulerTask extends AppObjectJSON{
      */
     public function run(){
         $this->last_run = time();
+        // run
         ob_start();
         eval($this->code);
         $this->output = ob_end_clean();
+        // next run?
+        $this->calculateNext();
+        // replace in db
+        $index = $this->index($this->__getID());
+        $this->__db[$index] = $this->toClone();
         $this->__changed = true;
+        $this->__commit();
     }
 
     /**
      * Calculate next task time
      */
     private function calculateNext(){
-        $this->next_run = Scheduler::parse($this->when_run);
+        $this->next_run = Scheduler::parse( $this->when_run ); // every ... == in ...
     }
 
 }
