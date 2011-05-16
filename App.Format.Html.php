@@ -333,4 +333,22 @@ class AppFormatHtml implements AppFormatInterface{
         $template->replace('body', $body);
         return $template;
     }
+
+    /**
+     * Default handler for uncreated HTML method
+     * @param <string> $name
+     * @param <mixed> $data
+     */
+    private function __call($name, $data){
+        $template = $this->getTemplate();
+        // make title
+        $pluralize = new Inflection( Routing::getName() );
+        $title = $pluralize->toPlural()->toString();
+        $template->replace('title', $title);
+        // make body
+        $body = '<p>The method <code>'.$name.'</code> has no HTML Format defined. Please create one.</p> ';
+        $body .= '<code>Data: '.print_r($data, true).'</code>';
+        $template->replace('body', $body);
+        return $template;
+    }
 }
