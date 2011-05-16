@@ -31,7 +31,8 @@ class AppFormatJson implements AppFormatInterface{
      * Send formatted output data
      */
     public function send(){
-        if( !KNIFE_DEBUG_ON ) header('Content-Type: application/json');
+        $config = Configuration::getInstance();
+        if( !$config['debug'] ) header('Content-Type: application/json');
         echo json_encode($this->out);
     }
 
@@ -42,7 +43,8 @@ class AppFormatJson implements AppFormatInterface{
         $error = $this->out;
         // send HTTP header
         header($_SERVER['SERVER_PROTOCOL'].' '.$error->getCode());
-        if( !KNIFE_DEBUG_ON ) header('Content-Type: application/json');
+        $config = Configuration::getInstance();
+        if( !$config['debug'] ) header('Content-Type: application/json');
         // send JSON error
         $e = array('error'=>$error->getMessage(), 'code'=>$error->getCode());
         echo json_encode($e);
