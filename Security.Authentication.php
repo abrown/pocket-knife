@@ -77,7 +77,7 @@ class Authentication{
 /**
  * All authentication methods must implement: isAllowed() and challenge()
  */
-interface AuthenticationMethod{
+interface AuthenticationMethodInterface{
     /**
      * Checks if the authentication is valid
      * @return <bool>
