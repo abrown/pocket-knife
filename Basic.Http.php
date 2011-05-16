@@ -120,6 +120,12 @@ class Http {
             case 'text':
                 return preg_replace('/![a-zA-Z0-9\.\/-_ ]/', ' ', $input);
             break;
+            // date format
+            case 'date':
+                $time = strtotime($input);
+                if( $time === false ) return null;
+                else return date('Y-m-d H:i:s', $time);
+            break;
             // clean for html
             case 'html':
                 $out = preg_replace('#<br ?/>|&nbsp;#i', ' ', $input);
