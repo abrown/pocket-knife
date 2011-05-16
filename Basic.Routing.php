@@ -61,20 +61,7 @@ class Routing{
     public static function parse() {
         static $tokens = null;
         if( $tokens === null ){
-            if( !self::getAnchor() ) throw new Exception('No anchor set', 500);
-            $url = self::getUrl();
-            if( strpos($url, self::getAnchor()) === false  ) throw new Exception('Anchor not found in URL', 400);
-            // get token string
-            $start = strpos($url, self::getAnchor()) + strlen(self::getAnchor());
-            $end = strpos($url, '?');
-            if( !$end ) $end = strlen($url);
-            $token_string = substr($url, $start, $end - $start);
-            // split and remove empty
-            $tokens = explode('/', $token_string);
-            foreach($tokens as $index => $token){
-                if( strlen($token) < 1 ) unset($tokens[$index]);
-            }
-            if( !$tokens ) throw new Exception('No URL tokens', 400);
+            $tokens = self::getTokens();
             // parse
             reset($tokens);
             $object = current($tokens);
@@ -104,11 +91,38 @@ class Routing{
     }
 
     /**
+     * Get tokens from a REST-style URL and return by index
+     * @return <array> List of tokens
+     */
+    public static function getTokens() {
+        static $tokens = null;
+        if( $tokens === null ){
+            if( !self::getAnchor() ) throw new Exception('No anchor set', 500);
+            $url = self::getUrl();
+            if( strpos($url, self::getAnchor()) === false  ) throw new Exception('Anchor not found in URL', 400);
+            // get token string
+            $start = strpos($url, self::getAnchor()) + strlen(self::getAnchor());
+            $end = strpos($url, '?');
+            if( !$end ) $end = strlen($url);
+            $token_string = substr($url, $start, $end - $start);
+            // split and remove empty
+            $tokens = explode('/', $token_string);
+            foreach($tokens as $index => $token){
+                if( strlen($token) < 1 ) unset($tokens[$index]);
+            }
+            if( !$tokens ) throw new Exception('No URL tokens', 400);
+        }
+        return $tokens;
+    }
+
+
+    /**
      * Get specified token
      * @return <string>
      */
     public static function getToken($key){
-        $tokens = self::parse();
+        if( is_int($key) ) $tokens = self::getTokens();
+        else $tokens = self::parse();
         return $tokens[$key];
     }
 
