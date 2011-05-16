@@ -103,7 +103,7 @@ class App{
      * @param <string> $type
      */
     public function setInputFormat($type){
-        $type = 'AppFormat'.ucfirst($type);
+        if( !class_exists($type, false) ) $type = 'AppFormat'.ucfirst($type);
         $this->input = new $type();
     }
 
@@ -123,7 +123,7 @@ class App{
      * @param <string> $view
      */
     public function setOutputFormat($type){
-        $type = 'AppFormat'.ucfirst($type);
+        if( !class_exists($type, false) ) $type = 'AppFormat'.ucfirst($type);
         $this->output = new $type;
     }
 
