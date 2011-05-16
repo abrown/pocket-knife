@@ -9,7 +9,7 @@
  */
 define('KNIFE_WSDL_PATH', dirname(__FILE__).DS.'wsdl');
 
-class KWsdl{
+class Wsdl{
 
     /**
      * Cache Key
