@@ -44,7 +44,7 @@ if( !function_exists('__autoload') ){
             $file = 'Security.Authentication.php';
         }
         else{
-            $basic = array('Cache', 'Configuration', 'File', 'Functions', 'Http', 'Inflection', 'Routing', 'Scheduler', 'Template', 'Test', 'Timer');
+            $basic = array('Cache', 'Configuration', 'Functions', 'Http', 'Inflection', 'Routing', 'Scheduler', 'Template', 'Test', 'Timer');
             if( in_array($class, $basic) ) $file = 'Basic.'.$class.'.php';
         }
         if( $file ){
