@@ -107,6 +107,7 @@ class Http {
             foreach($input as &$item){
                 $item = self::clean($item, $type);
             }
+            return $input;
         }
         // clean
         switch($type){
