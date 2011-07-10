@@ -476,4 +476,10 @@ class AppObjectPDO extends AppObjectAbstract{
         }
         return $instance;
     }
+    
+    static public function canConnect(){
+        try{ self::getDatabase(); }
+        catch(Exception $e){ return false; }
+        return true;
+    }
 }
