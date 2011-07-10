@@ -2,14 +2,64 @@
 /**
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
- */
-
-/**
+ *
  * The service is instantiated. Routing is set up. The object is decided upon.
  * An action is found. Data is input into the action in the specified format.
  * Data is sent from the action in the specified format.
+ * 
  * @example
  *
+    require '/home5/casabrow/public_html/pocket-knife/start.php';
+    Configuration::setPath('configuration.php');
+
+    $app = new App();
+    $app->setAllowedObjects('data', 'files', 'changes');
+
+    // routing
+    try{
+        $object = Routing::getToken('object');
+    }
+    catch(Exception $e){
+        $object = '';
+    }
+
+    // allowed actions
+    if( $object == 'files' ){
+         $app->setAllowedActions(
+                'upload',
+                'download',
+                'sync',
+                'poll',
+                'deleteAll',
+                'exists',
+                'enumerate',
+                'create',
+                'read',
+                'update',
+                'delete',
+                'with'
+          );
+    }
+    else{
+        $app->setAllowedActions(
+                'exists', 
+                'enumerate',
+                'create',
+                'read',
+                'update',
+                'delete'
+         );
+    }
+
+    // allowed input
+    //if( Routing::getToken('action') == 'upload' ) $app->setInputFormat('Xml');
+    $app->setInputFormat('Html');
+
+    if( $object == 'changes' ) $app->setOutputFormat('Json');
+    else $app->setOutputFormat('Html');
+
+    $app->execute();
+
  * @endexample
  */
 class App{
@@ -123,7 +173,7 @@ class App{
      * @param <string> $view
      */
     public function setOutputFormat($type){
-        if( !class_exists($type, false) ) $type = 'AppFormat'.ucfirst($type);
+        if( !class_exists($type, true) ) $type = 'AppFormat'.ucfirst($type);
         $this->output = new $type;
     }
 

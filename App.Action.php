@@ -2,6 +2,11 @@
 /**
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
+ * 
+ * Actions take an object, some data, and a method name, and attempt to create
+ * a result. The data is bound to the object and the object's method is called.
+ * The result is returned to App::execute()
+ * 
  */
 class AppAction{
 
