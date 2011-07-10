@@ -44,7 +44,8 @@ if( !function_exists('__autoload') ){
             $file = 'Security.Authentication.php';
         }
         else{
-            $basic = array('Cache', 'Configuration', 'Functions', 'Http', 'Inflection', 'Routing', 'Scheduler', 'Template', 'Test', 'Timer');
+            // TODO: fix this mess
+            $basic = array('Cache', 'Configuration', 'Functions', 'Http', 'Inflection', 'Routing', 'Scheduler', 'Set', 'Template', 'Test', 'Timer', 'Validation');
             if( in_array($class, $basic) ) $file = 'Basic.'.$class.'.php';
         }
         if( $file ){
@@ -54,6 +55,7 @@ if( !function_exists('__autoload') ){
         // then look in configured directories
         $config = Configuration::getInstance();
         if( array_key_exists('includes', $config) ){
+            if( !is_array($config['includes']) ) $config['includes'] = array($config['includes']); // TODO: fix this hack
             foreach($config['includes'] as $dir){
                 // create path
                 $last = $dir[ strlen($dir) - 1 ];
