@@ -8,7 +8,7 @@ class AppFormatHtml implements AppFormatInterface{
     /**
      * @var <mixed> holds data to output
      */
-    private $out;
+    protected $out;
 
     /**
      * Get input data
@@ -53,8 +53,9 @@ class AppFormatHtml implements AppFormatInterface{
     public function send(){
         if( !headers_sent() ) header('Content-Type: text/html');
         $toHtml = Routing::getToken('action').'ToHtml';
-        $template = $this->$toHtml($this->out);
-        $template->display();
+        $output = $this->$toHtml($this->out);
+        if( is_object($output) ) $output->display();
+        else echo $output;
     }
 
     /**
@@ -167,7 +168,7 @@ class AppFormatHtml implements AppFormatInterface{
      * @param <array> $list of objects
      * @return <string> HTML
      */
-    public function enumerateToHtml($list){
+    protected function enumerateToHtml($list){
         $template = $this->getTemplate();
         // make title
         $pluralize = new Inflection( Routing::getName() );
@@ -286,7 +287,7 @@ class AppFormatHtml implements AppFormatInterface{
      * @param <boolean> $updated
      * @return <string> HTML
      */
-    private function updateToHtml($item){
+    protected function updateToHtml($item){
         $template = $this->getTemplate();
         // make title
         $id = Routing::getToken('id');
@@ -322,7 +323,7 @@ class AppFormatHtml implements AppFormatInterface{
      * @param <boolean> delete
      * @return <string> HTML
      */
-    private function deleteToHtml($deleted){
+    protected function deleteToHtml($deleted){
         $template = $this->getTemplate();
         // make title
         $title = Routing::getName().' #'.Routing::getToken('id');
@@ -339,7 +340,7 @@ class AppFormatHtml implements AppFormatInterface{
      * @param <string> $name
      * @param <mixed> $data
      */
-    private function __call($name, $data){
+    public function __call($name, $data){
         $template = $this->getTemplate();
         // make title
         $pluralize = new Inflection( Routing::getName() );
