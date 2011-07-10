@@ -2,10 +2,17 @@
 /**
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
+ * 
+ * Should work like:
+ *  add "Configuration::setPath('path/to/configuration.php');"
+ *  use "$config = Configuration::getInstance(); $config['var']; ..."
+ * 
  */
 class Configuration{
 
     static private $path;
+    static private $instance;
+    static private $temp;
     const default_cache_interval = 3600;
 
     /**
@@ -33,16 +40,22 @@ class Configuration{
 
     /**
      * Get Configuration instance
-     * @staticvar <array> $instance
      * @return <array>
      */
     // TODO: test whether caching Configuration is any faster
     static public function getInstance(){
-        static $instance = null;
-        if( !$instance ){
-            $instance = self::read();
+        if( !self::$instance ){
+            self::$instance = is_array(self::$instance) ? array_merge(self::read(), self::$instance) : self::read();
         }
-        return $instance;
+        return array_merge(self::$instance, self::$temp);
+    }
+    
+    /**
+     * Reset Configuration instance
+     * @return void
+     */
+    static public function reset(){
+        self::$instance = null;
     }
 
     /**
@@ -57,15 +70,86 @@ class Configuration{
             // remove some
             unset($result['_'], $result['_SERVER'], $result['argv']);
         }
+        else{
+            throw new Exception('Could not find configuration file: '.self::$path, 500);
+        }
+        // add base directory and version
+        $result['pocket_knife_version'] = 1.0;
+        $result['base_dir'] = getcwd();
         // return
-        $result['base_dir'] = get_base_dir();
         return $result;
     }
+    
+    /**
+     * Write an array to the configuration file
+     * @param array $config 
+     */
+    static public function write($config){
+        if( !is_file(self::$path)) throw new Exception('Could not find configuration file: '.self::$path, 500);
+        $output = "<?php\n";
+        foreach($config as $key => $value){
+            $output .= self::write_key($key, $value)."\n";
+        }
+        $output .= "?>";
+        return file_put_contents(self::$path, $output);
+    }
+    
+    /**
+     * Creates a PHP string representing the given $key and $value
+     * @param any $key
+     * @param any $value
+     * @param int $_indent
+     * @return string 
+     */
+    static private function write_key($key, $value, $_indent = 0){
+        $indent = str_repeat("\t", $_indent);
+        if( is_object($value) ) throw new Exception('Cannot save objects to configuration file', 500);
+        elseif( is_int($value) ) $format = '%s$%s = %d;';
+        elseif( is_float($value) ) $format = '%s$%s = %f;';
+        elseif( is_string($value) ){ $value = addslashes($value); $format = '%s$%s = \'%s\';'; }
+        elseif( is_bool($value) ) $format = ($value) ? '%s$%s = true;' : '%s$%s = false;';
+        elseif( is_array($value) ){
+            $output = sprintf('%s$%s = array( ', $indent, $key)."\n";
+            $_indent++;
+            foreach($value as $_key => $_value ){
+                $line = self::write_key($_key, $_value, $_indent);
+                $line = substr($line, 0, -1).','."\n"; // replace comma for semi-colon
+                $line = preg_replace('/\$([^ ]+) *=/', '\'$1\' =>', $line, 1); // replace = with =>
+                $output .= $line;
+            }
+            $output .= sprintf('%s); ', $indent);
+            return $output;
+        }
+        // return
+        return sprintf($format, $indent, $key, $value);
+    }
 
+    /**
+     * Retrieves configuration value (convenience method)
+     * TODO: add ability to get inside config arrays
+     * @param string $key 
+     */
+    static public function get($key){
+        $c = self::getInstance();
+        return array_key_exists($key, $c) ? $c[$key] : null;
+    }
+    
+    /**
+     * Sets a configuration value (not persistent)
+     * TODO: add persistence
+     * @param string $key
+     * @param any $value 
+     */
+    static public function set($key, $value){
+        self::$temp[$key] = $value;
+    }
+    
     /**
      * Get configuration array from files
      * @return <array>
      */
+    /** OUTDATED
+
     static public function __install(){
         $configuration_pattern = KNIFE_BASE_PATH.DS.'data'.DS.'config'.DS.'*';
         $configuration_files = glob($configuration_pattern);
@@ -83,5 +167,7 @@ class Configuration{
         // return
         return $result;
     }
+     * 
+     */
 
 }
