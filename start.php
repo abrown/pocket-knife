@@ -45,7 +45,7 @@ if( !function_exists('__autoload') ){
         }
         else{
             // TODO: fix this mess
-            $basic = array('Cache', 'Configuration', 'Functions', 'Http', 'Inflection', 'Routing', 'Scheduler', 'Set', 'Template', 'Test', 'Timer', 'Validation');
+            $basic = array('Cache', 'Configuration', 'Functions', 'Http', 'Inflection', 'Routing', 'Scheduler', 'Set', 'Template', 'Test', 'Timer', 'Validation', 'Session', 'Process');
             if( in_array($class, $basic) ) $file = 'Basic.'.$class.'.php';
         }
         if( $file ){
