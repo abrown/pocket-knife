@@ -183,7 +183,10 @@ class AppObjectPDO extends AppObjectAbstract{
         }
         // execute
         $sql->execute();
-        if( !$sql->rowCount() ){ throw new Exception('Failed to create record', 400); }
+        if( !$sql->rowCount() ){ 
+            if( $this->__debug ) $this->debug($sql);
+            throw new Exception('Failed to create record', 400); 
+        }
         // object changed
         $this->__changed = true;
         // return
@@ -481,5 +484,9 @@ class AppObjectPDO extends AppObjectAbstract{
         try{ self::getDatabase(); }
         catch(Exception $e){ return false; }
         return true;
+    }
+    
+    static private function debug($sql){
+        pr($sql->errorInfo());
     }
 }
