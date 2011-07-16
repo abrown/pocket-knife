@@ -165,5 +165,6 @@ class Http {
      */
     static function redirect($url){
         header( 'Location: '.$url );
+        exit();
     }
 }
