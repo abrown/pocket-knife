@@ -17,7 +17,7 @@ class Set {
      */
     static function flatten( $thing, $key = null ){
         self::$cache = array();
-        return self::_flatten($thing);
+        return self::_flatten($thing, $key);
     }
 
     /**
