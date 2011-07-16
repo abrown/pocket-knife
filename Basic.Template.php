@@ -23,7 +23,7 @@ class Template{
      * Attempts to use TidyHTML to clean up code
      * @var bool 
      */
-    private $tidy = true;
+    private $tidy = false;
     
     /**
      * Inserts the file name of a template as a comment before the template begins
@@ -31,6 +31,13 @@ class Template{
      * @var bool 
      */
     private $insert_comment = true;
+    
+    /**
+     * Defines the token syntax; by default, Template will find '<K:your_token/>'
+     * @var string 
+     */
+    public $token_begin = '<K:';
+    public $token_end = '/>';
 
     /**
      * Types of input
@@ -122,7 +129,7 @@ class Template{
      * @param string $string to replace with
      */
     public function replace($token, $string ){
-        $token = '<K:'.$token.'/>';
+        $token = $this->token_begin.$token.$this->token_end;
         // replace
         $this->text = str_ireplace($token, $string, $this->text);
     }
@@ -228,8 +235,19 @@ class Template{
      * @return <string> text without tokens
      */
     private function replaceDanglingTokens(){
-        $pattern = '#<K:\w+/>#i';
+        $pattern = '#'.preg_quote($this->token_begin).'([A-Z0-9_\.-]+)'.preg_quote($this->token_end).'#i';
         return preg_replace($pattern, '', $this->text);
+    }
+    
+    /**
+     * Returns all of the unreplaced tokens in the template
+     * @return array 
+     */
+    public function findTokens(){
+        $pattern = '#'.preg_quote($this->token_begin).'([A-Z0-9_\.-]+)'.preg_quote($this->token_end).'#i';
+        $number_of_results = preg_match_all($pattern, $this->text, $matches);
+        if( $number_of_results ) return $matches[1];
+        else return array();
     }
 
     /**
