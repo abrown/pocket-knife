@@ -22,7 +22,7 @@ class Routing{
         return '.php';
     }
 
-        /**
+    /**
      * Get current request URL
      * @return <string>
      */
@@ -42,7 +42,7 @@ class Routing{
      * Get URL from start through anchor
      * @return <string>
      */
-    public function getAnchoredUrl(){
+    public static function getAnchoredUrl(){
         static $anchored_url = null;
         if( $anchored_url === null ){
             $url = self::getUrl();
@@ -52,6 +52,17 @@ class Routing{
             $anchored_url = substr( $url, $start, $end );
         }
         return $anchored_url;
+    }
+    
+    /**
+     * Returns filename after anchor
+     * @return string 
+     */
+    public static function getAnchoredFilename(){
+        $filename = str_ireplace(self::getAnchoredUrl(), '', self::getUrl());
+        $filename = preg_replace('/\?.*/', '', $filename);
+        $filename = trim($filename);
+        return $filename;
     }
 
     /**
