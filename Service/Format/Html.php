@@ -3,7 +3,13 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-class AppFormatHtml implements AppFormatInterface{
+
+/**
+ * ServiceFormatHtml
+ * @uses
+ *
+ */
+class ServiceFormatHtml implements ServiceFormatInterface{
 
     /**
      * @var <mixed> holds data to output
@@ -61,7 +67,7 @@ class AppFormatHtml implements AppFormatInterface{
     /**
      * Send formatted error data
      */
-    public function error(){
+    public function sendError(){
         $error = $this->out;
         // send HTTP header
         if( !headers_sent() ){
@@ -88,7 +94,7 @@ class AppFormatHtml implements AppFormatInterface{
     public function getTemplate(){
         static $template = null;
         if( $template === null ){
-            $template = new Template( $this->template );
+            $template = new WebTemplate( $this->template );
         }
         return $template;
     }

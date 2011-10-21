@@ -3,7 +3,14 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-interface AppFormatInterface{
+
+/**
+ * ServiceFormatInterface
+ * Enter description here ...
+ * @uses
+ *
+ */
+interface ServiceFormatInterface{
     /**
      * Accesses data received in the HTTP request
      */
@@ -19,5 +26,5 @@ interface AppFormatInterface{
     /**
      * Sends an error HTTP response
      */
-    public function error();
+    public function sendError();
 }

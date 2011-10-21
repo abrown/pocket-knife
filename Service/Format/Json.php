@@ -3,7 +3,13 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-class AppFormatJson implements AppFormatInterface{
+
+/**
+ * ServiceFormatJson
+ * @uses
+ *
+ */
+class ServiceFormatJson implements ServiceFormatInterface{
 
     /**
      * @var <mixed> holds data to output
@@ -39,7 +45,7 @@ class AppFormatJson implements AppFormatInterface{
     /**
      * Send formatted error data
      */
-    public function error(){
+    public function sendError(){
         $error = $this->out;
         // send HTTP header
         header($_SERVER['SERVER_PROTOCOL'].' '.$error->getCode());
