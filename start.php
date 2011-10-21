@@ -22,7 +22,7 @@ function autoload($class) {
     $replaced = str_replace('/', DS, $replaced);
     $path = get_base_dir() . DS . $replaced . '.php';
     if (!is_file($path)) {
-        throw new Exception('Class '.$class.' not found at: '.$path, 500);
+        throw new ExceptionFile('Class '.$class.' not found at: '.$path, 404);
         return false;
     }
     require $path;
