@@ -3,7 +3,7 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-class Authentication{
+class WebAuthentication{
 
     /**
      * Message to be displayed to unauthenticated users
