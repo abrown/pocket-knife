@@ -4,9 +4,25 @@
  *
  * @author andrew
  */
-class Set {
+class MathSet {
     
     static private $cache;
+    
+    /**
+     * Returns array depth
+     * @param array $array
+     * @return int 
+     */
+    static function getDepth($array){
+        $out_depth = 1;
+        foreach ($array as $item) {
+            if (is_array($item)) {
+                $depth = self::getDepth($item) + 1;
+                $out_depth = ($depth > $out_depth) ? $depth : $out_depth;
+            }
+        }
+        return $out_depth;
+    }
     
     /**
      * Flattens a multi-dimensional array into a single-dimensional, keyed list

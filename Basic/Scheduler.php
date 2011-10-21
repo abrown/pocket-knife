@@ -1,5 +1,16 @@
 <?php
-class Scheduler{
+
+/**
+ * @copyright Copyright 2011 Andrew Brown. All rights reserved.
+ * @license GNU/GPL, see 'help/LICENSE.html'.
+ */
+
+/**
+ * BasicScheduler
+ * @uses 
+ * @example
+ */
+class BasicScheduler{
 
     /**
      * Add a task to a scheduling queue
