@@ -23,21 +23,21 @@ class Service {
      * @example $this->storage = array('type'=>'mysql', 'username'=>'test', 'password'=>'password', 'location'=>'localhost', 'database'=>'db');
      * @var array
      * */
-    public $storage = 'Json';
+    public $storage = 'application/json';
 
     /**
      * Defines the input data type for the request; should be a class implementing ServiceType
      * @example $this->input = 'Xml';
      * @var string
      * */
-    public $input = 'Html';
+    public $input = 'application/x-www-form-urlencoded';
 
     /**
      * Defines the output data and content-type of the response; should be a class implementing ServiceType
      * @example $this->output = 'Html';
      * @var string
      * */
-    public $output = 'Html';
+    public $output = 'text/html';
 
     /**
      * Template to apply to the output after processing
@@ -119,13 +119,14 @@ class Service {
                 throw new ExceptionAccess('Class is not allowed', 403);
             if (!$this->allowed('method', $method))
                 throw new ExceptionAccess('Method is not allowed', 403);
-            //if( !$this->allowed('id', $id) ) throw new ExceptionAccess('ID is not allowed', 403);
+            //if( !$this->allowed('id', $id) ) 
+            //  throw new ExceptionAccess('ID is not allowed', 403);
             // get instance
             if (!$this->object) {
                 if (!class_exists($this->{'class'}))
                     throw new ExceptionFile('Could not find class: ' . $this->{'class'}, 404);
-                if (!in_array('ServiceObject', class_implements($this->{'class'})))
-                    throw new ExceptionConfiguration('Class must implement ServiceObject.', 500);
+                if (!in_array('ServiceObjectInterface', class_implements($this->{'class'})))
+                    throw new ExceptionConfiguration('Class must implement ServiceObjectInterface.', 500);
                 $this->object = new $this->{'class'}($id);
             }
             // set storage (if necessary)
@@ -141,7 +142,7 @@ class Service {
             // get output data
             $this->getOutput()->setData($result);
             // apply template (if necessary)
-            if ($this->template || $this->template_map) {
+            if ($this->template) {
                 $this->getTemplate()->replace('content', $this->getOutput()->getResponse());
                 $this->getOutput()->setResponse($this->getTemplate()->toString());
             }
@@ -149,6 +150,12 @@ class Service {
             $this->getOutput()->send();
         } catch (Exception $e) {
             $this->getOutput()->setData($e);
+            // apply template (if necessary)
+            if ($this->template) {
+                $this->getTemplate()->replace('content', $this->getOutput()->getResponse());
+                $this->getOutput()->setResponse($this->getTemplate()->toString());
+            }
+            // send data
             $this->getOutput()->sendError();
         }
     }
@@ -192,6 +199,7 @@ class Service {
      * @return boolean
      * */
     public function allowed($type, $value) {
+        $value = strtolower($value);
         // allow/deny settings
         if (is_bool($this->acl))
             return $this->acl;
@@ -212,7 +220,7 @@ class Service {
                 $r['deny'] = $matches[2];
                 $r['method'] = explode(',', $matches[3]);
                 $r['method'] = array_map('trim', $r['method']);
-                $r['class'] = explode(',', $matches[3]);
+                $r['class'] = explode(',', $matches[4]);
                 $r['class'] = array_map('trim', $r['class']);
                 // test
                 if (
@@ -237,10 +245,15 @@ class Service {
         static $object = null;
         if (!$object) {
             $configuration = $this->storage;
-            if (!array_key_exists('type', $configuration))
+            // check configuration
+            if (!property_exists($configuration, 'type'))
                 throw new ExceptionConfiguration('Storage type is not defined', 500);
-            $class = $configuration['type'];
-            unset($configuration['type']);
+            // get class
+            $class = $configuration->type;
+            // check parents
+            if (!in_array('StorageInterface', class_implements($class)))
+                throw new ExceptionConfiguration($class.' must implement StorageInterface.', 500);
+            // create object
             $object = new $class($configuration);
         }
         return $object;
@@ -253,10 +266,14 @@ class Service {
     protected function getInput() {
         static $object = null;
         if (!$object) {
+            // get class
             $content_type = $this->input;
-            if (is_null($content_type))
-                $content_type = $this->input;
+            if (is_null($content_type)) $content_type = $this->input;
             $class = $this->getContentClass($content_type);
+            // check parents
+            if (!in_array('ServiceFormatInterface', class_implements($class)))
+                throw new ExceptionConfiguration($class.' must implement ServiceFormatInterface.', 500);
+            // create object
             $object = new $class();
         }
         return $object;
@@ -269,10 +286,14 @@ class Service {
     protected function getOutput() {
         static $object = null;
         if (!$object) {
+            // get class
             $content_type = $this->output;
-            if (is_null($content_type))
-                $content_type = $this->output;
+            if (is_null($content_type)) $content_type = $this->output;
             $class = $this->getContentClass($content_type);
+            // check parents
+            if (!in_array('ServiceFormatInterface', class_implements($class)))
+                throw new ExceptionConfiguration($class.' must implement ServiceFormatInterface.', 500);
+            // create object
             $object = new $class();
         }
         return $object;
@@ -286,7 +307,7 @@ class Service {
         static $object = null;
         if (!$object) {
             $template_file = $this->template;
-            $object = new WebTemplate($template_file);
+            $object = new WebTemplate($template_file, WebTemplate::PHP_FILE);
         }
         return $object;
     }
