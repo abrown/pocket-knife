@@ -5,15 +5,6 @@
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
 
-//ini_set('display_errors','2');
-//ERROR_REPORTING(E_ALL);
-//$x = new stdClass();
-//$x->t = 1;
-//$x->s = 2;
-//echo $x->t;
-//echo($x->v);
-//echo($x->u->x);
-
 /**
  * Configuration
  * @uses ExceptionFile
@@ -26,19 +17,19 @@ class Configuration {
 
     /**
      * Current configuration data
-     * @var type 
+     * @var object 
      */
     private $instance;
 
     /**
      * Path to load/save configuration file
-     * @var type 
+     * @var string
      */
     private $path;
-    
+
     /**
      * Records whether the data has been changed
-     * @var type 
+     * @var boolean
      */
     private $changed = false;
 
@@ -63,18 +54,28 @@ class Configuration {
             $this->instance = $object;
         }
     }
-    
+
     /**
      * Returns current configuration data
      * @return type 
      */
-    public function getInstance(){
-        if( !$this->instance && $this->path ){
+    public function getInstance() {
+        if (!$this->instance && $this->path) {
             $this->instance = $this->read();
         }
         return $this->instance;
     }
 
+	/**
+	 * Checks inaccessible keys in current instance for existence
+	 * @param string $key
+	 * @return booolean
+	 * @example when calling property_exists( $configuration, $key );
+	**/
+	public function __isset($key){
+		return isset($this->instance->$key);
+	}
+	
     /**
      * Gets inaccessible key from current instance
      * @param string $key
@@ -82,25 +83,28 @@ class Configuration {
      * @example when calling $configuration->some_property
      */
     public function __get($key) {
-        return $this->instance->$key;
+		if( !isset($this->instance->$key) ) return null;
+        else return $this->instance->$key;
     }
-    
+
     /**
      * Gets a key with dot-notation
      * @param string $key 
      * @return any
      * @example when calling $configuration->get('prop.prop2.prop3')
      */
-    public function get($key){
+    public function get($key) {
         $keys = explode('.', $key);
         $object = $this->instance;
-        foreach($keys as $k){
-            if( !property_exists($object, $k) ) return null;
-            else $object = &$object->$k;
+        foreach ($keys as $k) {
+            if (!property_exists($object, $k))
+                return null;
+            else
+                $object = &$object->$k;
         }
         return $object;
     }
-    
+
     /**
      * Sets inaccessible key from current instance
      * @param string $key
@@ -120,47 +124,57 @@ class Configuration {
      * @return boolean
      * @example when calling $configuration->get('prop.prop2.prop3')
      */
-    public function set($key, $value){
+    public function set($key, $value) {
         $this->changed = true;
         $keys = explode('.', $key);
         $object = &$this->instance;
-        foreach($keys as $k){
-            if( !property_exists($object, $k) ) $object->$k = new stdClass();
+        foreach ($keys as $k) {
+            if (!property_exists($object, $k))
+                $object->$k = new stdClass();
             $object = &$object->$k;
         }
         $object = $value;
     }
-    
+
     /**
      * Tests current configuration against a template
      * @param array $template 
      */
     public function validate($template) {
-        if( !is_array($template) ) throw new ExceptionConfiguration('Invalid configuration template.', 500);
-        foreach($template as $key => $rule){
-            if( !is_numeric($rule) ) throw new ExceptionConfiguration("Invalid configuration template rule: '$key' => '$rule'", 500);
+        if (!is_array($template))
+            throw new ExceptionConfiguration('Invalid configuration template.', 500);
+        foreach ($template as $key => $rule) {
+            if (!is_numeric($rule))
+                throw new ExceptionConfiguration("Invalid configuration template rule: '$key' => '$rule'", 500);
             // rules
             $value = $this->get($key);
             $optional = $rule & self::OPTIONAL;
             $testable = true;
-            if( $optional && is_null($value) ) $testable = false;
-            if( $rule & self::MANDATORY ){
-                if( is_null($value) ) throw new ExceptionConfiguration("Invalid configuration: must have '$key' key", 500);
+            if ($optional && is_null($value))
+                $testable = false;
+            if ($rule & self::MANDATORY) {
+                if (is_null($value))
+                    throw new ExceptionConfiguration("Invalid configuration: must have '$key' key", 500);
             }
-            if( $rule & self::SINGLE && $testable){
-                if( is_array($value) || is_object($value) ) throw new ExceptionConfiguration("Invalid configuration: key '$key' must not contain multiple items", 500);
+            if ($rule & self::SINGLE && $testable) {
+                if (is_array($value) || is_object($value))
+                    throw new ExceptionConfiguration("Invalid configuration: key '$key' must not contain multiple items", 500);
             }
-            if( $rule & self::MULTIPLE && $testable){
-                if( !is_array($value) && !is_object($value) ) throw new ExceptionConfiguration("Invalid configuration: key '$key' must contain multiple items", 500);
+            if ($rule & self::MULTIPLE && $testable) {
+                if (!is_array($value) && !is_object($value))
+                    throw new ExceptionConfiguration("Invalid configuration: key '$key' must contain multiple items", 500);
             }
-            if( $rule & self::STRING && $testable){
-                if( !is_string($value) ) throw new ExceptionConfiguration("Invalid configuration: key '$key' must be a string", 500);
+            if ($rule & self::STRING && $testable) {
+                if (!is_string($value))
+                    throw new ExceptionConfiguration("Invalid configuration: key '$key' must be a string", 500);
             }
-            if( $rule & self::NUMERIC && $testable){
-                if( !is_numeric($value) ) throw new ExceptionConfiguration("Invalid configuration: '$key' must be a number", 500);
+            if ($rule & self::NUMERIC && $testable) {
+                if (!is_numeric($value))
+                    throw new ExceptionConfiguration("Invalid configuration: '$key' must be a number", 500);
             }
-            if( $rule & self::PATH && $testable){
-                if( !is_file($value) && !is_dir($value) && !is_link($value) ) throw new ExceptionConfiguration("Invalid configuration: '$key' must be a valid path", 500);
+            if ($rule & self::PATH && $testable) {
+                if (!is_file($value) && !is_dir($value) && !is_link($value))
+                    throw new ExceptionConfiguration("Invalid configuration: '$key' must be a valid path", 500);
             }
         }
         return true;
@@ -172,7 +186,8 @@ class Configuration {
      * @return <boolean>
      */
     public function setPath($path) {
-        if( !is_file($path) ) throw new ExceptionConfiguration('Could not find configuration file given: '.$path, 500);
+        if (!is_file($path))
+            throw new ExceptionConfiguration('Could not find configuration file given: ' . $path, 500);
         $this->$path = $path;
         return true;
     }
@@ -190,22 +205,23 @@ class Configuration {
      * Read configuration from path
      * @return <array>
      */
-    static public function read( $path ) {
-        if( !$path || !is_file($path) ) throw new ExceptionConfiguration('Could not find configuration file: '.$path, 500);
+    static public function read($path) {
+        if (!$path || !is_file($path))
+            throw new ExceptionConfiguration('Could not find configuration file: ' . $path, 500);
         $info = pathinfo($path);
-        switch( $info['extension'] ){
+        switch ($info['extension']) {
             // JSON
             case 'json':
                 $content = file_get_contents($path);
                 $result = json_decode($content);
-            break;
+                break;
             // PHP
             case 'php':
                 include(self::$path);
                 $result = get_defined_vars();
                 unset($result['_'], $result['_SERVER'], $result['argv']);
                 $result = $this->toObject($result);
-            break;
+                break;
             // LINUX-STYLE
             // TODO: could probably speed this up
             case '.config':
@@ -213,36 +229,38 @@ class Configuration {
                 $result = new stdClass();
                 $lines = file($path);
                 $heading = false;
-                foreach( $lines as $line ){
+                foreach ($lines as $line) {
                     // remove comment
                     $line = preg_replace('/#.*$/', '', $line);
                     // empty line
-                    if( preg_match('/^\s*$/m', $lines, $match) ){
+                    if (preg_match('/^\s*$/m', $lines, $match)) {
                         continue;
                     }
                     // heading change
-                    elseif( preg_match('/^\[(.*)\]\s*$/m', $lines, $match) ){
+                    elseif (preg_match('/^\[(.*)\]\s*$/m', $lines, $match)) {
                         $heading = $match[1];
                         $result->$heading = new stdClass();
                         continue;
                     }
                     // new key/pair
-                    elseif( strpos($line, '=') !== false ){
+                    elseif (strpos($line, '=') !== false) {
                         list($key, $value) = explode('=', $line);
                         // get key
                         $key = trim($key);
                         // get value
                         $value = trim($value);
-                        if( strpos($value, ',') !== false ){
+                        if (strpos($value, ',') !== false) {
                             $value = explode(',', $value);
                             array_walk($value, 'trim');
                         }
                         // set
-                        if( $heading ) $result->$heading->$key = $value;
-                        else $result->$key = $value;
+                        if ($heading)
+                            $result->$heading->$key = $value;
+                        else
+                            $result->$key = $value;
                     }
                 }
-            break;
+                break;
         }
         // return
         return $result;
@@ -264,13 +282,39 @@ class Configuration {
     }
 
     /**
+     * Writes a configuration to a JSON file
+     * @param object $config
+     * @param string $path
+     * @return boolean 
+     */
+    static private function writeJson($config, $path) {
+        $json = json_encode($config);
+        return file_put_contents($path, $json);
+    }
+
+    /**
+     * Writes a configuration to a PHP file
+     * @param type $config
+     * @param type $path 
+     * @return boolean
+     */
+    static private function writePhp($config, $path) {
+        $output = "<?php\n";
+        foreach ($config as $key => $value) {
+            $output .= self::writePhpKey($key, $value) . "\n";
+        }
+        $output .= "?>";
+        return file_put_contents($path, $output);
+    }
+
+    /**
      * Creates a PHP string representing the given $key and $value
      * @param any $key
      * @param any $value
      * @param int $_indent
      * @return string 
      */
-    static private function write_key($key, $value, $_indent = 0) {
+    static private function writePhpKey($key, $value, $_indent = 0) {
         $indent = str_repeat("\t", $_indent);
         if (is_object($value))
             throw new Exception('Cannot save objects to configuration file', 500);
@@ -299,6 +343,84 @@ class Configuration {
         return sprintf($format, $indent, $key, $value);
     }
 
+    static public function writeConfig($config, $path) {
+        $output = '';
+        $depth = MathSet::getDepth($config);
+        // case: no headings needed
+        if ($depth < 3) {
+            foreach ($config as $key => $value) {
+                $output .= self::writeConfigKey($key, $value) . "\n";
+            }
+        }
+        // case: headings needed
+        else {
+            // find top-level keys
+            $scalar = array();
+            $non_scalar = array();
+            foreach ($config as $key => $value) {
+                if (is_scalar($value))
+                    $scalar[] = $key;
+                else
+                    $non_scalar[] = $key;
+            }
+            // output
+            foreach ($scalar as $key) {
+                $output .= self::writeConfigKey($key, $config->$key);
+            }
+            foreach ($non_scalar as $key) {
+                $output .= "[$key]\n";
+                $output .= self::writeConfigKey($key, $config->$key);
+                $output .= "\n";
+            }
+        }
+        // write
+        return file_put_contents($path, $output);      
+    }
+
+    /**
+     * Writes a config key in linux-style format
+     * @param string $key
+     * @param any $value
+     * @return string 
+     */
+    static private function writeConfigKey($key, $value) {
+        if (is_array($value)) {
+            // test if all keys are integers
+            $keys = array_keys();
+            $all_integer_test = true;
+            foreach ($keys as $key) {
+                if (!is_int($key)) {
+                    $all_integer_test = false;
+                    break;
+                }
+            }
+            // case: numeric array
+            if ($all_integer_test) {
+                $output = sprintf('%s = %s', $key, implode(', ', $value)) . "\n";
+            }
+            // case: associative array
+            else {
+                $output = '';
+                foreach ($value as $k => $v) {
+                    $output .= self::writeConfigKey($key . '.' . $k, $v) . "\n";
+                }
+            }
+        }
+        // case: object
+        elseif (is_object($value)) {
+            $output = '';
+            foreach ($value as $k => $v) {
+                $output .= self::writeConfigKey($key . '.' . $k, $v) . "\n";
+            }
+        }
+        // case: scalars
+        else {
+            $output = sprintf('%s = %s', $key, $value) . "\n";
+        }
+        // return
+        return $output;
+    }
+
     /**
      * Converts arrays into objects
      * From Richard Castera, http://www.richardcastera.com/blog/php-convert-array-to-object-with-stdclass
@@ -316,18 +438,17 @@ class Configuration {
         if (is_array($array) && count($array) > 0) {
             foreach ($array as $name => $value) {
                 $name = strtolower(trim($name));
-                if ( strlen($name) > 0 ) {
+                if (strlen($name) > 0) {
                     $object->$name = $this->toObject($value);
                 }
             }
             return $object;
         }
         // case: nothing to return
-        else{
+        else {
             return null;
         }
     }
-    
 
     /**
      * Get configuration array from files
@@ -356,18 +477,18 @@ class Configuration {
      * Retrieves configuration value (convenience method)
      * TODO: add ability to get inside config arrays
      * @param string $key 
-    static public function get($key) {
-        $c = self::getInstance();
-        return array_key_exists($key, $c) ? $c[$key] : null;
-    }
+      static public function get($key) {
+      $c = self::getInstance();
+      return array_key_exists($key, $c) ? $c[$key] : null;
+      }
 
      * Sets a configuration value (not persistent)
      * TODO: add persistence
      * @param string $key
      * @param any $value 
-    static public function set($key, $value) {
-        self::$temp[$key] = $value;
-    }
+      static public function set($key, $value) {
+      self::$temp[$key] = $value;
+      }
      * 
      */
 }

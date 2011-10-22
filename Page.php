@@ -10,8 +10,31 @@
  * @uses Configuration, WebRouting, WebHttp, WebTemplate, ExceptionFile, ExceptionConfiguration 
  */
 class Page{
-    
-    private $configuration;
+
+	/**
+	 * Path to the file to serve as a page
+	 * @var string
+	**/
+	public $file;
+	
+	/**
+	 * Content-type of the page 
+	 * @var string
+	**/
+	public $content_type = 'text/html';
+	
+	/**
+	 * Path to the file to use as a Template
+	 * @see WebTemplate
+	 * @var string
+	**/
+	public $template;
+	
+	/**
+	 * List of key/values mapping a snippet name (key) to a snippet PHP file (value)
+	 * var object
+	**/
+	public $ajax = array();
     
     /**
      * Constructor
@@ -19,16 +42,19 @@ class Page{
      */
     public function __construct($configuration){
         // determines what configuration must be passed
-        $this->configuration = array(
+        $configuration_template = array(
             'file' => Configuration::MANDATORY,
             'content_type' => Configuration::OPTIONAL,
             'template' => Configuration::OPTIONAL,
             'ajax' => Configuration::OPTIONAL | Configuration::MULTIPLE
         );
         // accepts configuration
-        if( !is_a($configuration, 'Configuration') ) throw new ExceptionConfiguration('Incorrect configuration given.', 500);
+        if( !$configuration || !is_a($configuration, 'Configuration') ) throw new ExceptionConfiguration('Incorrect configuration given.', 500);
         $configuration->validate($configuration_template);
-        $this->configuration = $configuration;
+        // copy configuration into this
+        foreach($this as $key=>$value){
+			if( isset($configuration->$key) ) $this->$key = $configuration->$key;
+		}
     }
     
     /**
@@ -61,7 +87,7 @@ class Page{
      * @return string 
      */
     public function getAjaxHtml($snippet){
-        $file = $this->configuration->ajax->$snippet;
+        $file = $this->ajax->$snippet;
         if( !is_file($file) ) throw new ExceptionFile('File not found: ', $file, 404);
         ob_start();
         include $file;
@@ -74,23 +100,22 @@ class Page{
      */
     public function execute(){
         $file = WebRouting::getAnchoredFilename();
-        $content_type = ($this->configuration->content_type) ? $this->configuration->content_type : 'text/html';
         // get AJAX
         $snippet = ( strpos($file, 'ajax:') === 0 ) ? substr($file, 5) : false;
         if( $snippet ){
             $response = $this->getAjaxHtml($snippet);
         }
         // get templated PAGE
-        else if( $this->configuration->template ){
-            $response = $this->getTemplatedHtml($this->configuration->file, $this->configuration->template);
+        else if( $this->template ){
+            $response = $this->getTemplatedHtml($this->file, $this->template);
         }
         // get PAGE
         else{
-            $response = $this->getHtml($this->configuration->file);
+            $response = $this->getHtml($this->file);
         }
         // send HTML
         WebHttp::setCode(200);
-        WebHttp::setContentType($content_type);
+        WebHttp::setContentType($this->content_type);
         echo $response;
         return true;
     }
