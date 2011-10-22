@@ -113,9 +113,9 @@ class WebRouting{
     public static function getTokens() {
         static $tokens = null;
         if( $tokens === null ){
-            if( !self::getAnchor() ) throw new Exception('No anchor set', 500);
+            if( !self::getAnchor() ) throw new ExceptionWeb('No anchor set', 500);
             $url = self::getUrl();
-            if( strpos($url, self::getAnchor()) === false  ) throw new Exception('Anchor not found in URL', 400);
+            if( strpos($url, self::getAnchor()) === false  ) throw new ExceptionWeb('Anchor not found in URL', 400);
             // get token string
             $start = strpos($url, self::getAnchor()) + strlen(self::getAnchor());
             $end = strpos($url, '?');
@@ -126,7 +126,7 @@ class WebRouting{
             foreach($tokens as $index => $token){
                 if( strlen($token) < 1 ) unset($tokens[$index]);
             }
-            if( !$tokens ) throw new Exception('No URL tokens', 400);
+            if( !$tokens ) throw new ExceptionWeb('No URL tokens', 400);
         }
         return $tokens;
     }
