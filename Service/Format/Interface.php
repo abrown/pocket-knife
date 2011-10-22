@@ -6,9 +6,7 @@
 
 /**
  * ServiceFormatInterface
- * Enter description here ...
- * @uses
- *
+ * All content formats must implement this
  */
 interface ServiceFormatInterface{
     /**
@@ -19,6 +17,14 @@ interface ServiceFormatInterface{
      * Sets data to be sent in the HTTP response
      */
     public function setData($data);
+    /**
+     * Gets the text to send to the client
+     */
+    public function getResponse();
+    /**
+     * Sets the text to send to the client
+     */
+    public function setResponse($data);
     /**
      * Sends the HTTP response
      */
