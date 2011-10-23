@@ -56,7 +56,6 @@ class WebTemplate{
      * @param <string> Path/Text
      */
     public function __construct($input, $type = self::FILE){
-        // turn off insert_comment
         $on_off = $this->insert_comment;
         $this->setInsertComment(false);
         // get first text
@@ -146,8 +145,9 @@ class WebTemplate{
     public function getFile($file){
         // check file
         if( !is_file($file) ){
-            $file = Configuration::get('base_dir').DS.$file;
-            if( !is_file($file) ) return '<b>Error:</b> Could not find '.$file;;
+            $file = get_base_dir().DS.$file;
+            pr($file);
+            if( !is_file($file) ) throw new ExceptionFile('Could not find '.$file, 404);
         }
         // return
         return file_get_contents($file);
@@ -207,7 +207,7 @@ class WebTemplate{
     public function getPHPFile($file__hide__, $variables__hide__ = array()){
         // check file
         if( !is_file($file__hide__) ){
-            $file__hide__ = Configuration::get('base_dir').DS.$file__hide__;
+            $file__hide__ = get_base_dir().DS.$file__hide__;
             if( !is_file($file__hide__) ) return '<b>Error:</b> Could not find '.$file__hide__;
         }
         // get output
