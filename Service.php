@@ -105,7 +105,8 @@ class Service {
      * Handles requests, creates instances, and returns result
      */
     public function execute() {
-        // what we act upon
+        
+        // find what we act upon
         list($class, $id, $method) = $this->getRouting();
         if (!$this->{'class'})
             $this->{'class'} = $class;
@@ -113,15 +114,19 @@ class Service {
             $this->method = $method;
         if (!$this->id)
             $this->id = $id;
+        
+        // serve a response
         try {
-            // apply acl
+            
+            // check whether the client can access what he requested
             if (!$this->allowed('class', $class))
-                throw new ExceptionAccess('Class is not allowed', 403);
+                throw new ExceptionAccess("Class '$class' is not allowed", 403);
             if (!$this->allowed('method', $method))
-                throw new ExceptionAccess('Method is not allowed', 403);
+                throw new ExceptionAccess("Method '$method' is not allowed", 403);
             //if( !$this->allowed('id', $id) ) 
             //  throw new ExceptionAccess('ID is not allowed', 403);
-            // get instance
+
+            // get object instance
             if (!$this->object) {
                 if (!class_exists($this->{'class'}))
                     throw new ExceptionFile('Could not find class: ' . $this->{'class'}, 404);
@@ -129,34 +134,41 @@ class Service {
                     throw new ExceptionConfiguration('Class must implement ServiceObjectInterface.', 500);
                 $this->object = new $this->{'class'}($id);
             }
-            // set storage (if necessary)
+            
+            // set storage method (if necessary)
             if ($this->storage || $this->storage_map) {
                 $this->object->setStorage($this->getStorage());
             }
-            // get input data
-            $input = $this->getInput()->getData();
-            // do method
+            
+            // call method
             if (!method_exists($this->object, $this->method))
-                throw new ExceptionConfiguration('Method does not exist', 404);
-            $result = $this->object->{$this->method}($input);
-            // get output data
-            $this->getOutput()->setData($result);
+                throw new ExceptionConfiguration("Method '{$this->method}' does not exist", 404);
+            $input = $this->getInput()->getData();
+            if( !is_null($this->id) ) $input[] = $this->id; // tack ID on the end
+            $result = call_user_func_array(array($this->object, $this->method), $input);
+            
             // apply template (if necessary)
+            $this->getOutput()->setData($result);
             if ($this->template) {
                 $this->getTemplate()->replace('content', $this->getOutput()->getResponse());
                 $this->getOutput()->setResponse($this->getTemplate()->toString());
             }
+            
             // send data
             $this->getOutput()->send();
+            
         } catch (Exception $e) {
+            
+            // apply template to error (if necessary)
             $this->getOutput()->setData($e);
-            // apply template (if necessary)
             if ($this->template) {
                 $this->getTemplate()->replace('content', $this->getOutput()->getResponse());
                 $this->getOutput()->setResponse($this->getTemplate()->toString());
             }
-            // send data
+            
+            // send error data
             $this->getOutput()->sendError();
+            
         }
     }
 
@@ -179,7 +191,7 @@ class Service {
             else if ($id) {
                 $http_method = WebRouting::getMethod(); // use HTTP method
                 if ($http_method)
-                    $$method = $http_method;
+                    $method = $http_method;
                 else
                     $method = 'read';
             }
@@ -249,7 +261,7 @@ class Service {
             if (!property_exists($configuration, 'type'))
                 throw new ExceptionConfiguration('Storage type is not defined', 500);
             // get class
-            $class = $configuration->type;
+            $class = 'Storage'.ucfirst($configuration->type);
             // check parents
             if (!in_array('StorageInterface', class_implements($class)))
                 throw new ExceptionConfiguration($class.' must implement StorageInterface.', 500);
