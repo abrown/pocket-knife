@@ -27,8 +27,8 @@ class ServiceObjectItem implements ServiceObjectInterface{
      * Constructor
      */
     public function __construct(){
-        $tokens = WebRouting::getTokens();
-        if( isset($tokens[2]) ) $this->setID($tokens[2]);
+        list($object, $id, $method) = Service::getRouting();
+        $this->setID($id);
     }
     
     /**
@@ -70,7 +70,7 @@ class ServiceObjectItem implements ServiceObjectInterface{
      */
     public function create($item){
         $this->getStorage()->begin();
-        $id = $this->getStorage()->create($item);
+        $id = $this->getStorage()->create($item, $this->getID());
         $this->getStorage()->commit();
         return $id;
     }
@@ -80,9 +80,9 @@ class ServiceObjectItem implements ServiceObjectInterface{
      * @param mixed $id
      * @return mixed 
      */
-    public function read($id){
+    public function read(){
         $this->getStorage()->begin();
-        $item = $this->getStorage()->read($id);
+        $item = $this->getStorage()->read( $this->getID() );
         $this->getStorage()->commit();
         return $item;
     }
@@ -93,9 +93,9 @@ class ServiceObjectItem implements ServiceObjectInterface{
      * @param mixed $id
      * @return mixed 
      */
-    public function update($item, $id){
+    public function update($item){
         $this->getStorage()->begin();
-        $item = $this->getStorage()->update($item, $id);
+        $item = $this->getStorage()->update($item, $this->getID());
         $this->getStorage()->commit();
         return $item;
     }
@@ -105,9 +105,9 @@ class ServiceObjectItem implements ServiceObjectInterface{
      * @param mixed $id
      * @return mixed 
      */
-    public function delete($id){
+    public function delete(){
         $this->getStorage()->begin();
-        $item = $this->getStorage()->delete($id);
+        $item = $this->getStorage()->delete($this->getID());
         $this->getStorage()->commit();
         return $item;
     }
