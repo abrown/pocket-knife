@@ -144,7 +144,6 @@ class Service {
             if (!method_exists($this->object, $this->method))
                 throw new ExceptionConfiguration("Method '{$this->method}' does not exist", 404);
             $input = $this->getInput()->getData();
-            if( !is_null($this->id) ) $input[] = $this->id; // tack ID on the end
             $result = call_user_func_array(array($this->object, $this->method), $input);
             
             // apply template (if necessary)
@@ -176,34 +175,34 @@ class Service {
      * Returns object/method/id for this Http request
      * @return array
      * */
-    public function getRouting() {
-        $tokens = WebRouting::getTokens();
-        // parse
-        reset($tokens);
-        $object = current($tokens);
-        $id = next($tokens);
-        $method = next($tokens);
-        if (!$method) {
-            // case: object/method
-            if ($id && !is_numeric($id))
-                $action = $id;
-            // case: object/numeric_id
-            else if ($id) {
-                $http_method = WebRouting::getMethod(); // use HTTP method
-                if ($http_method)
-                    $method = $http_method;
-                else
-                    $method = 'read';
+    static public function getRouting() {
+        static $routing = null;
+        if( is_null($routing) ){
+            $tokens = WebRouting::getTokens();
+            // get object (always first)
+            reset($tokens);
+            $object = current($tokens);
+            // get id or method
+            $undecided = next($tokens);
+            if( method_exists($object, $undecided) ){
+                // found method in class
+                $method = $undecided;
+                $id = null;
             }
-            // case: entities/
-            else
-                $method = 'read';
+            else{
+                // default to order object/id/method
+                $id = $undecided;
+                $method = next($tokens);
+            }
+            // method default
+            if( !$method ){
+                $method = WebRouting::getMethod();
+            }
+            // set routing
+            $routing = array($object, $id, $method);
         }
-        // check ID type
-        if (is_numeric($id))
-            $id = (int) $id;
         // return
-        return array($object, $id, $method);
+        return $routing;
     }
 
     /**
