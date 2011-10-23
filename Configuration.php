@@ -48,10 +48,16 @@ class Configuration {
      * Constructor
      * @param array $array 
      */
-    public function __construct($array = null) {
-        if ($array !== null && is_array($array)) {
-            $object = $this->toObject($array);
+    public function __construct($list = null) {
+        if( $list === null ){
+            
+        }
+        elseif( is_array($list) ) {
+            $object = $this->toObject($list);
             $this->instance = $object;
+        }
+        elseif( is_object($list) ){
+            $this->instance = $list;
         }
     }
 

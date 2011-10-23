@@ -3,12 +3,7 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-
-/**
- * ServiceFormatInterface
- * All content formats must implement this
- */
-interface ServiceFormatInterface{
+interface AppFormatInterface{
     /**
      * Accesses data received in the HTTP request
      */
@@ -18,19 +13,11 @@ interface ServiceFormatInterface{
      */
     public function setData($data);
     /**
-     * Gets the text to send to the client
-     */
-    public function getResponse();
-    /**
-     * Sets the text to send to the client
-     */
-    public function setResponse($data);
-    /**
      * Sends the HTTP response
      */
     public function send();
     /**
      * Sends an error HTTP response
      */
-    public function sendError();
+    public function error();
 }

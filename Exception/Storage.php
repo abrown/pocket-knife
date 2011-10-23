@@ -6,12 +6,12 @@
  */
 
 /**
- * Exception
+ * ExceptionStorage
  */
-class ExceptionWeb extends Exception{
+class ExceptionStorage extends Exception{
     public function __toString(){
         header( 'HTTP/1.1 ' . intval($this->getCode()) );
-        $out = "<h2>Web Exception ({$this->getCode()})</h2>\n";
+        $out = "<h2>Storage Exception ({$this->getCode()})</h2>\n";
         $out .= "<p>{$this->getMessage()}</p>\n";
         $out .= "<pre>{$this->getTraceAsString()}</pre>\n";
         return $out;

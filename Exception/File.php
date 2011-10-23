@@ -5,8 +5,7 @@
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
 
-class ExceptionFile extends Exception{
-    
+class ExceptionFile extends Exception{ 
     public function __toString(){
         header( 'HTTP/1.1 ' . intval($this->getCode()) );
         $out = "<h2>File Exception ({$this->getCode()})</h2>\n";
@@ -14,5 +13,4 @@ class ExceptionFile extends Exception{
         $out .= "<pre>{$this->getTraceAsString()}</pre>\n";
         return $out;
     }
-    
 }

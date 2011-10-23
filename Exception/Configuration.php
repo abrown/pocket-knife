@@ -5,8 +5,7 @@
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
 
-class ExceptionConfiguration extends Exception{
-    
+class ExceptionConfiguration extends Exception{ 
     public function __toString(){
         header( 'HTTP/1.1 ' . intval($this->getCode()) );
         $out = "<h2>Configuration Exception ({$this->getCode()})</h2>\n";
@@ -14,5 +13,4 @@ class ExceptionConfiguration extends Exception{
         $out .= "<pre>{$this->getTraceAsString()}</pre>\n";
         return $out;
     }
-    
 }

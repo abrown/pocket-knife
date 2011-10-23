@@ -3,36 +3,24 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-
-/**
- * ServiceFormatHtml
- * @uses
- *
- */
-class ServiceFormatHtml implements ServiceFormatInterface{
-    
-    /**
-     * @var <mixed> holds data for input/output
-     */
-    protected $data;
-    
-    /**
-     * @var string holds text to be sent to client
-     */
-    protected $response;
+class AppFormatHtml implements AppFormatInterface{
 
     /**
-     * When used as an input formatter, this function gets the application/x-www-form-urlencoded
-     * data sent by the client
+     * @var <mixed> holds data to output
+     */
+    protected $out;
+
+    /**
+     * Get input data
      * @return <mixed>
      */
     public function getData(){
-        $key = WebRouting::getClassname();
-        if( !isset($_REQUEST[$key]) ) return array();
+        $key = Routing::getClassname();
+        if( !isset($_REQUEST[$key]) ) return null;
         if( get_magic_quotes_gpc() ){ $_REQUEST[$key] = $this->unescape($_REQUEST[$key]); }
-        return array($_REQUEST[$key]);
+        return $_REQUEST[$key];
     }
-    
+
     /**
      * Recursively string unnecessary slashes
      * @param <mixed> $thing
@@ -50,55 +38,47 @@ class ServiceFormatHtml implements ServiceFormatInterface{
         elseif( is_string($thing) ) return stripslashes($thing);
         else return $thing;
     }
-    
-    /**
-     * When used as an output formatter, this function sets the text/html data
-     * sent to the client
-     * @param mixed $data 
-     */
-    public function setData($data){
-        $this->data = $data;
-    }
 
     /**
-     * Formats and returns text to be sent to the client
-     * @return string
+     * Set output data
+     * @param <mixed>
      */
-    public function getResponse(){
-        if( is_null($this->response) ){
-            if( is_object($this->data) && method_exists($this->data, '__toString') ) $this->response = $this->data->__toString();
-            else $this->response = print_r($this->data, true);
-        }
-        return $this->response;
-    }
-    
-    /**
-     * Sets the response text to be sent to the client
-     * @param string $response 
-     */
-    public function setResponse($response){
-        $this->response = $response;
+    public function setData($data){
+        $this->out = $data;
     }
 
     /**
      * Send formatted output data
      */
     public function send(){
-        if( !headers_sent() ){
-            header('Content-Type: text/html');
-        }
-        echo $this->getResponse();
+        if( !headers_sent() ) header('Content-Type: text/html');
+        $toHtml = Routing::getToken('action').'ToHtml';
+        $output = $this->$toHtml($this->out);
+        if( is_object($output) ) $output->display();
+        else echo $output;
     }
 
     /**
      * Send formatted error data
      */
-    public function sendError(){
+    public function error(){
+        $error = $this->out;
+        // send HTTP header
         if( !headers_sent() ){
-            header($_SERVER['SERVER_PROTOCOL'].' '.$this->data->getCode());
+            header($_SERVER['SERVER_PROTOCOL'].' '.$error->getCode());
             header('Content-Type: text/html');
         }
-        echo $this->getResponse();
+        // display error
+        $template = $this->getTemplate();
+        // make title
+        $title = $error->getCode().' Error';
+        $template->replace('title', $title);
+        // make body
+        $body = '<p><i>Message</i>: '.$error->getMessage().'</p>';
+        $body .= '<p><i>Code</i>: '.$error->getCode().'</p>';
+        $template->replace('body', $body);
+        // display
+        $template->display();
     }
 
     /**
@@ -108,7 +88,7 @@ class ServiceFormatHtml implements ServiceFormatInterface{
     public function getTemplate(){
         static $template = null;
         if( $template === null ){
-            $template = new WebTemplate( $this->template );
+            $template = new Template( $this->template );
         }
         return $template;
     }
