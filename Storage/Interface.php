@@ -10,8 +10,11 @@
  * All Storage classes must implement these functions
  */
 interface StorageInterface{
+    /**
     public function begin();
     public function commit();
     public function rollback();
     public function isChanged();
+     * 
+     */
 }
