@@ -10,23 +10,29 @@
  *
  */
 class ServiceFormatHtml implements ServiceFormatInterface{
-
+    
     /**
-     * @var <mixed> holds data to output
+     * @var <mixed> holds data for input/output
      */
-    protected $out;
+    protected $data;
+    
+    /**
+     * @var string holds text to be sent to client
+     */
+    protected $response;
 
     /**
-     * Get input data
+     * When used as an input formatter, this function gets the application/x-www-form-urlencoded
+     * data sent by the client
      * @return <mixed>
      */
     public function getData(){
-        $key = Routing::getClassname();
-        if( !isset($_REQUEST[$key]) ) return null;
+        $key = WebRouting::getClassname();
+        if( !isset($_REQUEST[$key]) ) return array();
         if( get_magic_quotes_gpc() ){ $_REQUEST[$key] = $this->unescape($_REQUEST[$key]); }
-        return $_REQUEST[$key];
+        return array($_REQUEST[$key]);
     }
-
+    
     /**
      * Recursively string unnecessary slashes
      * @param <mixed> $thing
@@ -44,47 +50,55 @@ class ServiceFormatHtml implements ServiceFormatInterface{
         elseif( is_string($thing) ) return stripslashes($thing);
         else return $thing;
     }
-
+    
     /**
-     * Set output data
-     * @param <mixed>
+     * When used as an output formatter, this function sets the text/html data
+     * sent to the client
+     * @param mixed $data 
      */
     public function setData($data){
-        $this->out = $data;
+        $this->data = $data;
+    }
+
+    /**
+     * Formats and returns text to be sent to the client
+     * @return string
+     */
+    public function getResponse(){
+        if( is_null($this->response) ){
+            if( is_object($this->data) && method_exists($this->data, '__toString') ) $this->response = $this->data->__toString();
+            else $this->response = print_r($this->data, true);
+        }
+        return $this->response;
+    }
+    
+    /**
+     * Sets the response text to be sent to the client
+     * @param string $response 
+     */
+    public function setResponse($response){
+        $this->response = $response;
     }
 
     /**
      * Send formatted output data
      */
     public function send(){
-        if( !headers_sent() ) header('Content-Type: text/html');
-        $toHtml = Routing::getToken('action').'ToHtml';
-        $output = $this->$toHtml($this->out);
-        if( is_object($output) ) $output->display();
-        else echo $output;
+        if( !headers_sent() ){
+            header('Content-Type: text/html');
+        }
+        echo $this->getResponse();
     }
 
     /**
      * Send formatted error data
      */
     public function sendError(){
-        $error = $this->out;
-        // send HTTP header
         if( !headers_sent() ){
-            header($_SERVER['SERVER_PROTOCOL'].' '.$error->getCode());
+            header($_SERVER['SERVER_PROTOCOL'].' '.$this->data->getCode());
             header('Content-Type: text/html');
         }
-        // display error
-        $template = $this->getTemplate();
-        // make title
-        $title = $error->getCode().' Error';
-        $template->replace('title', $title);
-        // make body
-        $body = '<p><i>Message</i>: '.$error->getMessage().'</p>';
-        $body .= '<p><i>Code</i>: '.$error->getCode().'</p>';
-        $template->replace('body', $body);
-        // display
-        $template->display();
+        echo $this->getResponse();
     }
 
     /**
