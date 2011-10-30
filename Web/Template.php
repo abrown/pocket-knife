@@ -21,7 +21,31 @@ class WebTemplate{
      * Working text
      * @var <string>
      */
-    private $text;
+    // private $text;
+    
+    /**
+     * Template source input; can be text or path
+     * @var string
+     */
+    private $input;
+    
+    /**
+     * Type of template source
+     * @var string
+     */
+    private $type;
+    
+    /**
+     * Variables available to a PHP template
+     * @var type 
+     */
+    private $variables = array();
+    
+    /**
+     * Replacement tokens, in the form [token => 'replacement text...', ...]
+     * @var array
+     */
+    private $replacements = array();
     
     /**
      * Attempts to use TidyHTML to clean up code
@@ -40,7 +64,7 @@ class WebTemplate{
      * Defines the token syntax; by default, Template will find '<K:your_token/>'
      * @var string 
      */
-    public $token_begin = '<K:';
+    public $token_begin = '<template:';
     public $token_end = '/>';
 
     /**
@@ -56,17 +80,23 @@ class WebTemplate{
      * @param <string> Path/Text
      */
     public function __construct($input, $type = self::FILE){
-        $on_off = $this->insert_comment;
-        $this->setInsertComment(false);
-        // get first text
-        switch($type){
-            case self::STRING: $this->text = $input; break;
-            case self::FILE: $this->text = $this->getFile($input); break;
-            case self::PHP_STRING: $this->text = $this->getPHPString($input); break;
-            case self::PHP_FILE: $this->text = $this->getPHPFile($input); break;
-        }
-        // reset insert_comment
-        $this->setInsertComment($on_off);
+        if( !is_string($input) ) throw new ConfigurationException('Template input must be a string', 500);
+        if( !is_integer($type) ) throw new ConfigurationException('Template input type must be an integer (see class constants)', 500);
+        $this->input = $input;
+        $this->type = $type;
+        
+//        $on_off = $this->insert_comment;
+//        $this->setInsertComment(false);
+//        // get first text
+//        switch($type){
+//            case self::STRING: $this->text = $input; break;
+//            case self::FILE: $this->text = $this->getFile($input); break;
+//            case self::PHP_STRING: $this->text = $this->getPHPString($input); break;
+//            case self::PHP_FILE: $this->text = $this->getPHPFile($input); break;
+//            case self::DEFER: $this->text = null; break;
+//        }
+//        // reset insert_comment
+//        $this->setInsertComment($on_off);
     }
 
     /**
@@ -93,6 +123,27 @@ class WebTemplate{
      */
     public function setInsertComment($on_off){
         $this->insert_file_comment = $on_off;
+    }
+    
+    /**
+     * Sets a variable for use in a PHP template
+     * @param string $name
+     * @param mixed $value 
+     */
+    public function setVariable($name, &$value){
+        $this->variables[$name] = &$value;
+    }
+    
+    /**
+     * Replace token with string
+     * @param string $token to replace
+     * @param string $string to replace with
+     */
+    public function replace($token, $string){
+        $this->replacements[$token] = $string;
+        //$token = $this->token_begin.$token.$this->token_end;
+        // replace
+        //$this->text = str_ireplace($token, $string, $this->text);
     }
     
     /**
@@ -125,18 +176,7 @@ class WebTemplate{
     }
      * 
      */
-
-    /**
-     * Replace token with string
-     * @param string $token to replace
-     * @param string $string to replace with
-     */
-    public function replace($token, $string ){
-        $token = $this->token_begin.$token.$this->token_end;
-        // replace
-        $this->text = str_ireplace($token, $string, $this->text);
-    }
-   
+ 
     /**
      * Returns file as string; attempts to find file using base_dir
      * @param string $file
@@ -259,12 +299,43 @@ class WebTemplate{
      * @return <string>
      */
     public function toString(){
+        // get template source
+        $on_off = $this->insert_comment;
+        $this->setInsertComment(false);
+        switch($this->type){
+            case self::STRING: $text = $this->input; break;
+            case self::FILE: $text = $this->getFile($this->input); break;
+            case self::PHP_STRING: $text = $this->getPHPString($this->input, $this->variables); break;
+            case self::PHP_FILE: $text = $this->getPHPFile($this->input, $this->variables); break;
+            default: throw new ConfigurationException('Unknown template type: '.$this->type, 500); break;
+        }
+        $this->setInsertComment($on_off);
+        // get replacements
+        // TODO: time this against a foreach(...){ str_replace... }
+        $offset = 0;
+        $end = strlen($text);
+        while($offset < $end){
+            $a = strpos($text, $this->token_begin, $offset);
+            if( $a === false ) break;
+            $b = $a + strlen($this->token_begin);
+            $c = strpos($text, $this->token_end, $b);
+            if( $c === false ) break;
+            $d = $c + strlen($this->token_end);
+            // get token and value
+            $token = trim( substr($text, $b, $c - $b) );
+            if( array_key_exists($token, $this->replacements) ) $value = $this->replacements[$token];
+            else $value = '';
+            // replace
+            $text = substr($text, 0, $a).$value.substr($text, $d);
+        }
+        // tidy code
         if( $this->tidy && class_exists('tidy') ){
             $config = array('indent' => true, 'output-xhtml' => true, 'wrap' => 120, 'indent-spaces' => 4);
             $tidy = new tidy();
-            $this->text = $tidy->repairString($this->text, $config, 'utf8');
+            $text = $tidy->repairString($text, $config, 'utf8');
         }
-        return $this->replaceDanglingTokens();
+        // return
+        return $text;
     }
 
     /**

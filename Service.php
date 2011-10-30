@@ -150,6 +150,7 @@ class Service {
             $this->getOutput()->setData($result);
             if ($this->template) {
                 $this->getTemplate()->replace('content', $this->getOutput()->getResponse());
+                $this->getTemplate()->setVariable('data', $result);
                 $this->getOutput()->setResponse($this->getTemplate()->toString());
             }
             
@@ -162,6 +163,8 @@ class Service {
             $this->getOutput()->setData($e);
             if ($this->template) {
                 $this->getTemplate()->replace('content', $this->getOutput()->getResponse());
+                $this->getTemplate()->setVariable('data', $e);
+                $this->getTemplate()->setVariable('error', $e);
                 $this->getOutput()->setResponse($this->getTemplate()->toString());
             }
             
@@ -319,6 +322,7 @@ class Service {
         if (!$object) {
             $template_file = $this->template;
             $object = new WebTemplate($template_file, WebTemplate::PHP_FILE);
+            $object->setVariable('service', $this); // TODO: does this violate simplicity?
         }
         return $object;
     }
