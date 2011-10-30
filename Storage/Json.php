@@ -73,7 +73,7 @@ class StorageJson implements StorageInterface{
      * Completes transaction
      */
     public function commit(){
-        if( $this->isChanged ){
+        if( $this->isChanged() ){
             $json = json_encode($this->data);
             file_put_contents($this->location, $json);
         }
@@ -84,6 +84,14 @@ class StorageJson implements StorageInterface{
      */
     public function rollback(){
         // TODO: unlock records
+    }
+    
+    /**
+     * Returns true if data has been modified
+     * @return boolean 
+     */
+    public function isChanged(){
+        return $this->isChanged;
     }
     
     /**
