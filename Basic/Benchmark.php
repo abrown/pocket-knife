@@ -41,7 +41,20 @@ class BasicBenchmark{
      * @return <int>
      */
     public static function getTime(){
-        return self::$end - self::$start;
+        return round(self::$end - self::$start, 5);
+    }
+    
+    /**
+     * Returns peak memory usage
+     * @return string 
+     */
+    public static function getPeakMemory(){
+        $size = memory_get_peak_usage(false);
+        $units = array('b','kb','mb','gb','tb','pb');
+        $i = floor( log($size, 1024) );
+        $mem = $size / pow(1024, $i);
+        $mem = @round( $mem, 2 );
+        return $mem.' '.$units[$i];
     }
     
     /**
@@ -49,11 +62,11 @@ class BasicBenchmark{
      * @return string
      */
     public static function getMemory(){
-        $size = memory_get_usage(true);
+        $size = memory_get_usage(false);
         $units = array('b','kb','mb','gb','tb','pb');
-        $i = floor( log($size,1024) );
+        $i = floor( log($size, 1024) );
         $mem = $size / pow(1024, $i);
-        $mem = @round( $m, 2 );
+        $mem = @round( $mem, 2 );
         return $mem.' '.$units[$i];
     }
 }
