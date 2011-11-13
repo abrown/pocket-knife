@@ -53,7 +53,7 @@ class Configuration {
             
         }
         elseif( is_array($list) ) {
-            $object = $this->toObject($list);
+            $object = to_object($list);
             $this->instance = $object;
         }
         elseif( is_object($list) ){
@@ -226,7 +226,7 @@ class Configuration {
                 include(self::$path);
                 $result = get_defined_vars();
                 unset($result['_'], $result['_SERVER'], $result['argv']);
-                $result = $this->toObject($result);
+                $result = to_object($result);
                 break;
             // LINUX-STYLE
             // TODO: could probably speed this up
@@ -426,75 +426,4 @@ class Configuration {
         // return
         return $output;
     }
-
-    /**
-     * Converts arrays into objects
-     * From Richard Castera, http://www.richardcastera.com/blog/php-convert-array-to-object-with-stdclass
-     * @param array $array
-     * @return stdClass 
-     */
-    private function toObject($array) {
-        // case: all values/objects
-        if (!is_array($array)) {
-            return $array;
-        }
-        // create object
-        $object = new stdClass();
-        // case: is valid array
-        if (is_array($array) && count($array) > 0) {
-            foreach ($array as $name => $value) {
-                $name = strtolower(trim($name));
-                if (strlen($name) > 0) {
-                    $object->$name = $this->toObject($value);
-                }
-            }
-            return $object;
-        }
-        // case: nothing to return
-        else {
-            return null;
-        }
-    }
-
-    /**
-     * Get configuration array from files
-     * @return <array>
-     */
-    /** OUTDATED
-
-      static public function __install(){
-      $configuration_pattern = KNIFE_BASE_PATH.DS.'data'.DS.'config'.DS.'*';
-      $configuration_files = glob($configuration_pattern);
-      // get configuration files
-      foreach($configuration_files as $file){
-      if( is_file($file) ){
-      include($file);
-      }
-      }
-      unset($file);
-      // get vars
-      $result = get_defined_vars();
-      // remove some
-      unset($result['_'], $result['_SERVER'], $result['argv']);
-      // return
-      return $result;
-      }
-     * 
-     * Retrieves configuration value (convenience method)
-     * TODO: add ability to get inside config arrays
-     * @param string $key 
-      static public function get($key) {
-      $c = self::getInstance();
-      return array_key_exists($key, $c) ? $c[$key] : null;
-      }
-
-     * Sets a configuration value (not persistent)
-     * TODO: add persistence
-     * @param string $key
-     * @param any $value 
-      static public function set($key, $value) {
-      self::$temp[$key] = $value;
-      }
-     * 
-     */
 }
