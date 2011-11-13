@@ -144,7 +144,7 @@ class Service {
             if (!method_exists($this->object, $this->method))
                 throw new ExceptionConfiguration("Method '{$this->method}' does not exist", 404);
             $input = $this->getInput()->getData();
-            $result = call_user_func_array(array($this->object, $this->method), $input);
+            $result = call_user_func_array(array($this->object, $this->method), array($input));
             
             // apply template (if necessary)
             $this->getOutput()->setData($result);
@@ -201,6 +201,8 @@ class Service {
             if( !$method ){
                 $method = WebRouting::getMethod();
             }
+            // do not count '*' as id
+            if( $id == '*' ) $id = null;
             // set routing
             $routing = array($object, $id, $method);
         }
