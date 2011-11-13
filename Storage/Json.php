@@ -134,8 +134,11 @@ class StorageJson implements StorageInterface{
     public function update($record, $id){
         if( is_null($id) ) throw new ExceptionStorage('UPDATE action requires an ID', 400);
         if( !property_exists($this->data, $id) ) throw new ExceptionStorage("UPDATE action could not find ID '$id'", 400);
-        $this->data->$id = $record;
-        $this->isChanged = true;
+        // change each field
+        foreach($record as $key => $value){
+            $this->data->$id->$key = $value;
+            $this->isChanged = true;
+        } 
         return $this->data->$id;
     }
     
