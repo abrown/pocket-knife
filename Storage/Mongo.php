@@ -88,14 +88,17 @@ class StorageMongo implements StorageInterface{
      * @param mixed $id 
      */
     public function create($record, $id = null){
+        // create
         $_record = (array) $record;
         try{
-            $status = $this->collection->insert($_record);
+            $success = $this->collection->insert($_record);
         }
         catch(Exception $e){
             throw new ExceptionStorage($e->message, 400);
         }
-        return $status['_id']->{'$id'};
+        if( !$success ) throw new ExceptionStorage('CREATE action failed: no reason given', 400);
+        // return
+        return $_record['_id']->{'$id'};
     }
     
     /**
@@ -105,25 +108,41 @@ class StorageMongo implements StorageInterface{
      */
     public function read($id){
         if( is_null($id) ) throw new ExceptionStorage('READ action requires an ID', 400);
-        if( property_exists($this->data, $id) ) return $this->data->$id;
-        //elseif( array_key_exists($id, $this->data) ) return $this->data[$id];
-        else throw new ExceptionStorage("READ action could not find ID '$id'", 404);
+        // get record
+        try{
+            $item = $this->collection->findOne( array('_id' => new MongoId($id)));
+        }
+        catch(Exception $e){
+            throw new ExceptionStorage($e->message, 400);
+        }
+        // return
+        return to_object($item);
     }
     
     /**
      * Update record
-     * @param mixed $record
+     * @param mixed $changes
      * @param mixed $id 
      */
-    public function update($record, $id){
+    public function update($changes, $id){
         if( is_null($id) ) throw new ExceptionStorage('UPDATE action requires an ID', 400);
-        if( !property_exists($this->data, $id) ) throw new ExceptionStorage("UPDATE action could not find ID '$id'", 400);
+        // read
+        $record = $this->read($id);
         // change each field
-        foreach($record as $key => $value){
-            $this->data->$id->$key = $value;
+        foreach($changes as $key => $value){
+            $record->$key = $value;
             $this->isChanged = true;
         } 
-        return $this->data->$id;
+        // save
+        try{
+            $success = $this->collection->update( array('_id' => new MongoId($id)), $record );
+        }
+        catch(Exception $e){
+            throw new ExceptionStorage($e->message, 400);
+        }
+        if( !$success ) throw new ExceptionStorage('UPDATE action failed: unknown reason', 400); 
+        // return
+        return $record;
     }
     
     /**
@@ -131,11 +150,16 @@ class StorageMongo implements StorageInterface{
      * @param mixed $id 
      */
     public function delete($id){
-        if( is_null($id) ) throw new ExceptionStorage('DELETE action requires an ID', 400);
-        if( !property_exists($this->data, $id) ) throw new ExceptionStorage("DELETE action could not find ID '$id'", 400);
-        $record = $this->data->$id;
-        unset($this->data->$id);
-        $this->isChanged = true;
+        $record = $this->read($id);
+        // remove
+        try{
+            $success = $this->collection->remove( array('_id' => new MongoId($id)) );
+        }
+        catch(Exception $e){
+            throw new ExceptionStorage($e->message, 400);
+        }
+        if( !$success ) throw new ExceptionStorage('UPDATE action failed: unknown reason', 400); 
+        // return
         return $record;
     }
     
@@ -145,11 +169,7 @@ class StorageMongo implements StorageInterface{
      * @param mixed $value 
      */
     public function search($key, $value){
-        $found = array();
-        foreach($this->data as $id => $record){
-            if( $record->$key == $value ) $found[$id] = $record;
-        }
-        return $found;
+        // TODO
     }
     
     /**
@@ -172,10 +192,6 @@ class StorageMongo implements StorageInterface{
      * @return mixed
      */
     public function last(){
-        $last = null;
-        foreach($this->data as $i => $v){
-            if( $i > $last ) $last = $i;
-        }
-        return $last;
+        // TODO: can we even do this?
     }
 }
