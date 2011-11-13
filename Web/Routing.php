@@ -83,6 +83,7 @@ class WebRouting{
      * @param boolean $pass_get_variables 
      */
     public static function createUrl($tokens, $pass_get_variables = true){
+        if( $tokens[0] == '/' ) $tokens = substr($tokens, 1);
         $url = self::getLocationUrl().'/'.$tokens.'?'.http_build_query($_GET);
         return $url;
     }
