@@ -40,4 +40,15 @@ class ServiceObjectList implements ServiceObjectInterface{
         $this->getStorage()->commit();
         return $items;
     }
+    
+    /**
+     * Deletes all items in a list
+     * @return boolean 
+     */
+    public function delete(){
+        $this->getStorage()->begin();
+        $success = $this->getStorage()->deleteAll();
+        $this->getStorage()->commit();
+        return $success;
+    }
 }
