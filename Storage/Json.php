@@ -40,11 +40,10 @@ class StorageJson implements StorageInterface{
      * @param type $configuration 
      */
     public function __construct($configuration){
-        if( !$configuration ) throw new ExceptionConfiguration('StorageJson requires a configuration', 500);
-        if( !is_a($configuration, 'Configuration') ) $configuration_object = new Configuration($configuration);
+        if( !$configuration || !is_a($configuration, 'Configuration') ) throw new ExceptionConfiguration('StorageJson requires a configuration', 500);
         // create database if necessary
-        if( !is_file($configuration_object->location) ){
-            file_put_contents($configuration_object->location, '{}');
+        if( !is_file($configuration->location) ){
+            file_put_contents($configuration->location, '{}');
         }
         // determines what configuration must be passed
         $configuration_template = array(
@@ -52,11 +51,11 @@ class StorageJson implements StorageInterface{
             'schema' => Configuration::OPTIONAL
         );
         // accepts configuration
-        $configuration_object->validate($configuration_template);
+        $configuration->validate($configuration_template);
         // copy configuration into this
         foreach ($this as $key => $value) {
-            if (isset($configuration_object->$key))
-                $this->$key = $configuration_object->$key;
+            if (isset($configuration->$key))
+                $this->$key = $configuration->$key;
         }
     }
     
@@ -143,7 +142,7 @@ class StorageJson implements StorageInterface{
     }
     
     /**
-     * Delete record
+     * Deletes a record
      * @param mixed $id 
      */
     public function delete($id){
@@ -153,6 +152,16 @@ class StorageJson implements StorageInterface{
         unset($this->data->$id);
         $this->isChanged = true;
         return $record;
+    }
+    
+    /**
+     * Deletes all records
+     * @return boolean
+     */
+    public function deleteAll(){
+        $this->data = new stdClass();
+        $this->isChanged = true;
+        return true;
     }
     
     /**
