@@ -210,6 +210,13 @@ class WebHttp {
             )
         );
         $context = stream_context_create($options);
-        return file_get_contents($url, false, $context);
+        // do request
+        $response = file_get_contents($url, false, $context);
+        // check errors
+        if( $response === false ){
+            throw new ExceptionWeb('Could not open url: '.$url, 404);
+        }
+        // return 
+        return $response;
     }
 }
