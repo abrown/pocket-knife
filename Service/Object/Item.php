@@ -28,7 +28,7 @@ class ServiceObjectItem implements ServiceObjectInterface{
      */
     public function __construct(){
         list($object, $id, $method) = Service::getRouting();
-        $this->setID($id);
+        if( $id !== '*' ) $this->setID($id);
     }
     
     /**
@@ -68,7 +68,8 @@ class ServiceObjectItem implements ServiceObjectInterface{
      * @param mixed $item
      * @return mixed 
      */
-    public function create($item){
+    public function create($item = null){
+        if( $item === null ) throw new ExceptionService('No item given to create', 400);
         $this->getStorage()->begin();
         $id = $this->getStorage()->create($item, $this->getID());
         $this->getStorage()->commit();
@@ -93,7 +94,8 @@ class ServiceObjectItem implements ServiceObjectInterface{
      * @param mixed $id
      * @return mixed 
      */
-    public function update($item){
+    public function update($item = null){
+        if( $item === null ) throw new ExceptionService('No item given to create', 400);
         $this->getStorage()->begin();
         $item = $this->getStorage()->update($item, $this->getID());
         $this->getStorage()->commit();
@@ -110,5 +112,14 @@ class ServiceObjectItem implements ServiceObjectInterface{
         $item = $this->getStorage()->delete($this->getID());
         $this->getStorage()->commit();
         return $item;
+    }
+    
+    /**
+     * Shows editable fields for an item
+     * @return mixed
+     */
+    public function edit(){
+        if( is_null($this->getID()) ) return null;
+        else return $this->read();
     }
 }

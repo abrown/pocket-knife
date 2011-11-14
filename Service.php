@@ -144,12 +144,13 @@ class Service {
             if (!method_exists($this->object, $this->method))
                 throw new ExceptionConfiguration("Method '{$this->method}' does not exist", 404);
             $input = $this->getInput()->getData();
-            $result = call_user_func_array(array($this->object, $this->method), $input);
+            $result = call_user_func_array(array($this->object, $this->method), array($input));
             
             // apply template (if necessary)
             $this->getOutput()->setData($result);
             if ($this->template) {
                 $this->getTemplate()->replace('content', $this->getOutput()->getResponse());
+                $this->getTemplate()->setVariable('data', $result);
                 $this->getOutput()->setResponse($this->getTemplate()->toString());
             }
             
@@ -162,6 +163,8 @@ class Service {
             $this->getOutput()->setData($e);
             if ($this->template) {
                 $this->getTemplate()->replace('content', $this->getOutput()->getResponse());
+                $this->getTemplate()->setVariable('data', $e);
+                $this->getTemplate()->setVariable('error', $e);
                 $this->getOutput()->setResponse($this->getTemplate()->toString());
             }
             
@@ -198,6 +201,8 @@ class Service {
             if( !$method ){
                 $method = WebRouting::getMethod();
             }
+            // do not count '*' as id
+            if( $id == '*' ) $id = null;
             // set routing
             $routing = array($object, $id, $method);
         }
@@ -319,6 +324,7 @@ class Service {
         if (!$object) {
             $template_file = $this->template;
             $object = new WebTemplate($template_file, WebTemplate::PHP_FILE);
+            $object->setVariable('service', $this); // TODO: does this violate simplicity?
         }
         return $object;
     }

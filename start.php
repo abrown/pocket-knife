@@ -66,6 +66,35 @@ function get_public_vars($object) {
 }
 
 /**
+ * Converts arrays into objects
+ * From Richard Castera, http://www.richardcastera.com/blog/php-convert-array-to-object-with-stdclass
+ * @param array $array
+ * @return stdClass 
+ */
+function to_object($array) {
+    // case: all values/objects
+    if (!is_array($array)) {
+        return $array;
+    }
+    // create object
+    $object = new stdClass();
+    // case: is valid array
+    if (is_array($array) && count($array) > 0) {
+        foreach ($array as $name => $value) {
+            $name = strtolower(trim($name));
+            if (strlen($name) > 0) {
+                $object->$name = to_object($value);
+            }
+        }
+        return $object;
+    }
+    // case: nothing to return
+    else {
+        return null;
+    }
+}
+
+/**
  * Report errors
  */
 ini_set('display_errors','2');

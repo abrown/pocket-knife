@@ -78,6 +78,17 @@ class WebRouting{
     }
 
     /**
+     * Builds a URL with current location, given tokens, and (possibly) GET variables
+     * @param string $tokens
+     * @param boolean $pass_get_variables 
+     */
+    public static function createUrl($tokens, $pass_get_variables = true){
+        if( $tokens[0] == '/' ) $tokens = substr($tokens, 1);
+        $url = self::getLocationUrl().'/'.$tokens.'?'.http_build_query($_GET);
+        return $url;
+    }
+    
+    /**
      * Get tokens from a REST-style URL
      * @return <array> List of tokens
      */
