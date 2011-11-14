@@ -16,46 +16,55 @@ class StorageMongo implements StorageInterface{
      * @var boolean 
      */
     public $isChanged = false;
-    
-    /**
-     * Stores the path to the JSON database
-     * @var string 
-     */
-    public $location;
-    
-    /**
-     * Structure model for each record
-     * @var mixed 
-     */
-    public $schema;
-    
+
     /**
      * MongoDB Server
      * @var Mongo 
      */
     protected $server;
-    protected $collection;
-    
+
     /**
-     * Database data
-     * @var mixed 
+     * Current MongoDB Collection (like table)
+     * @var MongoCollection 
      */
-    protected $data;
-    
+    protected $collection;
+
     /**
      * Constructor
      * @param type $configuration 
      */
     public function __construct($configuration = null){
- 
+        if( !$configuration || !is_a($configuration, 'Configuration') ) throw new ExceptionConfiguration('StoragePdo requires a configuration', 500);
+        // determines what configuration must be passed
+        $configuration_template = array(
+            'location' => Configuration::MANDATORY,
+            'port' => Configuration::OPTIONAL | Configuration::NUMERIC,
+            'database' => Configuration::MANDATORY,
+            'collection' => Configuration::MANDATORY,
+            'username' => Configuration::OPTIONAL,
+            'password' => Configuration::OPTIONAL
+        );
+        // accepts configuration
+        $configuration->validate($configuration_template);
+        // copy configuration into this
+        $this->configuration = $configuration;   
+        // connect to server
+        try{
+            $url = $this->getDatabaseString($configuration);
+            $this->server = new Mongo($url);
+            $this->collection = $this->server->selectCollection($configuration->database, $configuration->collection);
+        }
+        catch(Exception $e){
+            throw new ExceptionStorage($e->getMessage(), 400);
+        }
+        
     }
     
     /**
      * Begins transaction
      */
     public function begin(){
-        $this->server = new Mongo();
-        $this->collection = $this->server->selectCollection('local', 'posts');
+
     }
     
     /**
@@ -88,6 +97,7 @@ class StorageMongo implements StorageInterface{
      * @param mixed $id 
      */
     public function create($record, $id = null){
+        if( !is_null($id) ) throw ExceptionStorage('MongoDB create() cannot specify an arbitrary ID', 400);
         // create
         $_record = (array) $record;
         try{
@@ -115,6 +125,8 @@ class StorageMongo implements StorageInterface{
         catch(Exception $e){
             throw new ExceptionStorage($e->message, 400);
         }
+        // check result
+        if( is_null($item) ) throw new ExceptionStorage('Could not find ID', 404);
         // return
         return to_object($item);
     }
@@ -158,9 +170,26 @@ class StorageMongo implements StorageInterface{
         catch(Exception $e){
             throw new ExceptionStorage($e->message, 400);
         }
-        if( !$success ) throw new ExceptionStorage('UPDATE action failed: unknown reason', 400); 
+        if( !$success ) throw new ExceptionStorage('DELETE action failed: unknown reason', 400); 
         // return
         return $record;
+    }
+    
+    /**
+     * Deletes all records
+     * @return boolean
+     */
+    public function deleteAll(){
+        // delete all records
+        try{
+            $success = $this->collection->remove( array() );
+        }
+        catch(Exception $e){
+            throw new ExceptionStorage($e->message, 400);
+        }
+        if( !$success ) throw new ExceptionStorage('DELETE action failed: unknown reason', 400); 
+        // return
+        return true;
     }
     
     /**
@@ -193,5 +222,18 @@ class StorageMongo implements StorageInterface{
      */
     public function last(){
         // TODO: can we even do this?
+    }
+    
+    /**
+     * Returns a database connection string from a given configuration
+     * @return string
+     */
+    protected function getDatabaseString($configuration){
+        $url = 'mongodb://';
+        if( $configuration->username ) $url .= $configuration->username.':';
+        if( $configuration->password ) $url .= $configuration->password;
+        $url .= ($configuration->location) ? $configuration->location : 'localhost';
+        $url .= ($configuration->port) ? ':'.$configuration->port : ':27017';
+        return $url;
     }
 }
