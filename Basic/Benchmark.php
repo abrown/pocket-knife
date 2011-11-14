@@ -48,12 +48,20 @@ class BasicBenchmark{
      * Returns peak memory usage
      * @return string 
      */
-    public static function getPeakMemory(){
+    public static function getPeakMemory($unit = null){
         $size = memory_get_peak_usage(false);
+        // choose units
         $units = array('b','kb','mb','gb','tb','pb');
-        $i = floor( log($size, 1024) );
+        if( $unit ){ 
+            $i = array_search($unit, $units);
+        }
+        else{
+            $i = floor( log($size, 1024) );
+        }
+        // format size
         $mem = $size / pow(1024, $i);
         $mem = @round( $mem, 2 );
+        // return
         return $mem.' '.$units[$i];
     }
     
@@ -61,12 +69,20 @@ class BasicBenchmark{
      * Returns current memory usage
      * @return string
      */
-    public static function getMemory(){
+    public static function getMemory($unit = null){
         $size = memory_get_usage(false);
+        // choose units
         $units = array('b','kb','mb','gb','tb','pb');
-        $i = floor( log($size, 1024) );
+        if( $unit ){ 
+            $i = array_search($unit, $units);
+        }
+        else{
+            $i = floor( log($size, 1024) );
+        }
+        // format size
         $mem = $size / pow(1024, $i);
         $mem = @round( $mem, 2 );
+        // return
         return $mem.' '.$units[$i];
     }
 }
