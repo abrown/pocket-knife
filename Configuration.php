@@ -49,14 +49,12 @@ class Configuration {
      * @param array $array 
      */
     public function __construct($list = null) {
-        if( $list === null ){
+        if ($list === null) {
             
-        }
-        elseif( is_array($list) ) {
+        } elseif (is_array($list)) {
             $object = to_object($list);
             $this->instance = $object;
-        }
-        elseif( is_object($list) ){
+        } elseif (is_object($list)) {
             $this->instance = $list;
         }
     }
@@ -72,16 +70,16 @@ class Configuration {
         return $this->instance;
     }
 
-	/**
-	 * Checks inaccessible keys in current instance for existence
-	 * @param string $key
-	 * @return booolean
-	 * @example when calling property_exists( $configuration, $key );
-	**/
-	public function __isset($key){
-		return isset($this->instance->$key);
-	}
-	
+    /**
+     * Checks inaccessible keys in current instance for existence
+     * @param string $key
+     * @return booolean
+     * @example when calling property_exists( $configuration, $key );
+     * */
+    public function __isset($key) {
+        return isset($this->instance->$key);
+    }
+
     /**
      * Gets inaccessible key from current instance
      * @param string $key
@@ -89,8 +87,10 @@ class Configuration {
      * @example when calling $configuration->some_property
      */
     public function __get($key) {
-		if( !isset($this->instance->$key) ) return null;
-        else return $this->instance->$key;
+        if (!isset($this->instance->$key))
+            return null;
+        else
+            return $this->instance->$key;
     }
 
     /**
@@ -380,7 +380,7 @@ class Configuration {
             }
         }
         // write
-        return file_put_contents($path, $output);      
+        return file_put_contents($path, $output);
     }
 
     /**
@@ -426,4 +426,5 @@ class Configuration {
         // return
         return $output;
     }
+
 }
