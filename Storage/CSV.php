@@ -4,12 +4,7 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-
-/**
- * BasicDocumentation
- * @uses
+/* 
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
  */
-
-class BasicDocumentation{
-
-}

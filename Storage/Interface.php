@@ -19,7 +19,8 @@ interface StorageInterface{
     public function read($id);
     public function update($record, $id);
     public function delete($id);
+    public function deleteAll();
+    public function last();
     public function search($key, $value);
     public function all();
-    public function last();
 }

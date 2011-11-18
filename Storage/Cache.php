@@ -4,7 +4,7 @@
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
 // TODO: check if overwriting another class cache with the same name; if so, throw warning
-class Cache{
+class StorageCache{
 
     /**
      * Default Cache Interval

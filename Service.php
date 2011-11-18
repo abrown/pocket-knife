@@ -262,7 +262,7 @@ class Service {
         if (!$object) {
             $configuration = $this->storage;
             // check configuration
-            if (!property_exists($configuration, 'type'))
+            if ( !isset($configuration->type) )
                 throw new ExceptionConfiguration('Storage type is not defined', 500);
             // get class
             $class = 'Storage'.ucfirst($configuration->type);
