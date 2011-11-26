@@ -63,6 +63,8 @@ class StorageJson implements StorageInterface{
      * Begins transaction
      */
     public function begin(){
+        // check permissions
+        if( !is_writable($this->location) ) throw new ExceptionStorage("The file '$this->location' is not writable", 500);
         // TODO: lock records
         $json = file_get_contents($this->location);
         $this->data = json_decode($json);
