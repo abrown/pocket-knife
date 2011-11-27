@@ -115,7 +115,7 @@ class WebHttp {
      */
     static function clean($input, $type = 'text') {
         // recurse
-        if (is_array($input)) {
+        if (is_array($input) || is_object($input)) {
             foreach ($input as &$item) {
                 $item = self::clean($item, $type);
             }
