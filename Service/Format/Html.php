@@ -30,7 +30,10 @@ class ServiceFormatHtml implements ServiceFormatInterface{
         $key = WebRouting::getClassname();
         if( !isset($_REQUEST[$key]) ) return array();
         if( get_magic_quotes_gpc() ){ $_REQUEST[$key] = $this->unescape($_REQUEST[$key]); }
-        return to_object($_REQUEST[$key]);
+        // make object
+        $object = to_object($_REQUEST[$key]);
+        // return        
+        return $object;
     }
     
     /**
