@@ -6,15 +6,23 @@
  */
 
 /**
- * ServiceObjectInterface
+ * ResourceInterface
  */
-interface ServiceObjectInterface{
+interface ResourceInterface{
+    
     /**
-     * Gets the storage object
+     * Returns the object URI
      */
-    public function getStorage();
+    public function getURI();
+       
     /**
      * Initializes the storage object
      */
     public function setStorage($configuration);
+    
+    /**
+     * Returns the storage object
+     */
+    public function getStorage();
+
 }

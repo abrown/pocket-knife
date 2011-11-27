@@ -6,10 +6,10 @@
  */
 
 /**
- * ServiceObjectItem
- * @uses ServiceObjectInterface
+ * ResourceItem
+ * @uses ResourceInterface
  */
-class ServiceObjectItem implements ServiceObjectInterface{
+class ResourceItem implements ResourceInterface{
     
     /**
      * Stored ID for this item
@@ -29,6 +29,14 @@ class ServiceObjectItem implements ServiceObjectInterface{
     public function __construct(){
         list($object, $id, $method) = Service::getRouting();
         if( $id !== '*' ) $this->setID($id);
+    }
+    
+    /**
+     * Returns this object's URI
+     * @return string
+     */
+    public function getURI(){
+        return '/'.strtolower(get_class($this)).'/'.$this->getID();
     }
     
     /**
@@ -115,11 +123,31 @@ class ServiceObjectItem implements ServiceObjectInterface{
     }
     
     /**
-     * Shows editable fields for an item
+     * Determines whether an item exists
+     * @param mixed $id
+     * @return boolean 
+     */
+    public function delete(){
+        $this->getStorage()->begin();
+        $exists = $this->getStorage()->exists($this->getID());
+        $this->getStorage()->commit();
+        return $exists;
+    }
+    
+    /**
+     * Returns editable fields for an item
      * @return mixed
      */
-    public function edit(){
-        if( is_null($this->getID()) ) return null;
-        else return $this->read();
+    public function fields(){
+        $this->getStorage()->begin();
+        $first = $this->getStorage()->first();
+        $this->getStorage()->commit();
+        // extract
+        $properties = array();
+        foreach($first as $property => $value){
+            $properties[] = $property;
+        }
+        // return
+        return $properties;
     }
 }
