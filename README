@@ -1,2 +1,12 @@
 pocket-knife
 ------------
+
+pocket-knife is a mini-framework for making sites and services. It is fast
+and simple. It is RESTful. It is minimal. It is a collection of the tools I use
+every day to make web development easy.
+
+By all means, contribute: if the framework does not contain that one perfect
+function, the fabled master-class, or some other construct you deem necessary to
+PHP life, please commit freely to https://github.com/andrewsbrown/pocket-knife.
+
+For more information, see pocket-knife/index.html
