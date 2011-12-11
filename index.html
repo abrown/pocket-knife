@@ -68,13 +68,13 @@ class Calculator extends ResourceStatic{
 include('pocket-knife/start.php');
 include('calculator.php');
 
-$Settings = new Settings(array[
+$settings = new Settings(array[
     'acl' => true,
     'input' => 'application/x-www-form-urlencoded',
     'output' => 'application/json'
 ]);
 
-$service = new Service($Settings);
+$service = new Service($settings);
 $service->execute();
 ?&gt;
 </code>

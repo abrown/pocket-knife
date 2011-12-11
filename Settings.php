@@ -74,7 +74,7 @@ class Settings {
      * Checks inaccessible keys in current instance for existence
      * @param string $key
      * @return booolean
-     * @example when calling property_exists( $Settings, $key );
+     * @example when calling property_exists( $settings, $key );
      * */
     public function __isset($key) {
         return isset($this->instance->$key);
@@ -84,7 +84,7 @@ class Settings {
      * Gets inaccessible key from current instance
      * @param string $key
      * @return any 
-     * @example when calling $Settings->some_property
+     * @example when calling $settings->some_property
      */
     public function __get($key) {
         if (!isset($this->instance->$key))
@@ -97,7 +97,7 @@ class Settings {
      * Gets a key with dot-notation
      * @param string $key 
      * @return any
-     * @example when calling $Settings->get('prop.prop2.prop3')
+     * @example when calling $settings->get('prop.prop2.prop3')
      */
     public function get($key) {
         $keys = explode('.', $key);
@@ -116,7 +116,7 @@ class Settings {
      * @param string $key
      * @param any $value
      * @return any 
-     * @example when calling $Settings->some_property = 'value';
+     * @example when calling $settings->some_property = 'value';
      */
     public function __set($key, $value) {
         $this->changed = true;
@@ -128,7 +128,7 @@ class Settings {
      * @param string $key 
      * @param any $value
      * @return boolean
-     * @example when calling $Settings->get('prop.prop2.prop3')
+     * @example when calling $settings->get('prop.prop2.prop3')
      */
     public function set($key, $value) {
         $this->changed = true;

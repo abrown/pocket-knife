@@ -14,7 +14,7 @@ class StoragePdo implements StorageInterface{
      * Settings
      * @var Settings
      */
-    protected $Settings;
+    protected $settings;
     
     /**
      * Whether the request changes the data
@@ -56,10 +56,10 @@ class StoragePdo implements StorageInterface{
      * Constructor
      * @param Settings
      */
-    public function __construct( $Settings ){
-        if( !$Settings || !is_a($Settings, 'Settings') ) throw new ExceptionSettings('StoragePdo requires a Settings', 500);
+    public function __construct( $settings ){
+        if( !$settings || !is_a($settings, 'Settings') ) throw new ExceptionSettings('StoragePdo requires a Settings', 500);
         // determines what Settings must be passed
-        $Settings_template = array(
+        $settings_template = array(
             'location' => Settings::MANDATORY,
             'database' => Settings::MANDATORY,
             'username' => Settings::MANDATORY,
@@ -68,12 +68,12 @@ class StoragePdo implements StorageInterface{
             'primary' => Settings::MANDATORY
         );
         // accepts Settings
-        $Settings->validate($Settings_template);
+        $settings->validate($settings_template);
         // copy Settings into this
-        $this->Settings = $Settings;
+        $this->Settings = $settings;
         // oft-used vars
-        $this->table = $Settings->table;
-        $this->primary = $Settings->primary;
+        $this->table = $settings->table;
+        $this->primary = $settings->primary;
     }
     
     /**

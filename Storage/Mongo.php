@@ -31,12 +31,12 @@ class StorageMongo implements StorageInterface{
 
     /**
      * Constructor
-     * @param type $Settings 
+     * @param type $settings 
      */
-    public function __construct($Settings = null){
-        if( !$Settings || !is_a($Settings, 'Settings') ) throw new ExceptionSettings('StoragePdo requires a Settings', 500);
+    public function __construct($settings = null){
+        if( !$settings || !is_a($settings, 'Settings') ) throw new ExceptionSettings('StoragePdo requires a Settings', 500);
         // determines what Settings must be passed
-        $Settings_template = array(
+        $settings_template = array(
             'location' => Settings::MANDATORY,
             'port' => Settings::OPTIONAL | Settings::NUMERIC,
             'database' => Settings::MANDATORY,
@@ -45,14 +45,14 @@ class StorageMongo implements StorageInterface{
             'password' => Settings::OPTIONAL
         );
         // accepts Settings
-        $Settings->validate($Settings_template);
+        $settings->validate($settings_template);
         // copy Settings into this
-        $this->Settings = $Settings;   
+        $this->Settings = $settings;   
         // connect to server
         try{
-            $url = $this->getDatabaseString($Settings);
+            $url = $this->getDatabaseString($settings);
             $this->server = new Mongo($url);
-            $this->collection = $this->server->selectCollection($Settings->database, $Settings->collection);
+            $this->collection = $this->server->selectCollection($settings->database, $settings->collection);
         }
         catch(Exception $e){
             throw new ExceptionStorage($e->getMessage(), 400);
@@ -228,12 +228,12 @@ class StorageMongo implements StorageInterface{
      * Returns a database connection string from a given Settings
      * @return string
      */
-    protected function getDatabaseString($Settings){
+    protected function getDatabaseString($settings){
         $url = 'mongodb://';
-        if( $Settings->username ) $url .= $Settings->username.':';
-        if( $Settings->password ) $url .= $Settings->password;
-        $url .= ($Settings->location) ? $Settings->location : 'localhost';
-        $url .= ($Settings->port) ? ':'.$Settings->port : ':27017';
+        if( $settings->username ) $url .= $settings->username.':';
+        if( $settings->password ) $url .= $settings->password;
+        $url .= ($settings->location) ? $settings->location : 'localhost';
+        $url .= ($settings->port) ? ':'.$settings->port : ':27017';
         return $url;
     }
 }

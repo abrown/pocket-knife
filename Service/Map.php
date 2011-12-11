@@ -40,11 +40,11 @@ class ServiceMap extends Service {
 
     /**
      * Constructor
-     * @param Settings $Settings 
+     * @param Settings $settings 
      */
-    public function __construct($Settings) {
+    public function __construct($settings) {
         // determines what Settings must be passed
-        $Settings_template = array(
+        $settings_template = array(
             'acl' => Settings::MANDATORY,
             'storage_map' => Settings::OPTIONAL | Settings::MULTIPLE,
             'input_map' => Settings::OPTIONAL | Settings::MULTIPLE,
@@ -56,13 +56,13 @@ class ServiceMap extends Service {
             'id' => Settings::OPTIONAL
         );
         // accepts Settings
-        if (!$Settings || !is_a($Settings, 'Settings'))
+        if (!$settings || !is_a($settings, 'Settings'))
             throw new ExceptionSettings('Incorrect Settings given.', 500);
-        $Settings->validate($Settings_template);
+        $settings->validate($settings_template);
         // copy Settings into this
         foreach ($this as $key => $value) {
-            if (isset($Settings->$key))
-                $this->$key = $Settings->$key;
+            if (isset($settings->$key))
+                $this->$key = $settings->$key;
         }
     }
 
@@ -125,12 +125,12 @@ class ServiceMap extends Service {
     protected function getStorage() {
         static $object = null;
         if (!$object) {
-            $Settings = ( $this->storage_map ) ? $this->getMapped($this->storage_map) : $this->storage;
-            if (!array_key_exists('type', $Settings))
+            $settings = ( $this->storage_map ) ? $this->getMapped($this->storage_map) : $this->storage;
+            if (!array_key_exists('type', $settings))
                 throw new ExceptionSettings('Storage type is not defined', 500);
-            $class = $Settings['type'];
-            unset($Settings['type']);
-            $object = new $class($Settings);
+            $class = $settings['type'];
+            unset($settings['type']);
+            $object = new $class($settings);
         }
         return $object;
     }

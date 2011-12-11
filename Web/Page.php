@@ -38,22 +38,22 @@ class Page{
     
     /**
      * Constructor
-     * @param Settings $Settings 
+     * @param Settings $settings 
      */
-    public function __construct($Settings){
+    public function __construct($settings){
         // determines what Settings must be passed
-        $Settings_template = array(
+        $settings_template = array(
             'file' => Settings::MANDATORY,
             'content_type' => Settings::OPTIONAL,
             'template' => Settings::OPTIONAL,
             'ajax' => Settings::OPTIONAL | Settings::MULTIPLE
         );
         // accepts Settings
-        if( !$Settings || !is_a($Settings, 'Settings') ) throw new ExceptionSettings('Incorrect Settings given.', 500);
-        $Settings->validate($Settings_template);
+        if( !$settings || !is_a($settings, 'Settings') ) throw new ExceptionSettings('Incorrect Settings given.', 500);
+        $settings->validate($settings_template);
         // copy Settings into this
         foreach($this as $key=>$value){
-			if( isset($Settings->$key) ) $this->$key = $Settings->$key;
+			if( isset($settings->$key) ) $this->$key = $settings->$key;
 		}
     }
     

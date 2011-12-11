@@ -35,7 +35,7 @@ class ResourceStatic{
      * Initializes the storage object; uses class variables to store data
      * @return this
      */
-    public function setStorage($Settings){
+    public function setStorage($settings){
         return $this;
     }
     

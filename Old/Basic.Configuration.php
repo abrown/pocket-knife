@@ -151,10 +151,10 @@ class Settings{
     /** OUTDATED
 
     static public function __install(){
-        $Settings_pattern = KNIFE_BASE_PATH.DS.'data'.DS.'config'.DS.'*';
-        $Settings_files = glob($Settings_pattern);
+        $settings_pattern = KNIFE_BASE_PATH.DS.'data'.DS.'config'.DS.'*';
+        $settings_files = glob($settings_pattern);
         // get Settings files
-        foreach($Settings_files as $file){
+        foreach($settings_files as $file){
             if( is_file($file) ){
                 include($file);
             }

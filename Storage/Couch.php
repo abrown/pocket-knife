@@ -22,7 +22,7 @@ class StorageCouch implements StorageInterface{
      * Stores Settings values
      * @var Settings 
      */
-    public $Settings;
+    public $settings;
     
     /**
      * RESTful CouchDB URL
@@ -32,12 +32,12 @@ class StorageCouch implements StorageInterface{
     
     /**
      * Constructor
-     * @param type $Settings 
+     * @param type $settings 
      */
-    public function __construct($Settings){
-        if( !$Settings|| !is_a($Settings, 'Settings') ) throw new ExceptionSettings('StoragePdo requires a Settings', 500);
+    public function __construct($settings){
+        if( !$settings|| !is_a($settings, 'Settings') ) throw new ExceptionSettings('StoragePdo requires a Settings', 500);
         // determines what Settings must be passed
-        $Settings_template = array(
+        $settings_template = array(
             'location' => Settings::MANDATORY,
             'port' => Settings::OPTIONAL | Settings::NUMERIC,
             'database' => Settings::MANDATORY,
@@ -45,13 +45,13 @@ class StorageCouch implements StorageInterface{
             'password' => Settings::OPTIONAL
         );
         // accepts Settings
-        $Settings->validate($Settings_template);
+        $settings->validate($settings_template);
         // copy Settings into this
-        $this->Settings = $Settings;   
+        $this->Settings = $settings;   
         // make url
-        $this->url = 'http://'.$Settings->location.':';
-        $this->url .= (@$Settings->port) ? $Settings->port : 5984;
-        $this->url .= '/'.$Settings->database;
+        $this->url = 'http://'.$settings->location.':';
+        $this->url .= (@$settings->port) ? $settings->port : 5984;
+        $this->url .= '/'.$settings->database;
     }
     
     /**

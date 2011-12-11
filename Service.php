@@ -75,11 +75,11 @@ class Service {
 
     /**
      * Constructor
-     * @param Settings $Settings 
+     * @param Settings $settings 
      */
-    public function __construct($Settings) {
+    public function __construct($settings) {
         // determines what Settings must be passed
-        $Settings_template = array(
+        $settings_template = array(
             'acl' => Settings::MANDATORY,
             'storage' => Settings::OPTIONAL | Settings::MULTIPLE,
             'input' => Settings::OPTIONAL | Settings::STRING,
@@ -91,13 +91,13 @@ class Service {
             'id' => Settings::OPTIONAL
         );
         // accepts Settings
-        if (!$Settings || !is_a($Settings, 'Settings'))
+        if (!$settings || !is_a($settings, 'Settings'))
             throw new ExceptionSettings('Incorrect Settings given.', 500);
-        $Settings->validate($Settings_template);
+        $settings->validate($settings_template);
         // copy Settings into this
         foreach ($this as $key => $value) {
-            if (isset($Settings->$key))
-                $this->$key = $Settings->$key;
+            if (isset($settings->$key))
+                $this->$key = $settings->$key;
         }
     }
 
@@ -260,17 +260,17 @@ class Service {
     protected function getStorage() {
         static $object = null;
         if (!$object) {
-            $Settings = $this->storage;
+            $settings = $this->storage;
             // check Settings
-            if ( !isset($Settings->type) )
+            if ( !isset($settings->type) )
                 throw new ExceptionSettings('Storage type is not defined', 500);
             // get class
-            $class = 'Storage'.ucfirst($Settings->type);
+            $class = 'Storage'.ucfirst($settings->type);
             // check parents
             if (!in_array('StorageInterface', class_implements($class)))
                 throw new ExceptionSettings($class.' must implement StorageInterface.', 500);
             // create object
-            $object = new $class($Settings);
+            $object = new $class($settings);
         }
         return $object;
     }

@@ -20,11 +20,11 @@ class StorageCouchTest extends PHPUnit_Framework_TestCase{
     }
     
     public function setUp(){
-        $Settings = new Settings(array(
+        $settings = new Settings(array(
             'location' => 'localhost',
             'database' => 'test'
         ));
-        $this->db = new StorageCouch($Settings);
+        $this->db = new StorageCouch($settings);
     }
     
     private function getObject(){

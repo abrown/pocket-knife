@@ -22,12 +22,12 @@ class StorageMongoTest extends PHPUnit_Framework_TestCase{
     }
     
     public function setUp(){
-        $Settings = new Settings(array(
+        $settings = new Settings(array(
             'location' => 'localhost',
             'database' => 'test',
             'collection' => 'test'
         ));
-        $this->db = new StorageMongo($Settings);
+        $this->db = new StorageMongo($settings);
     }
     
     private function getObject(){
