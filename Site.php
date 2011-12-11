@@ -37,7 +37,7 @@ class Site{
         return $this->url;
     }
     
-    function setConfiguration(){
+    function setSettings(){
         
     }
     

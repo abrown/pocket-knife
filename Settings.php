@@ -6,23 +6,23 @@
  */
 
 /**
- * Configuration
+ * Settings
  * @uses ExceptionFile
  * @example
  * Should work like:
- *  add "Configuration::setPath('path/to/configuration.php');"
- *  use "$config = Configuration::getInstance(); $config['var']; ..."
+ *  add "Settings::setPath('path/to/Settings.php');"
+ *  use "$config = Settings::getInstance(); $config['var']; ..."
  */
-class Configuration {
+class Settings {
 
     /**
-     * Current configuration data
+     * Current Settings data
      * @var object 
      */
     private $instance;
 
     /**
-     * Path to load/save configuration file
+     * Path to load/save Settings file
      * @var string
      */
     private $path;
@@ -60,7 +60,7 @@ class Configuration {
     }
 
     /**
-     * Returns current configuration data
+     * Returns current Settings data
      * @return type 
      */
     public function getInstance() {
@@ -74,7 +74,7 @@ class Configuration {
      * Checks inaccessible keys in current instance for existence
      * @param string $key
      * @return booolean
-     * @example when calling property_exists( $configuration, $key );
+     * @example when calling property_exists( $Settings, $key );
      * */
     public function __isset($key) {
         return isset($this->instance->$key);
@@ -84,7 +84,7 @@ class Configuration {
      * Gets inaccessible key from current instance
      * @param string $key
      * @return any 
-     * @example when calling $configuration->some_property
+     * @example when calling $Settings->some_property
      */
     public function __get($key) {
         if (!isset($this->instance->$key))
@@ -97,7 +97,7 @@ class Configuration {
      * Gets a key with dot-notation
      * @param string $key 
      * @return any
-     * @example when calling $configuration->get('prop.prop2.prop3')
+     * @example when calling $Settings->get('prop.prop2.prop3')
      */
     public function get($key) {
         $keys = explode('.', $key);
@@ -116,7 +116,7 @@ class Configuration {
      * @param string $key
      * @param any $value
      * @return any 
-     * @example when calling $configuration->some_property = 'value';
+     * @example when calling $Settings->some_property = 'value';
      */
     public function __set($key, $value) {
         $this->changed = true;
@@ -128,7 +128,7 @@ class Configuration {
      * @param string $key 
      * @param any $value
      * @return boolean
-     * @example when calling $configuration->get('prop.prop2.prop3')
+     * @example when calling $Settings->get('prop.prop2.prop3')
      */
     public function set($key, $value) {
         $this->changed = true;
@@ -143,15 +143,15 @@ class Configuration {
     }
 
     /**
-     * Tests current configuration against a template
+     * Tests current Settings against a template
      * @param array $template 
      */
     public function validate($template) {
         if (!is_array($template))
-            throw new ExceptionConfiguration('Invalid configuration template.', 500);
+            throw new ExceptionSettings('Invalid Settings template.', 500);
         foreach ($template as $key => $rule) {
             if (!is_numeric($rule))
-                throw new ExceptionConfiguration("Invalid configuration template rule: '$key' => '$rule'", 500);
+                throw new ExceptionSettings("Invalid Settings template rule: '$key' => '$rule'", 500);
             // rules
             $value = $this->get($key);
             $optional = $rule & self::OPTIONAL;
@@ -160,46 +160,46 @@ class Configuration {
                 $testable = false;
             if ($rule & self::MANDATORY) {
                 if (is_null($value))
-                    throw new ExceptionConfiguration("Invalid configuration: must have '$key' key", 500);
+                    throw new ExceptionSettings("Invalid Settings: must have '$key' key", 500);
             }
             if ($rule & self::SINGLE && $testable) {
                 if (is_array($value) || is_object($value))
-                    throw new ExceptionConfiguration("Invalid configuration: key '$key' must not contain multiple items", 500);
+                    throw new ExceptionSettings("Invalid Settings: key '$key' must not contain multiple items", 500);
             }
             if ($rule & self::MULTIPLE && $testable) {
                 if (!is_array($value) && !is_object($value))
-                    throw new ExceptionConfiguration("Invalid configuration: key '$key' must contain multiple items", 500);
+                    throw new ExceptionSettings("Invalid Settings: key '$key' must contain multiple items", 500);
             }
             if ($rule & self::STRING && $testable) {
                 if (!is_string($value))
-                    throw new ExceptionConfiguration("Invalid configuration: key '$key' must be a string", 500);
+                    throw new ExceptionSettings("Invalid Settings: key '$key' must be a string", 500);
             }
             if ($rule & self::NUMERIC && $testable) {
                 if (!is_numeric($value))
-                    throw new ExceptionConfiguration("Invalid configuration: '$key' must be a number", 500);
+                    throw new ExceptionSettings("Invalid Settings: '$key' must be a number", 500);
             }
             if ($rule & self::PATH && $testable) {
                 if (!is_file($value) && !is_dir($value) && !is_link($value))
-                    throw new ExceptionConfiguration("Invalid configuration: '$key' must be a valid path", 500);
+                    throw new ExceptionSettings("Invalid Settings: '$key' must be a valid path", 500);
             }
         }
         return true;
     }
 
     /**
-     * Sets path to configuration file
+     * Sets path to Settings file
      * @param <string> $path
      * @return <boolean>
      */
     public function setPath($path) {
         if (!is_file($path))
-            throw new ExceptionConfiguration('Could not find configuration file given: ' . $path, 500);
+            throw new ExceptionSettings('Could not find Settings file given: ' . $path, 500);
         $this->$path = $path;
         return true;
     }
 
     /**
-     * Reset Configuration instance
+     * Reset Settings instance
      * @return void
      */
     public function reset() {
@@ -208,12 +208,12 @@ class Configuration {
     }
 
     /**
-     * Read configuration from path
+     * Read Settings from path
      * @return <array>
      */
     static public function read($path) {
         if (!$path || !is_file($path))
-            throw new ExceptionConfiguration('Could not find configuration file: ' . $path, 500);
+            throw new ExceptionSettings('Could not find Settings file: ' . $path, 500);
         $info = pathinfo($path);
         switch ($info['extension']) {
             // JSON
@@ -273,12 +273,12 @@ class Configuration {
     }
 
     /**
-     * Write an array to the configuration file
+     * Write an array to the Settings file
      * @param array $config 
      */
     static public function write($config) {
         if (!is_file(self::$path))
-            throw new ExceptionFile('Could not find configuration file: ' . self::$path, 500);
+            throw new ExceptionFile('Could not find Settings file: ' . self::$path, 500);
         $output = "<?php\n";
         foreach ($config as $key => $value) {
             $output .= self::write_key($key, $value) . "\n";
@@ -288,7 +288,7 @@ class Configuration {
     }
 
     /**
-     * Writes a configuration to a JSON file
+     * Writes a Settings to a JSON file
      * @param object $config
      * @param string $path
      * @return boolean 
@@ -299,7 +299,7 @@ class Configuration {
     }
 
     /**
-     * Writes a configuration to a PHP file
+     * Writes a Settings to a PHP file
      * @param type $config
      * @param type $path 
      * @return boolean
@@ -323,7 +323,7 @@ class Configuration {
     static private function writePhpKey($key, $value, $_indent = 0) {
         $indent = str_repeat("\t", $_indent);
         if (is_object($value))
-            throw new Exception('Cannot save objects to configuration file', 500);
+            throw new Exception('Cannot save objects to Settings file', 500);
         elseif (is_int($value))
             $format = '%s$%s = %d;';
         elseif (is_float($value))

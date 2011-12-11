@@ -37,25 +37,25 @@ class StorageJson implements StorageInterface{
     
     /**
      * Constructor
-     * @param type $configuration 
+     * @param type $Settings 
      */
-    public function __construct($configuration){
-        if( !$configuration || !is_a($configuration, 'Configuration') ) throw new ExceptionConfiguration('StorageJson requires a configuration', 500);
+    public function __construct($Settings){
+        if( !$Settings || !is_a($Settings, 'Settings') ) throw new ExceptionSettings('StorageJson requires a Settings', 500);
         // create database if necessary
-        if( !is_file($configuration->location) ){
-            file_put_contents($configuration->location, '{}');
+        if( !is_file($Settings->location) ){
+            file_put_contents($Settings->location, '{}');
         }
-        // determines what configuration must be passed
-        $configuration_template = array(
-            'location' => Configuration::MANDATORY | Configuration::PATH,
-            'schema' => Configuration::OPTIONAL
+        // determines what Settings must be passed
+        $Settings_template = array(
+            'location' => Settings::MANDATORY | Settings::PATH,
+            'schema' => Settings::OPTIONAL
         );
-        // accepts configuration
-        $configuration->validate($configuration_template);
-        // copy configuration into this
+        // accepts Settings
+        $Settings->validate($Settings_template);
+        // copy Settings into this
         foreach ($this as $key => $value) {
-            if (isset($configuration->$key))
-                $this->$key = $configuration->$key;
+            if (isset($Settings->$key))
+                $this->$key = $Settings->$key;
         }
     }
     

@@ -7,7 +7,7 @@
 
 /**
  * Page
- * @uses Configuration, WebRouting, WebHttp, WebTemplate, ExceptionFile, ExceptionConfiguration 
+ * @uses Settings, WebRouting, WebHttp, WebTemplate, ExceptionFile, ExceptionSettings 
  */
 class Page{
 
@@ -38,22 +38,22 @@ class Page{
     
     /**
      * Constructor
-     * @param Configuration $configuration 
+     * @param Settings $Settings 
      */
-    public function __construct($configuration){
-        // determines what configuration must be passed
-        $configuration_template = array(
-            'file' => Configuration::MANDATORY,
-            'content_type' => Configuration::OPTIONAL,
-            'template' => Configuration::OPTIONAL,
-            'ajax' => Configuration::OPTIONAL | Configuration::MULTIPLE
+    public function __construct($Settings){
+        // determines what Settings must be passed
+        $Settings_template = array(
+            'file' => Settings::MANDATORY,
+            'content_type' => Settings::OPTIONAL,
+            'template' => Settings::OPTIONAL,
+            'ajax' => Settings::OPTIONAL | Settings::MULTIPLE
         );
-        // accepts configuration
-        if( !$configuration || !is_a($configuration, 'Configuration') ) throw new ExceptionConfiguration('Incorrect configuration given.', 500);
-        $configuration->validate($configuration_template);
-        // copy configuration into this
+        // accepts Settings
+        if( !$Settings || !is_a($Settings, 'Settings') ) throw new ExceptionSettings('Incorrect Settings given.', 500);
+        $Settings->validate($Settings_template);
+        // copy Settings into this
         foreach($this as $key=>$value){
-			if( isset($configuration->$key) ) $this->$key = $configuration->$key;
+			if( isset($Settings->$key) ) $this->$key = $Settings->$key;
 		}
     }
     
@@ -81,7 +81,7 @@ class Page{
     }
     
     /**
-     * Returns AJAX snippet HTML; map snippet keys to PHP files in configuration.ajax
+     * Returns AJAX snippet HTML; map snippet keys to PHP files in Settings.ajax
      * @example 'ajax' => array('main_content'=>'/dir/to/content.php', 'continuous_feed' => '/dir/to/feed.php');
      * @param string $snippet
      * @return string 

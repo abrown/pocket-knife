@@ -8,7 +8,7 @@
 /**
  * StorageCouch
  * Stores JSON records in a CouchDB
- * @uses StorageInterface, WebHttp, Configuration, ExceptionStorage
+ * @uses StorageInterface, WebHttp, Settings, ExceptionStorage
  */
 class StorageCouch implements StorageInterface{
     
@@ -19,10 +19,10 @@ class StorageCouch implements StorageInterface{
     public $isChanged = false;
     
     /**
-     * Stores configuration values
-     * @var Configuration 
+     * Stores Settings values
+     * @var Settings 
      */
-    public $configuration;
+    public $Settings;
     
     /**
      * RESTful CouchDB URL
@@ -32,26 +32,26 @@ class StorageCouch implements StorageInterface{
     
     /**
      * Constructor
-     * @param type $configuration 
+     * @param type $Settings 
      */
-    public function __construct($configuration){
-        if( !$configuration|| !is_a($configuration, 'Configuration') ) throw new ExceptionConfiguration('StoragePdo requires a configuration', 500);
-        // determines what configuration must be passed
-        $configuration_template = array(
-            'location' => Configuration::MANDATORY,
-            'port' => Configuration::OPTIONAL | Configuration::NUMERIC,
-            'database' => Configuration::MANDATORY,
-            'username' => Configuration::OPTIONAL,
-            'password' => Configuration::OPTIONAL
+    public function __construct($Settings){
+        if( !$Settings|| !is_a($Settings, 'Settings') ) throw new ExceptionSettings('StoragePdo requires a Settings', 500);
+        // determines what Settings must be passed
+        $Settings_template = array(
+            'location' => Settings::MANDATORY,
+            'port' => Settings::OPTIONAL | Settings::NUMERIC,
+            'database' => Settings::MANDATORY,
+            'username' => Settings::OPTIONAL,
+            'password' => Settings::OPTIONAL
         );
-        // accepts configuration
-        $configuration->validate($configuration_template);
-        // copy configuration into this
-        $this->configuration = $configuration;   
+        // accepts Settings
+        $Settings->validate($Settings_template);
+        // copy Settings into this
+        $this->Settings = $Settings;   
         // make url
-        $this->url = 'http://'.$configuration->location.':';
-        $this->url .= (@$configuration->port) ? $configuration->port : 5984;
-        $this->url .= '/'.$configuration->database;
+        $this->url = 'http://'.$Settings->location.':';
+        $this->url .= (@$Settings->port) ? $Settings->port : 5984;
+        $this->url .= '/'.$Settings->database;
     }
     
     /**

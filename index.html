@@ -62,19 +62,19 @@ class Calculator extends ResourceStatic{
             </li>
             <li>Create the resource anchor, <code>service.php</code>, and include <code>pocket-knife</code> (see below).</li>
             <li>Include that <code>Calculator</code> class we just made (see below).</li>
-            <li>Create a configuration that allows all users access to all classes (don't worry, the ACL can get more complicated) using GET variables as input and JSON as output (see below).</li>
+            <li>Create a Settings that allows all users access to all classes (don't worry, the ACL can get more complicated) using GET variables as input and JSON as output (see below).</li>
             <li>Create the service and let it run free:
 <code class="block">&lt;?php
 include('pocket-knife/start.php');
 include('calculator.php');
 
-$configuration = new Configuration(array[
+$Settings = new Settings(array[
     'acl' => true,
     'input' => 'application/x-www-form-urlencoded',
     'output' => 'application/json'
 ]);
 
-$service = new Service($configuration);
+$service = new Service($Settings);
 $service->execute();
 ?&gt;
 </code>
@@ -97,7 +97,7 @@ $service->execute();
             templating, and a bunch of supported database drivers
             (<a href="Help/index.php/service">learn more</a>).
             <!-- SETTINGS -->
-            The <code>Settings</code> component edits and stores configurations--again, 
+            The <code>Settings</code> component edits and stores Settingss--again, 
             with all of the buzzwords
             (<a href="Help/index.php/settings">learn more</a>).
             <!-- SEQUENCE -->

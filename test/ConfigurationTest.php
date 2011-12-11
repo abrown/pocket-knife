@@ -5,15 +5,15 @@
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
 
-class ConfigurationTest extends PHPUnit_Framework_TestCase{
+class SettingsTest extends PHPUnit_Framework_TestCase{
     
     public static function setUpBeforeClass() {
         // start pocket knife
         $path = dirname(dirname(__FILE__));
         require $path . '/start.php';
         // get code
-        autoload('Configuration');
-        autoload('ExceptionConfiguration');
+        autoload('Settings');
+        autoload('ExceptionSettings');
     }
 
     public function setUp() {
@@ -24,7 +24,7 @@ class ConfigurationTest extends PHPUnit_Framework_TestCase{
             'list2' => array('four'=>4, 'five'=>5, 'six'=>6),
             'LIST3' => array('list4'=>array(7, 8, 9))
         );
-        $this->c = new Configuration($this->a);
+        $this->c = new Settings($this->a);
     }
     
     public function testInstanceConstruction(){
@@ -52,31 +52,31 @@ class ConfigurationTest extends PHPUnit_Framework_TestCase{
     
     public function testValidate(){
         $template = array(
-            'one' => Configuration::MANDATORY,
-            'two' => Configuration::MANDATORY | Configuration::NUMERIC | Configuration::SINGLE,
-            'list1' => Configuration::MULTIPLE,
-            'list1.0' => Configuration::STRING,
-            'list2' => Configuration::OPTIONAL | Configuration::MULTIPLE,
-            'list2.five' => Configuration::OPTIONAL | Configuration::NUMERIC,
-            'list10' => Configuration::OPTIONAL
+            'one' => Settings::MANDATORY,
+            'two' => Settings::MANDATORY | Settings::NUMERIC | Settings::SINGLE,
+            'list1' => Settings::MULTIPLE,
+            'list1.0' => Settings::STRING,
+            'list2' => Settings::OPTIONAL | Settings::MULTIPLE,
+            'list2.five' => Settings::OPTIONAL | Settings::NUMERIC,
+            'list10' => Settings::OPTIONAL
         );
         $this->assertTrue( $this->c->validate($template) );
     }
     
     /**
-     * @expectedException ExceptionConfiguration
+     * @expectedException ExceptionSettings
      */
     public function testValidateException(){
         $template = array(
-            'list2' => Configuration::OPTIONAL | Configuration::SINGLE,
+            'list2' => Settings::OPTIONAL | Settings::SINGLE,
         );
         $this->assertTrue( $this->c->validate($template) );
     }
     
     public function testValidatePath(){
         $template = array(
-            'path' => Configuration::MANDATORY | Configuration::PATH,
-            'dir' => Configuration::PATH,
+            'path' => Settings::MANDATORY | Settings::PATH,
+            'dir' => Settings::PATH,
         );
         $this->c->path = __FILE__;
         $this->c->dir = dirname(__FILE__);

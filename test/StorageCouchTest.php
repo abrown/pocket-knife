@@ -15,16 +15,16 @@ class StorageCouchTest extends PHPUnit_Framework_TestCase{
         autoload('StorageInterface');
         autoload('StorageCouch');
         autoload('WebHttp');
-        autoload('Configuration');
+        autoload('Settings');
         autoload('ExceptionStorage');
     }
     
     public function setUp(){
-        $configuration = new Configuration(array(
+        $Settings = new Settings(array(
             'location' => 'localhost',
             'database' => 'test'
         ));
-        $this->db = new StorageCouch($configuration);
+        $this->db = new StorageCouch($Settings);
     }
     
     private function getObject(){

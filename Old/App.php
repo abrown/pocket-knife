@@ -10,7 +10,7 @@
  * @example
  *
     require '/home5/casabrow/public_html/pocket-knife/start.php';
-    Configuration::setPath('configuration.php');
+    Settings::setPath('Settings.php');
 
     $app = new App();
     $app->setAllowedObjects('data', 'files', 'changes');

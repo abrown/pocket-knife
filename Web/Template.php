@@ -80,8 +80,8 @@ class WebTemplate{
      * @param <string> Path/Text
      */
     public function __construct($input, $type = self::FILE){
-        if( !is_string($input) ) throw new ConfigurationException('Template input must be a string', 500);
-        if( !is_integer($type) ) throw new ConfigurationException('Template input type must be an integer (see class constants)', 500);
+        if( !is_string($input) ) throw new SettingsException('Template input must be a string', 500);
+        if( !is_integer($type) ) throw new SettingsException('Template input type must be an integer (see class constants)', 500);
         $this->input = $input;
         $this->type = $type;
         
@@ -168,7 +168,7 @@ class WebTemplate{
      * @param <string> $path
      * @return <string>
     private function getAbsolutePath($path){
-        $config = Configuration::getInstance();
+        $config = Settings::getInstance();
         if( array_key_exists('template_path', $config) ) $path = $config['template_path'].$path;
         else throw new Exception('No template path defined', 400);
         $path = str_replace('//', '/', $path);
@@ -307,7 +307,7 @@ class WebTemplate{
             case self::FILE: $text = $this->getFile($this->input); break;
             case self::PHP_STRING: $text = $this->getPHPString($this->input, $this->variables); break;
             case self::PHP_FILE: $text = $this->getPHPFile($this->input, $this->variables); break;
-            default: throw new ConfigurationException('Unknown template type: '.$this->type, 500); break;
+            default: throw new SettingsException('Unknown template type: '.$this->type, 500); break;
         }
         $this->setInsertComment($on_off);
         // get replacements

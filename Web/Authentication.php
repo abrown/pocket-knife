@@ -330,16 +330,16 @@ class AuthenticationACLArray extends AuthenticationACLAbstract{
 }
 
 /**
- * Configuration ACL (very similar to Array, just acquire array from config)
+ * Settings ACL (very similar to Array, just acquire array from config)
  */
-class AuthenticationACLConfiguration extends AuthenticationACLArray{
+class AuthenticationACLSettings extends AuthenticationACLArray{
 
     /**
      * Add users to list
      * @param <array> $list
      */
     public function __construct(){
-        $config = Configuration::getInstance();
+        $config = Settings::getInstance();
         $this->users = $config['acl'];
     }
 

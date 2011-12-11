@@ -79,7 +79,7 @@
 
     // authenticate
     require 'service/auth/Authentication.php';
-    $authentication = new Authentication('Basic', 'Configuration');
+    $authentication = new Authentication('Basic', 'Settings');
     $authentication->setMessage('Store Cart Service');
     if( !$authentication->isAllowed() ){
         header( $_SERVER['SERVER_PROTOCOL'].' 401 Unauthorized' );

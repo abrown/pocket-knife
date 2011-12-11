@@ -31,28 +31,28 @@ class StorageMongo implements StorageInterface{
 
     /**
      * Constructor
-     * @param type $configuration 
+     * @param type $Settings 
      */
-    public function __construct($configuration = null){
-        if( !$configuration || !is_a($configuration, 'Configuration') ) throw new ExceptionConfiguration('StoragePdo requires a configuration', 500);
-        // determines what configuration must be passed
-        $configuration_template = array(
-            'location' => Configuration::MANDATORY,
-            'port' => Configuration::OPTIONAL | Configuration::NUMERIC,
-            'database' => Configuration::MANDATORY,
-            'collection' => Configuration::MANDATORY,
-            'username' => Configuration::OPTIONAL,
-            'password' => Configuration::OPTIONAL
+    public function __construct($Settings = null){
+        if( !$Settings || !is_a($Settings, 'Settings') ) throw new ExceptionSettings('StoragePdo requires a Settings', 500);
+        // determines what Settings must be passed
+        $Settings_template = array(
+            'location' => Settings::MANDATORY,
+            'port' => Settings::OPTIONAL | Settings::NUMERIC,
+            'database' => Settings::MANDATORY,
+            'collection' => Settings::MANDATORY,
+            'username' => Settings::OPTIONAL,
+            'password' => Settings::OPTIONAL
         );
-        // accepts configuration
-        $configuration->validate($configuration_template);
-        // copy configuration into this
-        $this->configuration = $configuration;   
+        // accepts Settings
+        $Settings->validate($Settings_template);
+        // copy Settings into this
+        $this->Settings = $Settings;   
         // connect to server
         try{
-            $url = $this->getDatabaseString($configuration);
+            $url = $this->getDatabaseString($Settings);
             $this->server = new Mongo($url);
-            $this->collection = $this->server->selectCollection($configuration->database, $configuration->collection);
+            $this->collection = $this->server->selectCollection($Settings->database, $Settings->collection);
         }
         catch(Exception $e){
             throw new ExceptionStorage($e->getMessage(), 400);
@@ -225,15 +225,15 @@ class StorageMongo implements StorageInterface{
     }
     
     /**
-     * Returns a database connection string from a given configuration
+     * Returns a database connection string from a given Settings
      * @return string
      */
-    protected function getDatabaseString($configuration){
+    protected function getDatabaseString($Settings){
         $url = 'mongodb://';
-        if( $configuration->username ) $url .= $configuration->username.':';
-        if( $configuration->password ) $url .= $configuration->password;
-        $url .= ($configuration->location) ? $configuration->location : 'localhost';
-        $url .= ($configuration->port) ? ':'.$configuration->port : ':27017';
+        if( $Settings->username ) $url .= $Settings->username.':';
+        if( $Settings->password ) $url .= $Settings->password;
+        $url .= ($Settings->location) ? $Settings->location : 'localhost';
+        $url .= ($Settings->port) ? ':'.$Settings->port : ':27017';
         return $url;
     }
 }

@@ -47,7 +47,7 @@ class StoragePdoTest extends PHPUnit_Framework_TestCase{
     }    
     
     private function getConfig(){
-        $config = new Configuration(array(
+        $config = new Settings(array(
             'location' => 'localhost',
             'username' => 'root',
             'password' => '',

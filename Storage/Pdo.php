@@ -6,15 +6,15 @@
 
 /**
  * StoragePdo
- * @uses StorageInterface, ExceptionStorage, Configuration
+ * @uses StorageInterface, ExceptionStorage, Settings
  */
 class StoragePdo implements StorageInterface{
 
     /**
-     * Configuration
-     * @var Configuration
+     * Settings
+     * @var Settings
      */
-    protected $configuration;
+    protected $Settings;
     
     /**
      * Whether the request changes the data
@@ -54,26 +54,26 @@ class StoragePdo implements StorageInterface{
 
     /**
      * Constructor
-     * @param Configuration
+     * @param Settings
      */
-    public function __construct( $configuration ){
-        if( !$configuration || !is_a($configuration, 'Configuration') ) throw new ExceptionConfiguration('StoragePdo requires a configuration', 500);
-        // determines what configuration must be passed
-        $configuration_template = array(
-            'location' => Configuration::MANDATORY,
-            'database' => Configuration::MANDATORY,
-            'username' => Configuration::MANDATORY,
-            'password' => Configuration::MANDATORY,
-            'table' => Configuration::MANDATORY,
-            'primary' => Configuration::MANDATORY
+    public function __construct( $Settings ){
+        if( !$Settings || !is_a($Settings, 'Settings') ) throw new ExceptionSettings('StoragePdo requires a Settings', 500);
+        // determines what Settings must be passed
+        $Settings_template = array(
+            'location' => Settings::MANDATORY,
+            'database' => Settings::MANDATORY,
+            'username' => Settings::MANDATORY,
+            'password' => Settings::MANDATORY,
+            'table' => Settings::MANDATORY,
+            'primary' => Settings::MANDATORY
         );
-        // accepts configuration
-        $configuration->validate($configuration_template);
-        // copy configuration into this
-        $this->configuration = $configuration;
+        // accepts Settings
+        $Settings->validate($Settings_template);
+        // copy Settings into this
+        $this->Settings = $Settings;
         // oft-used vars
-        $this->table = $configuration->table;
-        $this->primary = $configuration->primary;
+        $this->table = $Settings->table;
+        $this->primary = $Settings->primary;
     }
     
     /**
@@ -503,8 +503,8 @@ class StoragePdo implements StorageInterface{
         if( !$instance ) {
             // create PDO instance
             try {
-                $dsn = "mysql:dbname={$this->configuration->database};host={$this->configuration->location}";
-                $instance = new PDO($dsn, $this->configuration->username, $this->configuration->password);
+                $dsn = "mysql:dbname={$this->Settings->database};host={$this->Settings->location}";
+                $instance = new PDO($dsn, $this->Settings->username, $this->Settings->password);
             } catch (PDOException $e) {
                 throw new Exception($e->getMessage(), 500);
             }

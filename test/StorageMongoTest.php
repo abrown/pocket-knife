@@ -17,17 +17,17 @@ class StorageMongoTest extends PHPUnit_Framework_TestCase{
         autoload('StorageInterface');
         autoload('StorageMongo');
         autoload('WebHttp');
-        autoload('Configuration');
+        autoload('Settings');
         autoload('ExceptionStorage');
     }
     
     public function setUp(){
-        $configuration = new Configuration(array(
+        $Settings = new Settings(array(
             'location' => 'localhost',
             'database' => 'test',
             'collection' => 'test'
         ));
-        $this->db = new StorageMongo($configuration);
+        $this->db = new StorageMongo($Settings);
     }
     
     private function getObject(){

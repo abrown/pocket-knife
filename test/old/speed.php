@@ -18,11 +18,11 @@ Timer::end();
 echo "<p class='success'>include start.php (including Timer)<br/><span class='mute'>Time: ".Timer::result().", Memory: ".memory_get_peak_usage()."b</span></p>";
 
 // get config
-Configuration::setPath('test-configuration');
-$config = Configuration::getInstance();
+Settings::setPath('test-Settings');
+$config = Settings::getInstance();
 //pr($config);
 Timer::end();
-echo "<p class='success'>get configuration<br/><span class='mute'>Time: ".Timer::result().", Memory: ".memory_get_peak_usage()."b</span></p>";
+echo "<p class='success'>get Settings<br/><span class='mute'>Time: ".Timer::result().", Memory: ".memory_get_peak_usage()."b</span></p>";
 
 // start app
 $app = new App();
