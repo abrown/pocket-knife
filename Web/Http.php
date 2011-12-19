@@ -219,4 +219,17 @@ class WebHttp {
         // return 
         return $response;
     }
+    
+    /**
+     * Get returned HTTP code from last HTTP request made
+     * @return type 
+     */
+    static function getCode(){
+        if( !$http_response_header ) throw new ExceptionWeb('No HTTP request was made', 400);
+        $lines = preg_grep('#HTTP/#i', $http_response_header);
+        foreach($lines as $line){
+            if( preg_match('#HTTP/\d.\d (\d\d\d)#i', $line, $matches) ) return intval($matches[1]);
+        }
+        return null;
+    }
 }
