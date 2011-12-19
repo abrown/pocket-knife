@@ -7,7 +7,7 @@
 
 /**
  * ServiceMap
- * @uses Configuration, WebRouting, WebHttp, WebTemplate, ExceptionFile, ExceptionConfiguration 
+ * @uses Settings, WebRouting, WebHttp, WebTemplate, ExceptionFile, ExceptionSettings 
  */
 class ServiceMap extends Service {
 
@@ -40,29 +40,29 @@ class ServiceMap extends Service {
 
     /**
      * Constructor
-     * @param Configuration $configuration 
+     * @param Settings $settings 
      */
-    public function __construct($configuration) {
-        // determines what configuration must be passed
-        $configuration_template = array(
-            'acl' => Configuration::MANDATORY,
-            'storage_map' => Configuration::OPTIONAL | Configuration::MULTIPLE,
-            'input_map' => Configuration::OPTIONAL | Configuration::MULTIPLE,
-            'output_map' => Configuration::OPTIONAL | Configuration::MULTIPLE,
-            'template_map' => Configuration::OPTIONAL | Configuration::MULTIPLE,
-            'class' => Configuration::OPTIONAL | Configuration::STRING,
-            'object' => Configuration::OPTIONAL | Configuration::MULTIPLE,
-            'method' => Configuration::OPTIONAL | Configuration::STRING,
-            'id' => Configuration::OPTIONAL
+    public function __construct($settings) {
+        // determines what Settings must be passed
+        $settings_template = array(
+            'acl' => Settings::MANDATORY,
+            'storage_map' => Settings::OPTIONAL | Settings::MULTIPLE,
+            'input_map' => Settings::OPTIONAL | Settings::MULTIPLE,
+            'output_map' => Settings::OPTIONAL | Settings::MULTIPLE,
+            'template_map' => Settings::OPTIONAL | Settings::MULTIPLE,
+            'class' => Settings::OPTIONAL | Settings::STRING,
+            'object' => Settings::OPTIONAL | Settings::MULTIPLE,
+            'method' => Settings::OPTIONAL | Settings::STRING,
+            'id' => Settings::OPTIONAL
         );
-        // accepts configuration
-        if (!$configuration || !is_a($configuration, 'Configuration'))
-            throw new ExceptionConfiguration('Incorrect configuration given.', 500);
-        $configuration->validate($configuration_template);
-        // copy configuration into this
+        // accepts Settings
+        if (!$settings || !is_a($settings, 'Settings'))
+            throw new ExceptionSettings('Incorrect Settings given.', 500);
+        $settings->validate($settings_template);
+        // copy Settings into this
         foreach ($this as $key => $value) {
-            if (isset($configuration->$key))
-                $this->$key = $configuration->$key;
+            if (isset($settings->$key))
+                $this->$key = $settings->$key;
         }
     }
 
@@ -90,7 +90,7 @@ class ServiceMap extends Service {
                 if (!class_exists($this->{'class'}))
                     throw new ExceptionFile('Could not find class: ' . $this->{'class'}, 404);
                 if (!in_array('ServiceObject', class_implements($this->{'class'})))
-                    throw new ExceptionConfiguration('Class must implement ServiceObject.', 500);
+                    throw new ExceptionSettings('Class must implement ServiceObject.', 500);
                 $this->object = new $this->{'class'}($id);
             }
             // set storage (if necessary)
@@ -101,7 +101,7 @@ class ServiceMap extends Service {
             $input = $this->getInput()->getData();
             // do method
             if (!method_exists($this->object, $this->method))
-                throw new ExceptionConfiguration('Method does not exist', 404);
+                throw new ExceptionSettings('Method does not exist', 404);
             $result = $this->object->{$this->method}($input);
             // get output data
             $this->getOutput()->setData($result);
@@ -119,18 +119,18 @@ class ServiceMap extends Service {
     }
 
     /**
-     * Returns the storage configuration for this request
+     * Returns the storage Settings for this request
      * @var array
      * */
     protected function getStorage() {
         static $object = null;
         if (!$object) {
-            $configuration = ( $this->storage_map ) ? $this->getMapped($this->storage_map) : $this->storage;
-            if (!array_key_exists('type', $configuration))
-                throw new ExceptionConfiguration('Storage type is not defined', 500);
-            $class = $configuration['type'];
-            unset($configuration['type']);
-            $object = new $class($configuration);
+            $settings = ( $this->storage_map ) ? $this->getMapped($this->storage_map) : $this->storage;
+            if (!array_key_exists('type', $settings))
+                throw new ExceptionSettings('Storage type is not defined', 500);
+            $class = $settings['type'];
+            unset($settings['type']);
+            $object = new $class($settings);
         }
         return $object;
     }

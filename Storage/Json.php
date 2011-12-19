@@ -8,6 +8,7 @@
 /**
  * StorageJson
  * Stores JSON records in a JSON file on the local server; uses indexes
+ * @uses StorageInterface, ExceptionSettings, ExceptionStorage
  */
 class StorageJson implements StorageInterface{
     
@@ -37,25 +38,33 @@ class StorageJson implements StorageInterface{
     
     /**
      * Constructor
-     * @param type $configuration 
+     * @param type $settings 
      */
-    public function __construct($configuration){
-        if( !$configuration || !is_a($configuration, 'Configuration') ) throw new ExceptionConfiguration('StorageJson requires a configuration', 500);
-        // create database if necessary
-        if( !is_file($configuration->location) ){
-            file_put_contents($configuration->location, '{}');
-        }
-        // determines what configuration must be passed
-        $configuration_template = array(
-            'location' => Configuration::MANDATORY | Configuration::PATH,
-            'schema' => Configuration::OPTIONAL
+    public function __construct($settings){
+        if( !$settings || !is_a($settings, 'Settings') ) throw new ExceptionSettings('StorageJson requires a Settings object', 500);
+        // determines what settings must be passed
+        $settings_template = array(
+            'location' => Settings::MANDATORY | Settings::PATH,
+            'schema' => Settings::OPTIONAL
         );
-        // accepts configuration
-        $configuration->validate($configuration_template);
-        // copy configuration into this
+        // validate settings
+        $settings->validate($settings_template);
+        // copy settings into this object
         foreach ($this as $key => $value) {
-            if (isset($configuration->$key))
-                $this->$key = $configuration->$key;
+            if (isset($settings->$key))
+                $this->$key = $settings->$key;
+        }
+        // ensure location is accessible
+        if( !is_writable($this->location) ) throw new ExceptionStorage("The file '$this->location' is not writable", 500);
+        // create database if necessary
+        $this->data = new stdClass();
+        if( !is_file($settings->location) ){
+            file_put_contents($settings->location, '{}');
+        }
+        // read database
+        else{
+            $json = file_get_contents($this->location);
+            $this->data = json_decode($json);
         }
     }
     
@@ -64,8 +73,6 @@ class StorageJson implements StorageInterface{
      */
     public function begin(){
         // TODO: lock records
-        $json = file_get_contents($this->location);
-        $this->data = json_decode($json);
     }
     
     /**
@@ -155,6 +162,23 @@ class StorageJson implements StorageInterface{
     }
     
     /**
+     * Tests whether an object with the given ID exists
+     * @param mixed $id
+     * @return boolean 
+     */
+    public function exists($id){
+        return property_exists($this->data, $id);
+    }
+    
+    /**
+     * Returns all records
+     * @return array
+     */
+    public function all($number_of_records = null, $page = null){
+        return $this->data;
+    }
+    
+    /**
      * Deletes all records
      * @return boolean
      */
@@ -162,6 +186,14 @@ class StorageJson implements StorageInterface{
         $this->data = new stdClass();
         $this->isChanged = true;
         return true;
+    }
+    
+    /**
+     * Returns the number of items
+     * @return int 
+     */
+    public function count(){
+        return count( (array) $this->data );
     }
     
     /**
@@ -178,11 +210,13 @@ class StorageJson implements StorageInterface{
     }
     
     /**
-     * Returns all records
-     * @return array
+     * Returns the first element
+     * @return mixed
      */
-    public function all(){
-        return $this->data;
+    public function first(){
+        foreach($this->data as $i => $v){
+            return $v;
+        }
     }
     
     /**

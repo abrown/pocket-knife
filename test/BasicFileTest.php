@@ -26,12 +26,12 @@ class BasicFileTest extends PHPUnit_Framework_TestCase {
         $classes_loaded = BasicFile::autoloadAll('Service');
         $service_uses = array(
             'Service',
-            'Configuration', 
+            'Settings', 
             'WebRouting', 
             'WebHttp', 
             'WebTemplate', 
             'ExceptionFile',
-            'ExceptionConfiguration'
+            'ExceptionSettings'
         );
         sort($service_uses);
         sort($classes_loaded);

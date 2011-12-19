@@ -114,7 +114,7 @@ class Template{
      * @param <string> $path
      * @return <string>
     private function getAbsolutePath($path){
-        $config = Configuration::getInstance();
+        $config = Settings::getInstance();
         if( array_key_exists('template_path', $config) ) $path = $config['template_path'].$path;
         else throw new Exception('No template path defined', 400);
         $path = str_replace('//', '/', $path);
@@ -142,7 +142,7 @@ class Template{
     public function getFile($file){
         // check file
         if( !is_file($file) ){
-            $file = Configuration::get('base_dir').DS.$file;
+            $file = Settings::get('base_dir').DS.$file;
             if( !is_file($file) ) return '<b>Error:</b> Could not find '.$file;;
         }
         // return
@@ -203,7 +203,7 @@ class Template{
     public function getPHPFile($file__hide__, $variables__hide__ = array()){
         // check file
         if( !is_file($file__hide__) ){
-            $file__hide__ = Configuration::get('base_dir').DS.$file__hide__;
+            $file__hide__ = Settings::get('base_dir').DS.$file__hide__;
             if( !is_file($file__hide__) ) return '<b>Error:</b> Could not find '.$file__hide__;
         }
         // get output

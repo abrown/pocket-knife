@@ -4,11 +4,11 @@
  * @license GNU/GPL, see 'help/LICENSE.html'.
  * 
  * Should work like:
- *  add "Configuration::setPath('path/to/configuration.php');"
- *  use "$config = Configuration::getInstance(); $config['var']; ..."
+ *  add "Settings::setPath('path/to/Settings.php');"
+ *  use "$config = Settings::getInstance(); $config['var']; ..."
  * 
  */
-class Configuration{
+class Settings{
 
     static private $path;
     static private $instance;
@@ -16,7 +16,7 @@ class Configuration{
     const default_cache_interval = 3600;
 
     /**
-     * Sets path to configuration file
+     * Sets path to Settings file
      * @param <string> $path
      * @return <boolean>
      */
@@ -31,7 +31,7 @@ class Configuration{
     }
 
     /**
-     * Gets configuration path
+     * Gets Settings path
      * @return <string>
      */
     public function getPath(){
@@ -39,10 +39,10 @@ class Configuration{
     }
 
     /**
-     * Get Configuration instance
+     * Get Settings instance
      * @return <array>
      */
-    // TODO: test whether caching Configuration is any faster
+    // TODO: test whether caching Settings is any faster
     static public function getInstance(){
         if( !self::$instance ){
             self::$instance = is_array(self::$instance) ? array_merge(self::read(), self::$instance) : self::read();
@@ -51,7 +51,7 @@ class Configuration{
     }
     
     /**
-     * Reset Configuration instance
+     * Reset Settings instance
      * @return void
      */
     static public function reset(){
@@ -59,7 +59,7 @@ class Configuration{
     }
 
     /**
-     * Read configuration from path
+     * Read Settings from path
      * @return <array>
      */
     static private function read(){
@@ -71,7 +71,7 @@ class Configuration{
             unset($result['_'], $result['_SERVER'], $result['argv']);
         }
         else{
-            throw new Exception('Could not find configuration file: '.self::$path, 500);
+            throw new Exception('Could not find Settings file: '.self::$path, 500);
         }
         // add base directory and version
         $result['pocket_knife_version'] = 1.0;
@@ -81,11 +81,11 @@ class Configuration{
     }
     
     /**
-     * Write an array to the configuration file
+     * Write an array to the Settings file
      * @param array $config 
      */
     static public function write($config){
-        if( !is_file(self::$path)) throw new Exception('Could not find configuration file: '.self::$path, 500);
+        if( !is_file(self::$path)) throw new Exception('Could not find Settings file: '.self::$path, 500);
         $output = "<?php\n";
         foreach($config as $key => $value){
             $output .= self::write_key($key, $value)."\n";
@@ -103,7 +103,7 @@ class Configuration{
      */
     static private function write_key($key, $value, $_indent = 0){
         $indent = str_repeat("\t", $_indent);
-        if( is_object($value) ) throw new Exception('Cannot save objects to configuration file', 500);
+        if( is_object($value) ) throw new Exception('Cannot save objects to Settings file', 500);
         elseif( is_int($value) ) $format = '%s$%s = %d;';
         elseif( is_float($value) ) $format = '%s$%s = %f;';
         elseif( is_string($value) ){ $value = addslashes($value); $format = '%s$%s = \'%s\';'; }
@@ -125,7 +125,7 @@ class Configuration{
     }
 
     /**
-     * Retrieves configuration value (convenience method)
+     * Retrieves Settings value (convenience method)
      * TODO: add ability to get inside config arrays
      * @param string $key 
      */
@@ -135,7 +135,7 @@ class Configuration{
     }
     
     /**
-     * Sets a configuration value (not persistent)
+     * Sets a Settings value (not persistent)
      * TODO: add persistence
      * @param string $key
      * @param any $value 
@@ -145,16 +145,16 @@ class Configuration{
     }
     
     /**
-     * Get configuration array from files
+     * Get Settings array from files
      * @return <array>
      */
     /** OUTDATED
 
     static public function __install(){
-        $configuration_pattern = KNIFE_BASE_PATH.DS.'data'.DS.'config'.DS.'*';
-        $configuration_files = glob($configuration_pattern);
-        // get configuration files
-        foreach($configuration_files as $file){
+        $settings_pattern = KNIFE_BASE_PATH.DS.'data'.DS.'config'.DS.'*';
+        $settings_files = glob($settings_pattern);
+        // get Settings files
+        foreach($settings_files as $file){
             if( is_file($file) ){
                 include($file);
             }

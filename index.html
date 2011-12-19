@@ -1,97 +1,128 @@
 <!doctype html>
 <html>
     <head>
-        <title>PocketKnife: A PHP Tool for Web Development</title>
-        <style>
-            body{
-                font-size: 14px;
-                font-family: 'Georgia', 'Times New Roman', serif;
-                display: block;
-                margin: 0 auto 0;
-                max-width: 1200px;
-                min-width: 600px;
-                width: 72%;
-            }
-            h1{
-                background: url(pocket-knife.jpg) top left no-repeat;
-                padding-left: 150px;
-                line-height: 1.5em;
-                height: 100px;
-            }
-            ul.features{
-                margin: 0;
-                padding: 0;
-            }
-            ul.features li{
-                display: inline;
-                list-style: none;
-                font-size: 2em;
-                background-color: lightpink;
-                padding: 0.1em;
-                padding-right: 2em;
-            }
-        </style>
+        <title>pocket-knife: the tools framework</title>
+        <link href="Help/help.css" media="all" type="text/css" rel="stylesheet" />
     </head>
     <body>
-        <h1>PocketKnife: A PHP Tool for Web Development</h1>
-        <ul class="features">
-            <li><code>PHP5</code></li>
-            <li><code>PDO</code></li>
-            <li><code>InnoDB</code></li>
-            <li><code>_autoload</code></li>
-        </ul>
-        <h2>Definition</h2>
+        
+        <!-- TITLE -->
+        <h1>pocket-knife</h1>
+        <hr/>
+        
+        <!-- ASIDE -->
+        <div class="aside">
+            <a href="Help/index.php/API">API</a>
+            <a href="#SiteMap">SiteMap</a>
+            <a href="http://www.github.com/andrewsbrown/pocket-knife">Download</a>
+            <br/>
+            <img src="Help/pocket-knife2.jpg" title="A real pocket knife... buy it here http://www.overstock.com/Sports-Toys/Swiss-Army-Swiss-Champ-30-tool-Pocket-Knife/4408380/product.html"/>
+        </div>
+        
+        <!-- PRELIMINARIES -->
+        <h2>About</h2>
         <p>
-            <code>PocketKnife</code> is a mini-framework designed to quickly
-            setup simple web services. The framework is very simple, so it may 
-            need to be modified for production use; however, it does provide the 
-            developer with a solid platform to begin building.
+            <code>pocket-knife</code> is a mini-framework for making sites and services. It is fast
+            and simple. It is RESTful. It is minimal. It is a collection of the tools I use
+            every day to make web development easy.
+        </p>
+        <p>
+            The idea is that RESTful PHP applications do not have to be complex to
+            be powerful and fast. Web applications build the same components (services,
+            settings, sites, and sequences) again and again; the <code>pocket-knife</code>
+            components are lightweight so they can be easily extended and fully tested
+            for so you can trust their reliability.
         </p>
         <h2>Requirements</h2>
         <p>
-            The <code>web service</code> uses the following components, for which
-            you may need to have a recent version of PHP:
+            <code>pocket-knife</code> uses the following:
         </p>
         <ul>
-            <li>PHP5 syntax (__construct, public, private, etc.)</li>
-            <li>PDO</li>
-            <li>__autoload function (may need to rewrite this if the service is
-            run within an application using it already)</li>
-            <li>.htaccess rewrites (to set Digest Authentication variables in
-            $_SERVER)</li>
-            <li>mysql</li>
-            <li>transactions (with InnoDB)</li>
+            <li>PHP5</li>
+            <li>PDO, if you choose to connect to MySQL</li>
         </ul>
-        <h2>Setup</h2>
-        <p>
-            To set up the <code>web service</code>:
-        </p>
+        <p>That is it. Let's start.</p>
+        
+        <!-- GETTING STARTED -->
+        <h2>Getting Started</h2>
+        <p>We can make a calculator quite easily:</p>
         <ol>
-            <li>Copy the files to the right directories</li>
-            <li>Configure the <code>/config/main.php</code> file; you may add
-            any additional configuration variables in other files within this
-            folder. Also, you may want to make sure the .htaccess files are
-            configured like you want.</li>
-            <li>Create data objects as extensions of the AbstractObject class
-            and put the path to these classes in the configuration file under
-            <code>$class_paths</code>. You may choose to not extend
-            AbstractObject: if this is the case, note that AbstractAction expects
-            at least these methods: <code>__bind</code>, <code>__getID</code>,
-            and <code>__setID</code>. If you do extend AbstractObject, see
-            its class file for a description of available options.</li>
-            <li>If extending AbstractObject, overload functions (e.g. <code>
-            beforeRead</code>) to change their logic. Also, see the AbstractObject
-            class file for a description of available options.
+            <li>Get the code: <code>git clone git://github.com/andrewsbrown/pocket-knife.git</code></li>
+            <li>Create the calculator class, <code>calculator.php</code>:
+<code class="block">&lt;?php
+class Calculator extends ResourceStatic{
+    public $a;
+    public $b;
+    public function sum(){
+        if( !is_numeric($this->a) || !is_numeric($this->b) ) 
+            throw new ExceptionService('Inputs must be numeric!', 400);
+        return $this->a + $this->b;
+    }
+}
+?&gt;
+</code>
+            </li>
+            <li>Create the resource anchor, <code>service.php</code>, and include <code>pocket-knife</code> (see below).</li>
+            <li>Include that <code>Calculator</code> class we just made (see below).</li>
+            <li>Create a <code>Settings</code> component that allows all users access to all classes (don't worry, the ACL can get more complex) using GET variables as input and JSON as output (see below).</li>
+            <li>Create the service and let it run free:
+<code class="block">&lt;?php
+include('pocket-knife/start.php');
+include('calculator.php');
+
+$settings = new Settings(array[
+    'acl' => true,
+    'input' => 'application/x-www-form-urlencoded',
+    'output' => 'application/json'
+]);
+
+$service = new Service($settings);
+$service->execute();
+?&gt;
+</code>
+            </li>
+            <li>Access it from the browser with: 
+                <code>http://[your_server_here]/[path_to_files]/service.php/calculator/sum?a=100&amp;b=200</code>
             </li>
         </ol>
-        <h2>Help</h2>
-        <ul>
-            <li><a href="help/json-server.html" title="Example">JSON Server Example</a></li>
-            <li><a href="help/html-server.html" title="Example">HTML Server Example</a></li>
-            <li><a href="help/object.html" title="Example">Object Example</a></li>
-            <li><a href="help/json-client.html" title="Example">JSON Client Example</a></li>
-            <li><a href="help/startup.html" title="Example">What Runs at Startup</a></li>
-            <li><a href="help/license.html" title="Example">License</a></li>
-        </ul>
+        <p>Too simplistic, right? We could make the same thing happen with one line of PHP
+            (let's see... <code>&lt;?php echo json_encode($_GET['a'] + $_GET['b']); ?&gt;</code>). 
+            Please, read on.</p>        
+        
+        <!-- MORE AND MORE -->
+        <h2>More and More</h2>
+        <p>The <code>pocket-knife</code> framework is a collection of common-sense
+            components. 
+            <!-- SERVICE -->
+            The <code>Service</code> component exposes a RESTful web
+            service with content-type detection, customizable ACL and authentication,
+            templating, and a bunch of supported database drivers
+            (<a href="Help/index.php/service">learn more</a>).
+            <!-- SETTINGS -->
+            The <code>Settings</code> component edits and stores Settingss--again, 
+            with all of the buzzwords
+            (<a href="Help/index.php/settings">learn more</a>).
+            <!-- SEQUENCE -->
+            The <code>Sequence</code> component is a multi-step web service 
+            (think shopping cart or sign-up form)
+            (<a href="Help/index.php/sequence">learn more</a>).
+            <!-- SITE -->
+            Finally, the <code>Site</code> component picks up any stray HTML/PHP 
+            pages and organizes them with site-mapping and search functions
+            (<a href="Help/index.php/site">learn more</a>).
+            <!-- SUMMARY -->
+            Together, the components make up an entire framework covering most
+            web application architectures. A blog? Basically a <code>Service</code>.
+            The admin section of a mail client? A <code>Settings</code> component.
+            A sign-up form for new users? A simple <code>Sequence</code>. And the
+            conglomerate of HTML and text files on my home server? A <code>Site</code>.
+            
+            
+            
+            
+        <!-- SITE MAP -->
+        <a name="SiteMap" />
+        <h2>Site Map</h2>
+        <p>Working on this...</p>
     </body>
 </html>

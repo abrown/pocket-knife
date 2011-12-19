@@ -9,7 +9,7 @@ class StorageCache{
     /**
      * Default Cache Interval
      */
-    const DEFAULT_CACHE_INTERVAL = 86400; // if no configuration set, cache for a day
+    const DEFAULT_CACHE_INTERVAL = 86400; // if no Settings set, cache for a day
 
     /**
      * Get path
@@ -86,7 +86,7 @@ class StorageCache{
     function getDefaultInterval(){
         static $interval = null;
         if( !$interval ){
-            $config = Configuration::getInstance();
+            $config = Settings::getInstance();
             if( array_key_exists('default_cache_interval', $config) ) $interval = $config['default_cache_interval'];
             else $interval = self::DEFAULT_CACHE_INTERVAL;
         }
@@ -101,7 +101,7 @@ class StorageCache{
     function isDebug(){
         static $debug = null;
         if( is_null($debug) ){
-            $config = Configuration::getInstance();
+            $config = Settings::getInstance();
             if( array_key_exists('debug', $config) ) $debug = $config['debug'];
         }
         return ($debug) ? true : false;

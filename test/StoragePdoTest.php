@@ -12,22 +12,50 @@ class StoragePdoTest extends PHPUnit_Framework_TestCase{
         $path = dirname(dirname(__FILE__));
         require $path . '/start.php';
         // get code
-        autoload('StorageInterface');
-        autoload('StoragePdo');
-        autoload('Configuration');
-        autoload('ExceptionStorage');
+        BasicFile::autoloadAll('StoragePdo');
+        // create connection
+        $instance = new StoragePdo( $this->getConfig() );
+        // create testing artifacts
+        try {
+            $dsn = "mysql:host={$config->location}";
+            $instance = new PDO($dsn, $config->username, $config->password);
+            $instance->query("CREATE DATABASE {$config->database}");
+            $instance->query("USE {$config->database}");
+            $instance->query("CREATE TABLE `{$config->table}` ( `{$config->primary}` int(11) NOT NULL AUTO_INCREMENT, PRIMARY KEY (`{$config->primary}`) ) ENGINE=InnoDB");
+            $instance->query("ALTER TABLE {$config->table} ADD COLUMN a DATETIME DEFAULT NULL");
+            $instance->query("ALTER TABLE {$config->table} ADD COLUMN b TEXT");
+        } catch (PDOException $e) {
+            throw new Exception($e->getMessage(), 500);
+        }
     }
     
     public function setUp(){
-        $configuration = new Configuration(array(
+        // create connection
+        $this->db = new StoragePdo( $this->getConfig() );
+        // create testing artifacts
+        try {
+            $dsn = "mysql:host={$config->location}";
+            $instance = new PDO($dsn, $config->username, $config->password);
+            $instance->query("CREATE DATABASE {$config->database}");
+            $instance->query("USE {$config->database}");
+            $instance->query("CREATE TABLE `{$config->table}` ( `{$config->primary}` int(11) NOT NULL AUTO_INCREMENT, PRIMARY KEY (`{$config->primary}`) ) ENGINE=InnoDB");
+            $instance->query("ALTER TABLE {$config->table} ADD COLUMN a DATETIME DEFAULT NULL");
+            $instance->query("ALTER TABLE {$config->table} ADD COLUMN b TEXT");
+        } catch (PDOException $e) {
+            throw new Exception($e->getMessage(), 500);
+        }
+    }    
+    
+    private function getConfig(){
+        $config = new Settings(array(
             'location' => 'localhost',
-            'database' => 'test',
-            'username' => 'dev',
-            'password' => 'dev',
+            'username' => 'root',
+            'password' => '',
+            'database' => 'pocket_knife_test',
             'table'    => 'test',
             'primary'  => 'id'
         ));
-        $this->db = new StoragePdo($configuration);
+        return $config;
     }
     
     private function getObject(){

@@ -7,7 +7,7 @@
 
 /**
  * Service
- * @uses Configuration, WebRouting, WebHttp, WebTemplate, ExceptionFile, ExceptionConfiguration 
+ * @uses Settings, WebRouting, WebHttp, WebTemplate, ExceptionFile, ExceptionSettings 
  */
 class Service {
 
@@ -23,18 +23,18 @@ class Service {
      * @example $this->storage = array('type'=>'mysql', 'username'=>'test', 'password'=>'password', 'location'=>'localhost', 'database'=>'db');
      * @var array
      * */
-    public $storage = 'application/json';
+    public $storage = array('type'=>'json', 'location'=>'db.json');
 
     /**
      * Defines the input data type for the request; should be a class implementing ServiceType
-     * @example $this->input = 'Xml';
+     * @example $this->input = 'application/json';
      * @var string
      * */
     public $input = 'application/x-www-form-urlencoded';
 
     /**
      * Defines the output data and content-type of the response; should be a class implementing ServiceType
-     * @example $this->output = 'Html';
+     * @example $this->output = 'application/json';
      * @var string
      * */
     public $output = 'text/html';
@@ -75,29 +75,29 @@ class Service {
 
     /**
      * Constructor
-     * @param Configuration $configuration 
+     * @param Settings $settings 
      */
-    public function __construct($configuration) {
-        // determines what configuration must be passed
-        $configuration_template = array(
-            'acl' => Configuration::MANDATORY,
-            'storage' => Configuration::OPTIONAL | Configuration::MULTIPLE,
-            'input' => Configuration::OPTIONAL | Configuration::STRING,
-            'output' => Configuration::OPTIONAL | Configuration::STRING,
-            'template' => Configuration::OPTIONAL | Configuration::PATH,
-            'class' => Configuration::OPTIONAL | Configuration::STRING,
-            'object' => Configuration::OPTIONAL | Configuration::MULTIPLE,
-            'method' => Configuration::OPTIONAL | Configuration::STRING,
-            'id' => Configuration::OPTIONAL
+    public function __construct($settings) {
+        // determines what settings must be passed
+        $settings_template = array(
+            'acl' => Settings::MANDATORY,
+            'storage' => Settings::OPTIONAL | Settings::MULTIPLE,
+            'input' => Settings::OPTIONAL | Settings::STRING,
+            'output' => Settings::OPTIONAL | Settings::STRING,
+            'template' => Settings::OPTIONAL | Settings::PATH,
+            'class' => Settings::OPTIONAL | Settings::STRING,
+            'object' => Settings::OPTIONAL | Settings::MULTIPLE,
+            'method' => Settings::OPTIONAL | Settings::STRING,
+            'id' => Settings::OPTIONAL
         );
-        // accepts configuration
-        if (!$configuration || !is_a($configuration, 'Configuration'))
-            throw new ExceptionConfiguration('Incorrect configuration given.', 500);
-        $configuration->validate($configuration_template);
-        // copy configuration into this
+        // accepts settings
+        if (!$settings || !is_a($settings, 'Settings'))
+            throw new ExceptionSettings('Incorrect settings given.', 500);
+        $settings->validate($settings_template);
+        // copy Settings into this
         foreach ($this as $key => $value) {
-            if (isset($configuration->$key))
-                $this->$key = $configuration->$key;
+            if (isset($settings->$key))
+                $this->$key = $settings->$key;
         }
     }
 
@@ -131,7 +131,7 @@ class Service {
                 if (!class_exists($this->{'class'}))
                     throw new ExceptionFile('Could not find class: ' . $this->{'class'}, 404);
                 if (!in_array('ServiceObjectInterface', class_implements($this->{'class'})))
-                    throw new ExceptionConfiguration('Class must implement ServiceObjectInterface.', 500);
+                    throw new ExceptionSettings('Class must implement ServiceObjectInterface.', 500);
                 $this->object = new $this->{'class'}($id);
             }
             
@@ -142,7 +142,7 @@ class Service {
             
             // call method
             if (!method_exists($this->object, $this->method))
-                throw new ExceptionConfiguration("Method '{$this->method}' does not exist", 404);
+                throw new ExceptionSettings("Method '{$this->method}' does not exist", 404);
             $input = $this->getInput()->getData();
             $result = call_user_func_array(array($this->object, $this->method), array($input));
             
@@ -246,7 +246,7 @@ class Service {
                     return true;
                 }
             } else {
-                throw new ExceptionConfiguration('Poorly worded ACL rule: ' . $rule, 500);
+                throw new ExceptionSettings('Poorly worded ACL rule: ' . $rule, 500);
             }
         } while (prev($list) !== false);
         // return
@@ -254,23 +254,23 @@ class Service {
     }
 
     /**
-     * Returns the storage configuration for this request
+     * Returns the storage object for this request
      * @var array
      * */
     protected function getStorage() {
         static $object = null;
         if (!$object) {
-            $configuration = $this->storage;
-            // check configuration
-            if ( !isset($configuration->type) )
-                throw new ExceptionConfiguration('Storage type is not defined', 500);
+            $settings = $this->storage;
+            // check Settings
+            if ( !isset($settings->type) )
+                throw new ExceptionSettings('Storage type is not defined', 500);
             // get class
-            $class = 'Storage'.ucfirst($configuration->type);
+            $class = 'Storage'.ucfirst($settings->type);
             // check parents
             if (!in_array('StorageInterface', class_implements($class)))
-                throw new ExceptionConfiguration($class.' must implement StorageInterface.', 500);
+                throw new ExceptionSettings($class.' must implement StorageInterface.', 500);
             // create object
-            $object = new $class($configuration);
+            $object = new $class($settings);
         }
         return $object;
     }
@@ -288,7 +288,7 @@ class Service {
             $class = $this->getContentClass($content_type);
             // check parents
             if (!in_array('ServiceFormatInterface', class_implements($class)))
-                throw new ExceptionConfiguration($class.' must implement ServiceFormatInterface.', 500);
+                throw new ExceptionSettings($class.' must implement ServiceFormatInterface.', 500);
             // create object
             $object = new $class();
         }
@@ -308,7 +308,7 @@ class Service {
             $class = $this->getContentClass($content_type);
             // check parents
             if (!in_array('ServiceFormatInterface', class_implements($class)))
-                throw new ExceptionConfiguration($class.' must implement ServiceFormatInterface.', 500);
+                throw new ExceptionSettings($class.' must implement ServiceFormatInterface.', 500);
             // create object
             $object = new $class();
         }
@@ -345,6 +345,6 @@ class Service {
         if (array_key_exists($content_type, $map))
             return $map[$content_type];
         else
-            throw new ExceptionConfiguration('Attempting to use unknown content type: ' . $content_type, 500);
+            throw new ExceptionSettings('Attempting to use unknown content type: ' . $content_type, 500);
     }
 }

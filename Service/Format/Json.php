@@ -37,7 +37,7 @@ class ServiceFormatJson implements ServiceFormatInterface{
      * Send formatted output data
      */
     public function send(){
-        $config = Configuration::getInstance();
+        $config = Settings::getInstance();
         if( !$config['debug'] ) header('Content-Type: application/json');
         echo json_encode($this->out);
     }
@@ -49,7 +49,7 @@ class ServiceFormatJson implements ServiceFormatInterface{
         $error = $this->out;
         // send HTTP header
         header($_SERVER['SERVER_PROTOCOL'].' '.$error->getCode());
-        $config = Configuration::getInstance();
+        $config = Settings::getInstance();
         if( !$config['debug'] ) header('Content-Type: application/json');
         // send JSON error
         $e = array('error'=>$error->getMessage(), 'code'=>$error->getCode());

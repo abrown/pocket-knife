@@ -11,23 +11,40 @@ class SiteTest extends PHPUnit_Extensions_OutputTestCase {
         $path = dirname(dirname(__FILE__));
         require $path . '/start.php';
         // get code
-        autoload('Site');
+        autoload('BasicFile');
+        BasicFile::autoloadAll('Site');
+        BasicFile::autoloadAll('StorageJson');
     }
 
     public function setUp() {
-        $this->s = new Site();
+        $settings = new Settings(array(
+            'location' => './data',
+            'acl' => true,
+            'storage' => array('type'=>'json', 'location'=>'data/site-map.json')
+        ));
+        $this->site = new Site( $settings );
     }
     
-    public function testUrlHandling(){
-        $this->s->setUrl('google.com/');
-        $this->assertEquals('http://google.com', $this->s->getUrl());
+    public function testFind(){
+        $expected = dirname(__FILE__).DS.'data'.DS.'example.php';
+        $actual = $this->site->find('example.php');
+        $this->assertEquals($expected, $actual);
     }
 
-    public function testExistence() {
-        $this->assertNotNull($this->s);
+    public function testSiteMap() {
+        // get expected filesfiles
+        chdir('data');
+        $expected = glob('*');
+        chdir('..');
+        // get site map
+        $actual = $this->site->getSiteMap();
+        // test
+        foreach($expected as $file){
+            $this->assertContains($file, (array) $actual);
+        }
     }
     
-    public function testCanAccessPages() {
+    public function testExecute() {
         
     }
 }

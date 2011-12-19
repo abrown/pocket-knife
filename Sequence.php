@@ -1,23 +1,110 @@
 <?php
 
 /**
- * 
- * Use _GET for output
- * Use _POST for input
+ * @copyright Copyright 2011 Andrew Brown. All rights reserved.
+ * @license GNU/GPL, see 'help/LICENSE.html'.
+ */
+
+/**
+ * Sequence
+ * @uses WebSession, WebRouting, WebHttp
  */
 class Sequence {
 
-    private $steps = array();
-    private $parameter = 'step';
-    private $current;
-
-    public function __construct() {
-        if (Session::get('current'))
-            $this->current = Session::get('current');
-        else {
-            $this->current = 0;
-            Session::put('current', 0);
+    /**
+     * URIs for the steps in this sequence
+     * @var array 
+     */
+    public $steps = array();
+    
+    /**
+     * Template to apply to the output after processing 
+     * @var string 
+     */
+    public $template;
+    
+    /**
+     * Set in WebSession (not in Settings), this property marks what step the user is currently at
+     * @var int 
+     */
+    public $current_step;
+    
+    /**
+     * Constructor
+     * @param Settings $settings 
+     */
+    public function __construct( $settings ){
+        // determines what settings must be passed
+        $settings_template = array(
+            'steps' => Settings::MANDATORY | Settings::MULTIPLE,
+            'template' => Settings::OPTIONAL | Settings::PATH
+        );
+        // accepts settings
+        if (!$settings || !is_a($settings, 'Settings'))
+            throw new ExceptionSettings('Incorrect settings given.', 500);
+        $settings->validate($settings_template);
+        // copy settings into this object
+        foreach ($this as $key => $value) {
+            if (isset($settings->$key))
+                $this->$key = $settings->$key;
         }
+        // setup session 
+        if( WebSession::get('sequence-current-step') )
+            $this->step = Session::get('sequence-current-step');
+        else {
+            $this->current = 1;
+            Session::put('sequence-current-step', 1);
+        }
+    }
+    
+    /**
+     * Returns this object's URI
+     * @return string
+     */
+    public function getURI(){
+        $_GET['step'] = $this->current_step;
+        return WebRouting::createUrl('');
+    }
+    
+    public function getStepURI( $step ){
+        // 
+        $_url = $this->steps[$this->current_step - 1];
+        // case: server name defined 
+        if( strpos('http', $_url) === 0 ) return $_url;
+        // default: use this server name
+        $url = 'http://'.$_SERVER['SERVER_NAME'].'/'.$_url;
+        return $url;  
+    }
+    
+ 
+    public function execute(){
+        // check for step existence
+        if( !array_key_exists($this->current_step - 1, $this->steps) ) throw new ExceptionSequence('No URI exists for this step', 404);
+        // check URL injection attempt
+        if( $_GET['step'] != $this->current_step ) WebHttp::redirect( $this->getURI() );
+        // get URL
+        $url = $this->getStepURI( $this->current_step );
+        // proxy
+        if( $_SERVER['REQUEST_METHOD'] == 'GET' ){
+            echo WebHttp::request($url, 'GET'); // a GET request to the sequence returns the GET from the step URL
+        }
+        elseif( $_SERVER['REQUEST_METHOD'] == 'POST' ){
+            $result = WebHttp::request($url, 'POST', urlencode($_POST), 'application/x-www-form-urlencoded'); // a POST request to the sequence returns the POST from the step URL so we can validate the response
+            if( WebHttp::getCode() == 200 ){
+                $_GET['message'] = 'Step was completed successfully';
+                $this->current_step++;
+                WebSession::put('sequence-current-step', $this->current_step);
+                WebHttp::redirect( $this->getURI() );
+            }
+            else{
+                $_GET['message'] = 'Step failed';
+                WebHttp::redirect( $this->getURI() );
+            }
+        }
+        else{
+            throw new ExceptionSequence('Only GET and POST methods are allowed in a sequence', 400);
+        }
+        
     }
 
     public function addStep($id, $output_script, $process_script = null, $requirements = null, $data = null) {

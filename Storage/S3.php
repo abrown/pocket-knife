@@ -260,7 +260,7 @@ class AmazonS3 extends CFRuntime
 	// CONSTRUCTOR
 
 	/**
-	 * Constructs a new instance of <AmazonS3>. If the <code>AWS_DEFAULT_CACHE_CONFIG</code> configuration
+	 * Constructs a new instance of <AmazonS3>. If the <code>AWS_DEFAULT_CACHE_CONFIG</code> Settings
 	 * option is set, requests will be authenticated using a session token. Otherwise, requests will use
 	 * the older authentication method.
 	 *
@@ -276,12 +276,12 @@ class AmazonS3 extends CFRuntime
 		$this->hostname = self::DEFAULT_URL;
 
 		$this->base_acp_xml = '<?xml version="1.0" encoding="UTF-8"?><AccessControlPolicy xmlns="http://s3.amazonaws.com/doc/latest/"></AccessControlPolicy>';
-		$this->base_location_constraint = '<?xml version="1.0" encoding="UTF-8"?><CreateBucketConfiguration xmlns="http://s3.amazonaws.com/doc/' . $this->api_version . '/"><LocationConstraint></LocationConstraint></CreateBucketConfiguration>';
+		$this->base_location_constraint = '<?xml version="1.0" encoding="UTF-8"?><CreateBucketSettings xmlns="http://s3.amazonaws.com/doc/' . $this->api_version . '/"><LocationConstraint></LocationConstraint></CreateBucketSettings>';
 		$this->base_logging_xml = '<?xml version="1.0" encoding="utf-8"?><BucketLoggingStatus xmlns="http://doc.s3.amazonaws.com/' . $this->api_version . '"></BucketLoggingStatus>';
-		$this->base_notification_xml = '<?xml version="1.0" encoding="utf-8"?><NotificationConfiguration></NotificationConfiguration>';
-		$this->base_versioning_xml = '<?xml version="1.0" encoding="utf-8"?><VersioningConfiguration xmlns="http://s3.amazonaws.com/doc/' . $this->api_version . '/"></VersioningConfiguration>';
+		$this->base_notification_xml = '<?xml version="1.0" encoding="utf-8"?><NotificationSettings></NotificationSettings>';
+		$this->base_versioning_xml = '<?xml version="1.0" encoding="utf-8"?><VersioningSettings xmlns="http://s3.amazonaws.com/doc/' . $this->api_version . '/"></VersioningSettings>';
 		$this->complete_mpu_xml = '<?xml version="1.0" encoding="utf-8"?><CompleteMultipartUpload></CompleteMultipartUpload>';
-		$this->website_config_xml = '<?xml version="1.0" encoding="utf-8"?><WebsiteConfiguration xmlns="http://s3.amazonaws.com/doc/' . $this->api_version . '/"><IndexDocument><Suffix>index.html</Suffix></IndexDocument><ErrorDocument><Key>error.html</Key></ErrorDocument></WebsiteConfiguration>';
+		$this->website_config_xml = '<?xml version="1.0" encoding="utf-8"?><WebsiteSettings xmlns="http://s3.amazonaws.com/doc/' . $this->api_version . '/"><IndexDocument><Suffix>index.html</Suffix></IndexDocument><ErrorDocument><Key>error.html</Key></ErrorDocument></WebsiteSettings>';
 
 		if (!$key && !defined('AWS_KEY'))
 		{
@@ -1761,7 +1761,7 @@ class AmazonS3 extends CFRuntime
 	 * 	<li><code>curlopts</code> - <code>array</code> - Optional - A set of values to pass directly into <code>curl_setopt()</code>, where the key is a pre-defined <code>CURLOPT_*</code> constant.</li>
 	 * 	<li><code>returnCurlHandle</code> - <code>boolean</code> - Optional - A private toggle specifying that the cURL handle be returned rather than actually completing the request. This toggle is useful for manually managed batch requests.</li></ul>
 	 * @return CFResponse A <CFResponse> object containing a parsed HTTP response.
-	 * @link http://docs.amazonwebservices.com/AmazonS3/latest/dev/LoggingAPI.html Server Access Logging Configuration API
+	 * @link http://docs.amazonwebservices.com/AmazonS3/latest/dev/LoggingAPI.html Server Access Logging Settings API
 	 */
 	public function enable_logging($bucket, $target_bucket, $target_prefix, $opt = null)
 	{
@@ -1840,7 +1840,7 @@ class AmazonS3 extends CFRuntime
 	 * 	<li><code>curlopts</code> - <code>array</code> - Optional - A set of values to pass directly into <code>curl_setopt()</code>, where the key is a pre-defined <code>CURLOPT_*</code> constant.</li>
 	 * 	<li><code>returnCurlHandle</code> - <code>boolean</code> - Optional - A private toggle specifying that the cURL handle be returned rather than actually completing the request. This toggle is useful for manually managed batch requests.</li></ul>
 	 * @return CFResponse A <CFResponse> object containing a parsed HTTP response.
-	 * @link http://docs.amazonwebservices.com/AmazonS3/latest/dev/LoggingAPI.html Server Access Logging Configuration API
+	 * @link http://docs.amazonwebservices.com/AmazonS3/latest/dev/LoggingAPI.html Server Access Logging Settings API
 	 */
 	public function disable_logging($bucket, $opt = null)
 	{
@@ -2705,13 +2705,13 @@ class AmazonS3 extends CFRuntime
 	 * policy to enable the bucket owner to publish to the topic.
 	 *
 	 * By default, only the bucket owner can configure notifications on a bucket. However, bucket owners
-	 * can use bucket policies to grant permission to other users to set this configuration with the
+	 * can use bucket policies to grant permission to other users to set this Settings with the
 	 * `s3:PutBucketNotification` permission.
 	 *
 	 * After a PUT operation is called to configure notifications on a bucket, Amazon S3 publishes a test
 	 * notification to ensure that the topic exists and that the bucket owner has permission to publish
 	 * to the specified topic. If the notification is successfully published to the SNS topic, the PUT
-	 * operation updates the bucket configuration and returns the 200 OK responses with a
+	 * operation updates the bucket Settings and returns the 200 OK responses with a
 	 * `x-amz-sns-test-message-id` header containing the message ID of the test notification sent to topic.
 	 *
 	 * @param string $bucket (Required) The name of the bucket to create bucket notifications for.
@@ -2733,7 +2733,7 @@ class AmazonS3 extends CFRuntime
 		);
 
 		$xml = simplexml_load_string($this->base_notification_xml);
-		$topic_config = $xml->addChild('TopicConfiguration');
+		$topic_config = $xml->addChild('TopicSettings');
 		$topic_config->addChild('Topic', $topic_arn);
 		$topic_config->addChild('Event', $event);
 
@@ -2744,16 +2744,16 @@ class AmazonS3 extends CFRuntime
 	}
 
 	/**
-	 * Gets the notification configuration of a bucket. Currently, the `s3:ReducedRedundancyLostObject` event
+	 * Gets the notification Settings of a bucket. Currently, the `s3:ReducedRedundancyLostObject` event
 	 * is the only event supported for notifications. The `s3:ReducedRedundancyLostObject` event is triggered
 	 * when Amazon S3 detects that it has lost all replicas of a Reduced Redundancy Storage object and can no
 	 * longer service requests for that object.
 	 *
 	 * If notifications are not enabled on the bucket, the operation returns an empty
-	 * `NotificatonConfiguration` element.
+	 * `NotificatonSettings` element.
 	 *
-	 * By default, you must be the bucket owner to read the notification configuration of a bucket. However,
-	 * the bucket owner can use a bucket policy to grant permission to other users to read this configuration
+	 * By default, you must be the bucket owner to read the notification Settings of a bucket. However,
+	 * the bucket owner can use a bucket policy to grant permission to other users to read this Settings
 	 * with the `s3:GetBucketNotification` permission.
 	 *
 	 * @param string $bucket (Required) The name of the bucket to use.
@@ -3451,7 +3451,7 @@ class AmazonS3 extends CFRuntime
 
 
 	/*%******************************************************************************************%*/
-	// WEBSITE CONFIGURATION
+	// WEBSITE Settings
 
 	/**
 	 * Enables and configures an Amazon S3 website using the corresponding bucket as the content source.
@@ -3496,8 +3496,8 @@ class AmazonS3 extends CFRuntime
 	}
 
 	/**
-	 * Retrieves the website configuration for a bucket. The contents of this response are identical to the
-	 * content submitted by the user during the website creation operation. If a website configuration has
+	 * Retrieves the website Settings for a bucket. The contents of this response are identical to the
+	 * content submitted by the user during the website creation operation. If a website Settings has
 	 * never been set, Amazon S3 will return a 404 error.
 	 *
 	 * @param string $bucket (Required) The name of the bucket to use.
@@ -3520,7 +3520,7 @@ class AmazonS3 extends CFRuntime
 	}
 
 	/**
-	 * Removes the website configuration for a bucket.
+	 * Removes the website Settings for a bucket.
 	 *
 	 * @param string $bucket (Required) The name of the bucket to use.
 	 * @param array $opt (Optional) An associative array of parameters that can have the following keys: <ul>

@@ -6,15 +6,15 @@
 
 /**
  * StoragePdo
- * @uses StorageInterface, ExceptionStorage, Configuration
+ * @uses StorageInterface, ExceptionStorage, Settings
  */
 class StoragePdo implements StorageInterface{
 
     /**
-     * Configuration
-     * @var Configuration
+     * Settings
+     * @var Settings
      */
-    protected $configuration;
+    protected $settings;
     
     /**
      * Whether the request changes the data
@@ -54,26 +54,26 @@ class StoragePdo implements StorageInterface{
 
     /**
      * Constructor
-     * @param Configuration
+     * @param Settings
      */
-    public function __construct( $configuration ){
-        if( !$configuration || !is_a($configuration, 'Configuration') ) throw new ExceptionConfiguration('StoragePdo requires a configuration', 500);
-        // determines what configuration must be passed
-        $configuration_template = array(
-            'location' => Configuration::MANDATORY,
-            'database' => Configuration::MANDATORY,
-            'username' => Configuration::MANDATORY,
-            'password' => Configuration::MANDATORY,
-            'table' => Configuration::MANDATORY,
-            'primary' => Configuration::MANDATORY
+    public function __construct( $settings ){
+        if( !$settings || !is_a($settings, 'Settings') ) throw new ExceptionSettings('StoragePdo requires a Settings', 500);
+        // determines what Settings must be passed
+        $settings_template = array(
+            'location' => Settings::MANDATORY,
+            'database' => Settings::MANDATORY,
+            'username' => Settings::MANDATORY,
+            'password' => Settings::MANDATORY,
+            'table' => Settings::MANDATORY,
+            'primary' => Settings::MANDATORY
         );
-        // accepts configuration
-        $configuration->validate($configuration_template);
-        // copy configuration into this
-        $this->configuration = $configuration;
+        // accepts Settings
+        $settings->validate($settings_template);
+        // copy Settings into this
+        $this->Settings = $settings;
         // oft-used vars
-        $this->table = $configuration->table;
-        $this->primary = $configuration->primary;
+        $this->table = $settings->table;
+        $this->primary = $settings->primary;
     }
     
     /**
@@ -160,7 +160,7 @@ class StoragePdo implements StorageInterface{
             $result = Cache::read($key);
         }
          */
-        // 
+        // build query
         $query = "SELECT `{$this->table}`.*\n".
                 "FROM `{$this->table}`\n".
                 "WHERE `{$this->table}`.`{$this->primary}` = ?";
@@ -237,20 +237,6 @@ class StoragePdo implements StorageInterface{
         return $record;
     }
     
-    public function deleteAll(){
-        $sql = $this->getDatabase()->prepare( "TRUNCATE `{$this->table}`" );
-        $sql->execute();
-        // changes
-        $this->isChanged = true;
-        // error
-        if( !$sql->rowCount() ){ 
-            $error = $sql->errorInfo();
-            throw new Exception('Failed to delete all records: '.$error[2], 400); 
-        }
-        // return
-        return true;
-    }
-    
     /**
      * Checks whether a record exists in the database
      * @param mixed $id
@@ -272,10 +258,10 @@ class StoragePdo implements StorageInterface{
     }
 
     /**
-     * List All
+     * Lists all records in a table
      * @return <array>
      */
-    public function all($size = null, $page = null){
+    public function all($number_of_records = null, $page = null){
         // TODO: cache
         /**
         $key = $this->getEnumerateCacheKey();
@@ -287,8 +273,18 @@ class StoragePdo implements StorageInterface{
             $results = Cache::read($key);
         }
          */
+        // build query
         $query = "SELECT `{$this->table}`.*\n".
                 "FROM `{$this->table}`";
+        // paging
+        if( is_int($number_of_records) ){
+            $query .= "\nLIMIT ";
+            if( is_int($page) ){
+                $offset = (abs($page) - 1) * $number_of_records;
+                $query .= "$offset, ";
+            }
+            $query .= $number_of_records;
+        }
         // prepare statement
         $sql = $this->getDatabase()->prepare( $query );
         $sql->execute();
@@ -302,12 +298,106 @@ class StoragePdo implements StorageInterface{
         return $results;
     }
     
-    public function search($key, $value){
-        // TODO
+    /**
+     * Deletes all records in a table
+     * @return boolean 
+     */  
+    public function deleteAll(){
+        $sql = $this->getDatabase()->prepare( "DELETE FROM `{$this->table}`" );
+        $sql->execute();
+        // changes
+        $this->isChanged = true;
+        // error
+        if( !$sql->rowCount() ){ 
+            $error = $sql->errorInfo();
+            throw new Exception('Failed to delete all records: '.$error[2], 400); 
+        }
+        // return
+        return true;
     }
     
+    /**
+     * Counts records in the table
+     * @return int
+     */
+    public function count(){
+        // build query
+        $query = "SELECT COUNT(`{$this->table}`.*)\n".
+                "FROM `{$this->table}`";
+        // prepare statement
+        $sql = $this->getDatabase()->prepare( $query );
+        $sql->execute();  
+        // get result
+        $result = $sql->fetch();
+        $count = intval($result[0]);
+        // return
+        return $count;
+    }
+    
+    /**
+     * Searches for a key-value pair in the table
+     * @param string $key
+     * @param any $value
+     * @return array 
+     */
+    public function search($key, $value){
+        // build query
+        $query = "SELECT COUNT(`{$this->table}`.*)\n".
+                "FROM `{$this->table}`\n".
+                "WHERE `{$this->table}`.`$key` LIKE `%$value%' OR `{$this->table}`.`$key` = '$value'";
+        // prepare statement
+        $sql = $this->getDatabase()->prepare( $query );
+        $sql->execute();
+        // get result
+        $results = array();
+        while( $row = $sql->fetch(PDO::FETCH_OBJ) ){
+            $id = $row->{$this->primary};
+            $results[$id] = $row;
+        }
+        // return
+        return $results;
+                
+    }
+    
+    /**
+     * Returns the first record in the table
+     * @return stdObject
+     */
+    public function first(){
+        // build query
+        $query = "SELECT `{$this->table}`.*\n".
+                "FROM `{$this->table}`\n".
+                "LIMIT 0, 1";
+        // prepare statement
+        $sql = $this->getDatabase()->prepare( $query );
+        $sql->execute();
+        // get result
+        $result = $sql->fetch(PDO::FETCH_OBJ);
+        // check result
+        if( $result === false ){ throw new ExceptionStorage('Could not find record to read', 404); }
+        // return
+        return $result;
+    }
+    
+    /**
+     * Returns the last record in the table (assumes auto-increment)
+     * @return stdObject
+     */
     public function last(){
-        
+        // build query
+        $query = "SELECT `{$this->table}`.*\n".
+                "FROM `{$this->table}`\n".
+                "ORDER BY `{$this->table}`.`{$this->primary}` DESC".
+                "LIMIT 0, 1";
+        // prepare statement
+        $sql = $this->getDatabase()->prepare( $query );
+        $sql->execute();
+        // get result
+        $result = $sql->fetch(PDO::FETCH_OBJ);
+        // check result
+        if( $result === false ){ throw new ExceptionStorage('Could not find record to read', 404); }
+        // return
+        return $result;
     }
 
     /**
@@ -413,8 +503,8 @@ class StoragePdo implements StorageInterface{
         if( !$instance ) {
             // create PDO instance
             try {
-                $dsn = "mysql:dbname={$this->configuration->database};host={$this->configuration->location}";
-                $instance = new PDO($dsn, $this->configuration->username, $this->configuration->password);
+                $dsn = "mysql:dbname={$this->Settings->database};host={$this->Settings->location}";
+                $instance = new PDO($dsn, $this->Settings->username, $this->Settings->password);
             } catch (PDOException $e) {
                 throw new Exception($e->getMessage(), 500);
             }
