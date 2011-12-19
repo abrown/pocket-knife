@@ -6,7 +6,7 @@
 
 /**
  * WebRouting
- * @uses
+ * @uses ExceptionWeb, LanguageInflection
  */
 class WebRouting{
 
