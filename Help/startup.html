@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>PocketKnife: Startup</title>
+        <style>
+            body{
+                font-size: 14px;
+                font-family: 'Georgia', 'Times New Roman', serif;
+                display: block;
+                margin: 0 auto 0;
+                max-width: 1200px;
+                min-width: 600px;
+                width: 72%;
+            }
+            h1{
+                background: url(../pocket-knife.jpg) top left no-repeat;
+                padding-left: 150px;
+                line-height: 1.5em;
+                height: 100px;
+            }
+            pre{
+                background-color: #eee;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>PocketKnife: A PHP Tool for Web Development</h1>
+        <h2>What happens on including <code>'knife/start.php'</code></h2>
+        <p>
+            The following are created (in order):
+        </p>
+        <table>
+            <tr>
+                <th>Name</th><th>Type</th><th>Description</th><th>Memory Usage</th>
+            </tr>
+            <tr>
+                <td><code>KNIFE_BASE_PATH</code></td>
+                <td>Constant</td>
+                <td>Absolute path to current Knife folder</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><code>DS</code></td>
+                <td>Constant</td>
+                <td>Shortcut for OS directory separator</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><code>pr</code></td>
+                <td>Function</td>
+                <td>Prints out debug information</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><code>get_public_vars</code></td>
+                <td>Function</td>
+                <td>Gets public variables of a class instance</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><code>__autoload</code></td>
+                <td>Function</td>
+                <td>Overrides PHP <code>__autoload</code> to load classes from Knife files</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><code>require KSettings</code></td>
+                <td>Class</td>
+                <td>Loads Settings, cached</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td><code>KNIFE_DEBUG_ON</code></td>
+                <td>Constant</td>
+                <td>KSettings sets debugging level, including ini_set('display_errors', x) and error_reporting()</td>
+                <td></td>
+            </tr>
+        </table>
+    </body>
+</html>
