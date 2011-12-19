@@ -23,18 +23,18 @@ class Service {
      * @example $this->storage = array('type'=>'mysql', 'username'=>'test', 'password'=>'password', 'location'=>'localhost', 'database'=>'db');
      * @var array
      * */
-    public $storage = 'application/json';
+    public $storage = array('type'=>'json', 'location'=>'db.json');
 
     /**
      * Defines the input data type for the request; should be a class implementing ServiceType
-     * @example $this->input = 'Xml';
+     * @example $this->input = 'application/json';
      * @var string
      * */
     public $input = 'application/x-www-form-urlencoded';
 
     /**
      * Defines the output data and content-type of the response; should be a class implementing ServiceType
-     * @example $this->output = 'Html';
+     * @example $this->output = 'application/json';
      * @var string
      * */
     public $output = 'text/html';
@@ -78,7 +78,7 @@ class Service {
      * @param Settings $settings 
      */
     public function __construct($settings) {
-        // determines what Settings must be passed
+        // determines what settings must be passed
         $settings_template = array(
             'acl' => Settings::MANDATORY,
             'storage' => Settings::OPTIONAL | Settings::MULTIPLE,
@@ -90,9 +90,9 @@ class Service {
             'method' => Settings::OPTIONAL | Settings::STRING,
             'id' => Settings::OPTIONAL
         );
-        // accepts Settings
+        // accepts settings
         if (!$settings || !is_a($settings, 'Settings'))
-            throw new ExceptionSettings('Incorrect Settings given.', 500);
+            throw new ExceptionSettings('Incorrect settings given.', 500);
         $settings->validate($settings_template);
         // copy Settings into this
         foreach ($this as $key => $value) {
@@ -254,7 +254,7 @@ class Service {
     }
 
     /**
-     * Returns the storage Settings for this request
+     * Returns the storage object for this request
      * @var array
      * */
     protected function getStorage() {
