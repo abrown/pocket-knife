@@ -28,8 +28,10 @@
         </p>
         <p>
             The idea is that RESTful PHP applications do not have to be complex to
-            be powerful and fast. Web applications extend the same components (services,
-            settings, sites, and sequences) again and again; why not writ
+            be powerful and fast. Web applications build the same components (services,
+            settings, sites, and sequences) again and again; the <code>pocket-knife</code>
+            components are lightweight so they can be easily extended and fully tested
+            for so you can trust their reliability.
         </p>
         <h2>Requirements</h2>
         <p>
@@ -62,7 +64,7 @@ class Calculator extends ResourceStatic{
             </li>
             <li>Create the resource anchor, <code>service.php</code>, and include <code>pocket-knife</code> (see below).</li>
             <li>Include that <code>Calculator</code> class we just made (see below).</li>
-            <li>Create a Settings that allows all users access to all classes (don't worry, the ACL can get more complicated) using GET variables as input and JSON as output (see below).</li>
+            <li>Create a <code>Settings</code> component that allows all users access to all classes (don't worry, the ACL can get more complex) using GET variables as input and JSON as output (see below).</li>
             <li>Create the service and let it run free:
 <code class="block">&lt;?php
 include('pocket-knife/start.php');
