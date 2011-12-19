@@ -7,7 +7,7 @@
 
 /**
  * Settings
- * @uses ExceptionFile
+ * @uses ExceptionFile, ExceptionSettings
  * @example
  * Should work like:
  *  add "Settings::setPath('path/to/Settings.php');"
