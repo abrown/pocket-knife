@@ -19,8 +19,8 @@ class BasicBenchmark{
     static $end = 0;
     
     /**
-     * Start timer
-     * @return <int>
+     * Starts timer
+     * @return float the microseconds-time when the timer was started
      */
     public static function startTimer(){
         self::$start = microtime(true);
@@ -28,8 +28,8 @@ class BasicBenchmark{
     }
     
     /**
-     * End timer
-     * @return <int>
+     * Ends timer
+     * @return float the microseconds-time when the timer was stopped
      */
     public static function endTimer(){
         self::$end = microtime(true);
@@ -38,7 +38,7 @@ class BasicBenchmark{
     
     /**
      * Returns time elapsed
-     * @return <int>
+     * @return float the number of seconds from startTime() to endTime()
      */
     public static function getTime(){
         return round(self::$end - self::$start, 5);
