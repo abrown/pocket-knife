@@ -6,15 +6,13 @@
  */
 
 /**
- * BasicFile
- * @uses
+ * BasicClass
+ * @uses BasicDocumentation
  */
-class BasicFile{
-    
-    static private $autoload = array();
+class BasicClass{
     
     /**
-     * Recursively loads classes
+     * Recursively loads all dependent classes
      * @param string $class
      * @return boolean 
      */
@@ -42,7 +40,7 @@ class BasicFile{
      * @param boolean $debug
      * @return array 
      */
-    public function findDependencies( $class, $dependencies = array() ){
+    public static function findDependencies( $class, $dependencies = array() ){
         if( !$class ) return array();
         // add self to dependencies
         if( !in_array($class, $dependencies) ) $dependencies[] = $class;
@@ -56,7 +54,7 @@ class BasicFile{
                 $_class = trim($_class);
                 if( in_array($_class, $dependencies) ) continue;
                 else $dependencies[] = $_class;
-                $dependencies = BasicFile::findDependencies($_class, $dependencies);
+                $dependencies = BasicClass::findDependencies($_class, $dependencies);
             }
         }
         return $dependencies;
@@ -67,11 +65,21 @@ class BasicFile{
      * @param string $class
      * @return string 
      */
-    public function getPathToClass($class){
+    public static function getPathToClass($class){
         $replaced = preg_replace('/([a-z])([A-Z])/', '$1/$2', $class);
         $replaced = str_replace('/', DS, $replaced);
         $path = get_base_dir() . DS . $replaced . '.php';
         if (!is_file($path)) throw new ExceptionFile('Class '.$class.' not found at: '.$path, 500);
         return $path;
+    }
+    
+    /**
+     * Returns HTML-formatted documentation for a given class
+     * @param string $class
+     * @return string HTML
+     */
+    public static function getDocumentation($class){
+    	$documentation = new BasicDocumentation($class);
+    	return $documentation->getHtml($class);
     }
 }
