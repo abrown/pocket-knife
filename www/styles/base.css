@@ -1,0 +1,134 @@
+/**
+Palettes from http://www.colourlovers.com/palette/28518/10X777.com
+**/
+
+html{
+    background-color: #282626;
+}
+body{
+    background-color: #ffffff;
+    display: block;
+    font-size: 16px;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    line-height: 24px;
+    margin: 2em auto 2em;
+    max-width: 1200px;
+    min-width: 600px;
+    padding: 2em;
+    width: 72%;
+}
+
+/** TEXT **/
+h1, h2, h3, h4, h5, h6{
+    font-family: 'Arial', 'Helvetica', 'Verdana', 'Tahoma', sans-serif;
+    font-weight: bold;
+}
+h1{
+    font-size: 3em;
+    line-height: 1em;
+}
+h2, h3, h4{
+    font-size: 1.5em;
+    line-height: 1em;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+h2{
+	color: #0B486B;
+}
+p{
+	margin-bottom: 1.5em;
+}
+
+/** CODE **/
+pre{
+	background-color: black;
+	color: white;
+	padding: 1em;
+	overflow-x: scroll;
+	overflow-y: hidden;
+}
+code{
+	font-size: 15px;
+	line-height: 16px;
+}
+
+/** TABLE **/
+table{
+	border-collapse: collapse;
+	table-layout: fixed;
+	width: 100%;
+}
+tr{
+	border-bottom: 1px solid #D9CECE;
+}
+td{
+	vertical-align: top;
+}
+td p{
+	margin-top: 0;	
+}
+
+/** LIST **/
+ul, ol{
+	margin-bottom: 1.5em;
+}
+ul li{
+	list-style: url("/pocket-knife/www/images/bullet.jpg");
+}
+ol li{
+	list-style: decimal;
+}
+li{
+    margin-left: 1.5em;
+}
+
+/** HORIZONTAL RULE **/
+hr{
+    background-color: #D9CECE;
+    border: 0;
+    color: #D9CECE;
+    height: 1px;
+    margin: 0 -2em;
+    padding: 0;
+}
+hr.title{
+	margin-bottom: 40px;
+}
+
+/** SPECIAL ELEMENTS **/
+.aside{
+    float: right;
+    margin-left: 2em;
+}
+.aside *{
+	clear: both;
+}
+.aside a{
+    background-color: #0B486B;
+    color: #fff;
+    clear: both;
+    display: inline-block;
+    float: right;
+    font-family: 'Arial', 'Helvetica', 'Verdana', 'Tahoma', sans-serif;
+    font-weight: bold;
+    font-size: 1.5em;
+    line-height: 24px;
+    margin-bottom: 24px;
+    padding: 0 0.5em;
+    text-decoration: none;
+}
+.aside a:hover{
+    background-color: #EE1C25;
+}
+
+ul.sitemap li{
+	display: inline-block;
+	width: 10em;
+	outline: 1px solid red; 
+}
+ul.sitemap a{
+	background-color: #0B486B;
+    color: #fff;
+}
+
