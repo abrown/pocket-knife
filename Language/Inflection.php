@@ -6,26 +6,28 @@
  */
 
 /**
- * LanguageInflection
- * @uses
+ * Provides methods to modify the inflection of English words.
+ * @example
+ * $lang = new LanguageInflection('blog_posts');
+ * echo $lang->toCamelCaseStyle()->toPlural(); // BlogPosts
  */
 class LanguageInflection{
 
     /**
      * Initial word
-     * @var <string>
+     * @var string
      */
     public $before;
 
     /**
      * Current (modified) word
-     * @var <string>
+     * @var string
      */
     public $after;
 
     /**
      * Constructor
-     * @param <string> $string Words to inflect
+     * @param string $string Words to inflect
      */
     public function __construct($string){
         $this->before = trim($string);
@@ -33,7 +35,7 @@ class LanguageInflection{
 
     /**
      * Get word in current state
-     * @return <string>
+     * @return string
      */
     public function getWord(){
         if( is_null($this->after) ) return $this->before;
@@ -42,7 +44,7 @@ class LanguageInflection{
 
     /**
      * Set word
-     * @param <string> $string
+     * @param string $string
      */
     public function setWord($string){
         $this->after = $string;
@@ -50,7 +52,7 @@ class LanguageInflection{
 
     /**
      * Checks if word is in camel-case style
-     * @return <bool>
+     * @return boolean
      */
     public function isCamelCaseStyle(){
         if( strpos($this->getWord(), '_') !== false ) return true;
@@ -59,8 +61,8 @@ class LanguageInflection{
 
     /**
      * Sets current word to camel-case style from underscore style
-     * @param <bool> $capitalize_first_letter
-     * @return <RestInflection>
+     * @param boolean $capitalize_first_letter
+     * @return LanguageInflection
      */
     public function toCamelCaseStyle( $capitalize_first_letter = true ){
         $word = $this->getWord();
@@ -77,7 +79,7 @@ class LanguageInflection{
 
     /**
      * Checks if word is in underscore style
-     * @return <bool>
+     * @return boolean
      */
     public function isUnderscoreStyle(){
         if( strpos($this->getWord(), '_') === false ) return true;
@@ -86,8 +88,8 @@ class LanguageInflection{
 
     /**
      * Sets current word to underscore style from camel-case style
-     * @param <bool> $lowercase_first_letter
-     * @return <RestInflection>
+     * @param boolean $lowercase_first_letter
+     * @return LanguageInflection
      */
     public function toUnderscoreStyle( $lowercase_first_letter = true ){
         $word = $this->getWord();
@@ -100,6 +102,35 @@ class LanguageInflection{
         // save
         $this->setWord($word);
         return $this;
+    }
+
+    /**
+    * Sets current word to paragraph style (i.e. normal, written English)
+    * @param boolean $uppercase_first_letters
+    * @return LanguageInflection
+    */
+    public function toParagraphStyle( $uppercase_first_letters = true ){
+    	$word = $this->getWord();
+    	// replace camelcase with spaces
+    	$word = preg_replace('/([a-z])([A-Z])/e', "strtolower('\\1 \\2')", $word);
+    	// replace special characters
+    	$word = strtr($word, array('-'=>' ', '_'=>' '));
+    	// capitalize?
+    	if( $uppercase_first_letters ){
+    		$word = preg_replace('/ ([a-z])/e', "strtoupper(' \\1')", ucfirst($word));
+    	}
+    	// save
+    	$this->setWord($word);
+    	return $this;
+    }
+    
+    public function removeFileExtension(){
+    	$word = $this->getWord();
+    	// replace file extensions
+    	$word = preg_replace('/\.\w+$/', '', $word);
+    	// save
+    	$this->setWord($word);
+    	return $this;
     }
 
     /**
@@ -126,7 +157,7 @@ class LanguageInflection{
 
     /**
      * Transforms to singular
-     * @return <RestInflection>
+     * @return LanguageInflection
      */
     public function toSingular(){
         $word = $this->getWord();
@@ -164,7 +195,7 @@ class LanguageInflection{
 
     /**
      * Transforms to plural
-     * @return <RestInflection>
+     * @return LanguageInflection
      */
     public function toPlural(){
         $word = $this->getWord();
@@ -180,7 +211,7 @@ class LanguageInflection{
 
     /**
      * Transforms word to lower case
-     * @return <RestInflection>
+     * @return LanguageInflection
      */
     public function toLowerCase(){
         $this->setWord( strtolower($this->getWord()) );
@@ -189,7 +220,7 @@ class LanguageInflection{
 
     /**
      * Transforms word to upper case
-     * @return <RestInflection>
+     * @return LanguageInflection
      */
     public function toUpperCase(){
         $this->setWord( strtoupper($this->getWord()) );
@@ -198,7 +229,7 @@ class LanguageInflection{
 
     /**
      * Transforms word to title case (e.g.: 'One Two Three-Four')
-     * @return <RestInflection>
+     * @return LanguageInflection
      */
     public function toTitleCase(){
         $word = $this->getWord();
@@ -213,7 +244,7 @@ class LanguageInflection{
 
     /**
      * To string
-     * @return <string>
+     * @return string
      */
     public function __toString(){
         return $this->getWord();
@@ -221,7 +252,7 @@ class LanguageInflection{
 
     /**
      * Alias for __toString
-     * @return <string>
+     * @return string
      */
     public function toString(){
         return $this->__toString();
