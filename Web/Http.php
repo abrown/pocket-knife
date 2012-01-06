@@ -6,15 +6,14 @@
  */
 
 /**
- * WebHttp
- * @uses 
+ * Provides static methods to handle common HTTP-related tasks.
  */
 class WebHttp {
 
     /**
-     * Get request URL
-     * @staticvar <string> $url
-     * @return <string> Request URL
+     * Returns the HTTP request URL
+     * @staticvar string $url
+     * @return string
      */
     static function getUrl() {
         static $url = null;
@@ -36,18 +35,22 @@ class WebHttp {
     }
 
     /**
-     * Get request URI
-     * @return <string> Request URI
+     * Returns the HTTP request URI
+     * @example
+     * For a URL like "http://www.example.com/index.php?etc", the URI
+     * returned will be "/index.php?etc"
+     * @return string
      */
     static function getUri() {
         return $_SERVER['REQUEST_URI'];
     }
 
     /**
-     * Get request tokens
-     * E.g.: http://www.example.com/a/1/delete -> [a, 1, delete]
-     * @staticvar <array> $tokens
-     * @return <array>
+     * Returns HTTP request tokens from the request URL
+     * @example For the URL "http://www.example.com/a/1/delete",
+     * this methods returns an array of the form [a, 1, delete]
+     * @staticvar array $tokens
+     * @return array
      */
     static function getTokens() {
         static $tokens = null;
@@ -61,11 +64,14 @@ class WebHttp {
     }
 
     /**
-     * Get request method
-     * @return <string> Method
+     * Returns HTTP request method. Checks the request URI 
+     * for a parameter like "PUT" or "POST" before checking the 
+     * real HTTP method. This allows all types of requests from 
+     * the browser.
+     * @return string one of [GET, PUT, POST, DELETE, HEAD, LIST]
      */
     static function getMethod() {
-        $types = array('GET', 'PUT', 'POST', 'DELETE', 'HEAD', 'UPDATE');
+        $types = array('GET', 'PUT', 'POST', 'DELETE', 'HEAD', 'LIST');
         if ($type = array_intersect(array_keys($_GET), $types)) {
             return $type[0];
         }
@@ -80,10 +86,11 @@ class WebHttp {
     }
 
     /**
-     * Get a cleaned parameter
-     * @param <string> $parameter
-     * @param <string> $clean type
-     * @return <mixed>
+     * Get a parameter from the HTTP request; will clean the 
+     * value using Http::clean() if necessary
+     * @param string $parameter a key in the GET or POST array
+     * @param boolean $clean a boolean determining whether to use Http::clean() on the parameter
+     * @return mixed
      */
     static function getParameter($parameter = null, $clean = false) {
         $out = null;
@@ -109,9 +116,9 @@ class WebHttp {
     /**
      * Cleans inputs according to type
      * TODO: test
-     * @param <mixed> $input
-     * @param <string> $type
-     * @return <mixed>
+     * @param mixed $input
+     * @param string $type one of [url, string, date, html, integer, float]  
+     * @return mixed
      */
     static function clean($input, $type = 'text') {
         // recurse
@@ -166,25 +173,24 @@ class WebHttp {
     }
 
     /**
-     * Send HTTP code
-     * @return <void>
+     * Sends HTTP code to client
      */
     static function setCode($code) {
         header('HTTP/1.1 ' . intval($code));
     }
     
     /**
-     * Send HTTP content type
+     * Sends HTTP content type to client
      * @param string $type 
      */
     static function setContentType($type){
         header('Content-Type: '.$type);
     }
 
-    /**
-     * Redirect
-     * @return <void>
-     */
+	/**
+	 * Redirects client to the given URL
+	 * @param string $url
+	 */
     static function redirect($url) {
         header('Location: ' . $url);
         exit();
@@ -192,7 +198,7 @@ class WebHttp {
 
     /**
      * Performs HTTP request
-     * @example To grab a page: Http::request('www.google.com')
+     * @example To grab a page: WebHttp::request('www.google.com')
      * @param string $url
      * @param string $method, one of [GET, POST, PUT, DELETE, HEAD]
      * @param string $content, 
@@ -221,8 +227,9 @@ class WebHttp {
     }
     
     /**
-     * Get returned HTTP code from last HTTP request made
-     * @return type 
+     * Returns HTTP code from last HTTP request made using WebHttp::request()
+     * TODO: test
+     * @return int 
      */
     static function getCode(){
         if( !$http_response_header ) throw new ExceptionWeb('No HTTP request was made', 400);
@@ -230,6 +237,6 @@ class WebHttp {
         foreach($lines as $line){
             if( preg_match('#HTTP/\d.\d (\d\d\d)#i', $line, $matches) ) return intval($matches[1]);
         }
-        return null;
+        return 0;
     }
 }
