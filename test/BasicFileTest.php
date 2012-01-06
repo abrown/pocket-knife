@@ -5,25 +5,25 @@
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
 
-class BasicFileTest extends PHPUnit_Framework_TestCase {
+class BasicClassTest extends PHPUnit_Framework_TestCase {
 
     public static function setUpBeforeClass() {
         // start pocket knife
         $path = dirname(dirname(__FILE__));
         require $path . '/start.php';
         // get code
-        autoload('BasicFile');
+        autoload('BasicClass');
     }
     
     public function testAutoloadAll(){
-        $classes = BasicFile::autoloadAll('TestDataExample');
+        $classes = BasicClass::autoloadAll('TestDataExample');
         $this->assertEquals(array('TestDataExample', 'TestDataExample2'), $classes);
         $this->assertTrue( class_exists('TestDataExample', false) );
         $this->assertTrue( class_exists('TestDataExample', false) );
     }
     
     public function testAutoloadAll2(){
-        $classes_loaded = BasicFile::autoloadAll('Service');
+        $classes_loaded = BasicClass::autoloadAll('Service');
         $service_uses = array(
             'Service',
             'Settings', 

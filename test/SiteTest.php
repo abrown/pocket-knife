@@ -11,9 +11,9 @@ class SiteTest extends PHPUnit_Extensions_OutputTestCase {
         $path = dirname(dirname(__FILE__));
         require $path . '/start.php';
         // get code
-        autoload('BasicFile');
-        BasicFile::autoloadAll('Site');
-        BasicFile::autoloadAll('StorageJson');
+        autoload('BasicClass');
+        BasicClass::autoloadAll('Site');
+        BasicClass::autoloadAll('StorageJson');
     }
 
     public function setUp() {

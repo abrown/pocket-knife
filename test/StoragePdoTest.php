@@ -12,7 +12,7 @@ class StoragePdoTest extends PHPUnit_Framework_TestCase{
         $path = dirname(dirname(__FILE__));
         require $path . '/start.php';
         // get code
-        BasicFile::autoloadAll('StoragePdo');
+        BasicClass::autoloadAll('StoragePdo');
         // create connection
         $instance = new StoragePdo( $this->getConfig() );
         // create testing artifacts
