@@ -6,7 +6,23 @@
  */
 
 /**
- * Site
+ * Provides a system for storing, indexing, editing, and serving a
+ * group of files. 
+ * When using templates, the following variables and tokens are
+ * available.
+ * @example
+ * // the 'content' token is replaced with the file in question
+ * &lt;template:content/&gt;
+ * // the 'content' variable is also available, and contains the 
+ * // same information as above
+ * echo $content;
+ * // the 'name' variable holds the anchored URL, while 'path'
+ * // holds the absolute path to 'name';
+ * echo $name; // e.g. 'dir/page.html'
+ * echo $path; // e.g. '/var/www/dir/page.html'
+ * // the 'site' variable references the Site service (the actual
+ * // object created with this class)
+ * echo $site->search('...'); 
  * @uses Settings, WebRouting, WebTemplate, ExceptionFile, ExceptionAccess
  */
 class Site{
@@ -18,21 +34,24 @@ class Site{
     private $location = '.';
     
     /**
-     * Defines access to each page; set to true to allow all, false to deny all
+     * Defines access to each page; set to true to allow all, 
+     * false to deny all.
      * @example $this->acl = array('user/29 can access index.html');
      * @var mixed
      * */
     public $acl = true;
 
     /**
-     * Defines storage method for storing the site map; see classes in Storage for specific parameters required
+     * Defines the storage method for storing the site map; see classes 
+     * in Storage for specific parameters required.
      * @example $this->storage = array('type'=>'mysql', 'username'=>'test', 'password'=>'password', 'location'=>'localhost', 'database'=>'db');
      * @var array
      * */
     public $storage = array('type'=>'json', 'location'=>'site-map.json');
 
     /**
-     * Defines the output content-type of the response; setting (bool) false allows the web server to determine this
+     * Defines the output content-type of the response; setting 
+     * (bool) false allows the web server to determine this.
      * @example $this->output = 'application/json';
      * @var string
      * */
@@ -79,20 +98,40 @@ class Site{
     }
     
     /**
-     * Executes the site server
-     * TODO: add 'admin' handling
+     * Executes the site server.
+     * @example
+     * // 'admin' invokes the administration section of the site
+     * http://example.com/dir/site.php/admin
+     * // 'clear' deletes all index entries to refresh the site map
+     * http://example.com/dir/site.php/clear
      */
     public function execute(){
-        // find file
-        $filename = $this->location . DS . WebRouting::getAnchoredUrl();
-        $path = $this->find($filename);
-        // send header (if necessary)
-        if( $this->output ) header( 'Content-Type: '.$this->output );
-        // get contents
-        $content = file_get_contents($path);
+    	// send header (if necessary)
+    	if( $this->output ) header( 'Content-Type: '.$this->output );
+        // get name, find file
+        $name = WebRouting::getAnchoredUrl();
+        // routing
+        switch($name){
+        	case 'admin':
+        		$path = null;
+        		$content = $this->executeAdmin();
+        		break;
+        	case 'clear':
+        		$path = null;
+        		$content = $this->executeClearIndex();
+        		break;
+        	default:
+        		$path = $this->find($name);
+		       	if( is_file($path) ) $content = file_get_contents($path);
+				else $content = null;
+        }
         // do templating
         if ($this->template) {
             $this->getTemplate()->replace('content', $content);
+            $this->getTemplate()->setVariable('content', $content);
+            $this->getTemplate()->setVariable('name', $name);
+            $this->getTemplate()->setVariable('path', $path);
+            $this->getTemplate()->setVariable('site', $this);           
             $content = $this->getTemplate()->toString();
         }
         // output
@@ -100,7 +139,27 @@ class Site{
     }
     
     /**
-     * Returns an absolute path when given a filename relative to the site, e.g. folder/index.html
+     * Invokes administration section
+     * @return string
+     */
+    public function executeAdmin(){
+    	return '<h2>TODO: Admin section</h2>';
+    }
+    
+    /**
+     * Clears the site map index and returns an HTML message.
+     * @return string
+     */
+    public function executeClearIndex(){
+    	$this->getStorage()->begin();
+    	$this->getStorage()->deleteAll();
+    	$this->getStorage()->commit();
+    	return '<h2>Site map index cleared.</h2>';
+    }
+    
+    /**
+     * Returns an absolute path when given a filename relative 
+     * to the site, e.g. folder/index.html
      * @param string $filename
      * @return string path to file
      */
@@ -108,44 +167,59 @@ class Site{
         $path = $this->location . DS. $filename;
         // readability check
         if( !is_readable($path) ) throw new ExceptionFile("File {$path} is not readable.", 404);
-        // access check
-        // TODO
+        // access check, TODO
+        
         // return
         return $path;
     }
     
     /**
      * Searches for a text string within the site
+     * TODO:
      */
     public function search( $query ){
         // TODO: implement index
     }
     
     /**
-     * Returns site map
+     * Returns a site map: a list of all files located within 
+     * $this->location. It will filter out all files beginning 
+     * with a period. It also caches its results for 24 hours;
+     * use the '.../clear' URL action (see execute()) to refresh
+     * the cache.
      * @return array
      */
     public function getSiteMap(){
         // run spider?
         $empty = $this->getStorage()->count() < 1;
-        $stale = $empty ? true : time() > $this->getStorage()->read('_updated') + 86400; // more than a day old
+        $stale = $empty ? true : time() > $this->getStorage()->getLastModified() + 86400; // more than a day old
         if( $empty || $stale  ){
             // begin
             $this->getStorage()->begin();
             $this->getStorage()->deleteAll();
-            // change directory
-            $directory = getcwd();
-            $result = chdir($this->location);
-            if( !$result ) throw new ExceptionFile('Site cannot crawl in '.$this->location, 404);
-            // crawl
-            foreach( glob('*') as $filename ){
-                if( $filename[0] == '.' ) continue;
-                $this->getStorage()->create($filename);
+            // crawl through files
+            $stack = array( $this->location );
+            // iteratively search for files
+            while( $stack ){
+            	$current_directory = array_pop($stack);
+            	foreach( scandir($current_directory) as $file ){
+            		// filter
+            		if( $file[0] == '.' ) continue;
+            		// make absolute path
+            		$absolute_path = $current_directory.DS.$file;
+            		// case: directory
+            		if( is_dir($absolute_path) ){
+            			array_push($stack, $absolute_path);
+            		}
+            		// case: file
+            		if( is_file($absolute_path) ){
+						$relative_path = str_ireplace($this->location.DS, '', $absolute_path);
+            			$this->getStorage()->create($relative_path);
+            		}
+            	}
             }
-            // change directory back
-            chdir($directory);
             // commit
-            $this->getStorage()->create(time(), '_updated');
+            //$this->getStorage()->create(time(), '_updated');
             $this->getStorage()->commit();
         }
         // return
@@ -153,15 +227,14 @@ class Site{
     }
     
     /**
-     * Return the applicable template for this request
-     * @return object
-     * */
+     * Creates and returns the applicable template for this request.
+     * @return WebTemplate
+     */
     protected function getTemplate() {
         static $object = null;
         if (!$object) {
             $template_file = $this->template;
             $object = new WebTemplate($template_file, WebTemplate::PHP_FILE);
-            $object->setVariable('site', $this); // TODO: does this violate simplicity?
         }
         return $object;
     }
