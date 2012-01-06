@@ -38,13 +38,14 @@ class StorageJson implements StorageInterface{
     
     /**
      * Constructor
-     * @param type $settings 
+     * @param Settings $settings 
      */
-    public function __construct($settings){
+    public function __construct($settings){        
+        // check settings
         if( !$settings || !is_a($settings, 'Settings') ) throw new ExceptionSettings('StorageJson requires a Settings object', 500);
         // determines what settings must be passed
         $settings_template = array(
-            'location' => Settings::MANDATORY | Settings::PATH,
+            'location' => Settings::MANDATORY | Settings::STRING,
             'schema' => Settings::OPTIONAL
         );
         // validate settings
@@ -54,17 +55,19 @@ class StorageJson implements StorageInterface{
             if (isset($settings->$key))
                 $this->$key = $settings->$key;
         }
-        // ensure location is accessible
-        if( !is_writable($this->location) ) throw new ExceptionStorage("The file '$this->location' is not writable", 500);
         // create database if necessary
         $this->data = new stdClass();
-        if( !is_file($settings->location) ){
-            file_put_contents($settings->location, '{}');
+        if( !is_file($this->location) ){
+        	file_put_contents($this->location, '{}');
+        }
+        // ensure location is accessible
+        elseif( !is_writable($this->location) ){
+        	throw new ExceptionStorage("The file '$this->location' is not writable", 500);
         }
         // read database
         else{
-            $json = file_get_contents($this->location);
-            $this->data = json_decode($json);
+        	$json = file_get_contents($this->location);
+        	$this->data = json_decode($json);
         }
     }
     
@@ -229,5 +232,13 @@ class StorageJson implements StorageInterface{
             if( $i > $last ) $last = $i;
         }
         return $last;
+    }
+    
+    /**
+     * Returns last time the database was modified in unix-time
+     * @return int
+     */
+    public function getLastModified(){
+    	return filectime($this->location);
     }
 }
