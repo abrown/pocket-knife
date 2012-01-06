@@ -179,6 +179,7 @@ class Sequence {
 //        Session::put('step-data', $data);
 //    }
 
+    /**
     public function execute() {
         // check current marker
         if (!array_key_exists($this->parameter, $_GET)) {
@@ -214,12 +215,13 @@ class Sequence {
             }
         }
     }
+    */
 
 }
 
 /**
  * Step
- */
+
 class Step {
 
     private $id;
@@ -292,3 +294,4 @@ class Step {
     }
 
 }
+*/
