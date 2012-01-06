@@ -17,6 +17,7 @@ interface ResourceInterface{
        
     /**
      * Initializes the storage object
+     * @param Settings $settings
      */
     public function setStorage($settings);
     
