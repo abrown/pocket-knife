@@ -82,8 +82,9 @@ class WebRouting {
             $start = 0;
             // find url end
             $anchor_start = strpos($url, $anchor);
-            if( $anchor_start !== false ) 
+            if( $anchor_start !== false ){
                 $end = $anchor_start + strlen($anchor);
+            }
             elseif( strpos($url, '?') !== false ){
                 $end = strpos($url, '?');
             }
@@ -216,8 +217,6 @@ class WebRouting {
         // look through request
         foreach ($_REQUEST as $key => $value) {
             $KEY = strtoupper($key);
-            if (in_array($key, $http_request_methods))
-                $method = $KEY;
             if (in_array($KEY, $http_request_methods))
                 $method = $KEY;
         }
@@ -272,5 +271,4 @@ class WebRouting {
         // return
         return $tokens;
     }
-
 }
