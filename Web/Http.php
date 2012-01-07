@@ -80,13 +80,6 @@ class WebHttp {
     }
 
     /**
-     * TODO: implement getQuery function to get query string
-     */
-    static function getQuery() {
-        
-    }
-
-    /**
      * Get a parameter from the HTTP request; will clean the 
      * value using Http::clean() if necessary
      * @param string $parameter a key in the GET or POST array
