@@ -6,7 +6,10 @@
  */
 
 /**
- * Provides static methods to handle common HTTP-related tasks.
+ * Provides static methods to handle common HTTP-related tasks. These include
+ * handling URLs, sanitizing data, and making HTTP requests. Any URL-related
+ * tasks that have to do with tokens after the anchor are listed in WebRouting.
+ * @uses ExceptionWeb
  */
 class WebHttp {
 
@@ -73,7 +76,7 @@ class WebHttp {
      */
     static function getMethod() {
         $types = array('GET', 'PUT', 'POST', 'DELETE', 'HEAD', 'LIST');
-        if ($type = array_intersect(array_keys($_GET), $types)) {
+        if ($_GET && $type = array_intersect(array_keys($_GET), $types)) {
             return $type[0];
         }
         return $_SERVER['REQUEST_METHOD'];
@@ -108,8 +111,24 @@ class WebHttp {
     }
 
     /**
+     * Normalizes a URL according to the rules in RFC 3986
+     * @link http://en.wikipedia.org/wiki/URL_normalization
+     * @param string $url 
+     * @return string
+     */
+    static function normalize($url){
+        // convert to lower case
+        $url = strtolower($url);
+        // convert non-alphanumeric characters (except -_.~) to hex
+        $url = rawurlencode($url);
+        // add trailing / to directories
+        return $url;
+    }
+    
+    /**
      * Cleans inputs according to type
      * TODO: test
+     * TODO: clarify purpose--cleans what? or from what?
      * @param mixed $input
      * @param string $type one of [url, string, date, html, integer, float]  
      * @return mixed
