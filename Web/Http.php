@@ -49,6 +49,7 @@ class WebHttp {
      * Returns HTTP request tokens from the request URL
      * @example For the URL "http://www.example.com/a/1/delete",
      * this methods returns an array of the form [a, 1, delete]
+     * @deprecated fits better in WebRouting
      * @staticvar array $tokens
      * @return array
      */
@@ -56,7 +57,7 @@ class WebHttp {
         static $tokens = null;
         $pattern = '#\.php/([^?]+)#i';
         if (is_null($tokens)) {
-            if (preg_match($pattern, Http::getUrl(), $match)) {
+            if (preg_match($pattern, WebHttp::getUrl(), $match)) {
                 $tokens = explode('/', $match[1]);
             }
         }
