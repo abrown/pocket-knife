@@ -46,6 +46,26 @@ class WebRouting {
         }
         return $url;
     }
+    
+    /**
+     * Returns the request URL from its beginning through the 
+     * directory holding the current script.
+     * @example
+     * // for a request like 'http://www.example.com/dir/index.php'
+     * echo WebRouting::getDirectoryUrl();
+     * // should print 'http://www.example.com/dir'
+     * @staticvar string $directory_url
+     * @return string 
+     */
+    public static function getDirectoryUrl(){
+        static $directory_url = null;
+        if( $directory_url === null ){
+            $url = self::getLocationUrl();
+            $end = strrpos($url, '/');
+            $directory_url = substr($url, 0, $end);
+        }
+        return $directory_url;
+    }
 
     /**
      * Returns the request URL from its beginning through the
