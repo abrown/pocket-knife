@@ -80,8 +80,17 @@ class WebRouting {
             $url = self::getUrl();
             $anchor = self::getAnchor();
             $start = 0;
-            $end = strpos($url, $anchor) + strlen($anchor);
-            // get url
+            // find url end
+            $anchor_start = strpos($url, $anchor);
+            if( $anchor_start !== false ) 
+                $end = $anchor_start + strlen($anchor);
+            elseif( strpos($url, '?') !== false ){
+                $end = strpos($url, '?');
+            }
+            else{
+                $end = strlen($url);
+            }
+            // make url
             $location_url = substr($url, $start, $end);
             // test for filename 
             if( strpos($location_url, '.php') === false ){
