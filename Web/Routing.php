@@ -61,7 +61,15 @@ class WebRouting {
             $anchor = self::getAnchor();
             $start = 0;
             $end = strpos($url, $anchor) + strlen($anchor);
+            // get url
             $location_url = substr($url, $start, $end);
+            // test for filename 
+            if( strpos($location_url, '.php') === false ){
+                $parts = explode('/', $_SERVER['SCRIPT_FILENAME']);
+                $filename = end($parts);
+                if( $location_url[ strlen($location_url) - 1 ] !== '/' ) $location_url .= '/';
+                $location_url .= $filename;
+            }
         }
         return $location_url;
     }
