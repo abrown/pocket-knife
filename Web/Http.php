@@ -95,7 +95,7 @@ class WebHttp {
             elseif (array_key_exists($parameter, $_POST))
                 $out = $_POST[$parameter];
             elseif (strtoupper($parameter) == 'GET')
-                $out = $_POST;
+                $out = $_GET;
             elseif (strtoupper($parameter) == 'POST')
                 $out = $_POST;
         }
