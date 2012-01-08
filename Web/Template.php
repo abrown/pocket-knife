@@ -12,7 +12,7 @@
  * template by passing a path or template text to the constructor; the
  * tokens are replaced with WebTemplate::replace() and PHP variables are
  * set with WebTemplate::setVariable().
- * @uses ExceptionSettings
+ * @uses ExceptionSettings, ExceptionFile
  * @example
  * // build the instance
  * $template = new Template('file.php', Template::PHP_FILE);
