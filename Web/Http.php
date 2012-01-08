@@ -14,6 +14,12 @@
 class WebHttp {
 
     /**
+     * Storest HTTP codes for WebHttp::request();
+     * @var int 
+     */
+    private static $response_code;
+
+    /**
      * Returns the HTTP request URL
      * @staticvar string $url
      * @return string
@@ -180,7 +186,7 @@ class WebHttp {
      * @example
      * 
      * @param mixed $input
-     * @param string $type one of [alphanumeric, date, html, integer, float]
+     * @param string $type one of [alphanumeric, date, html, sql, integer, float]
      * @param mixed $default the value to return if $data is empty (uses PHP empty() function)
      * @return mixed
      */
@@ -231,6 +237,7 @@ class WebHttp {
      * Sends HTTP code to client
      */
     static function setCode($code) {
+        if( headers_sent() ) throw new ExceptionWeb('HTTP headers already sent', 400);
         header('HTTP/1.1 ' . intval($code));
     }
     
@@ -239,6 +246,7 @@ class WebHttp {
      * @param string $type 
      */
     static function setContentType($type){
+        if( headers_sent() ) throw new ExceptionWeb('HTTP headers already sent', 400);
         header('Content-Type: '.$type);
     }
 
@@ -247,6 +255,7 @@ class WebHttp {
 	 * @param string $url
 	 */
     static function redirect($url) {
+        if( headers_sent() ) throw new ExceptionWeb('HTTP headers already sent', 400);
         header('Location: ' . $url);
         exit();
     }
@@ -277,21 +286,27 @@ class WebHttp {
         if( $response === false ){
             throw new ExceptionWeb('Could not open url: '.$url, 404);
         }
+        // save response code
+        if( !isset($http_response_header) ){
+            throw new ExceptionWeb('No HTTP request was made', 400);
+        }
+        $lines = preg_grep('#HTTP/#i', $http_response_header);
+        self::$response_code = 0;
+        foreach($lines as $line){
+            if( preg_match('#HTTP/\d.\d (\d\d\d)#i', $line, $matches) ){
+                self::$response_code = intval($matches[1]);
+                break;
+            }
+        }
         // return 
         return $response;
     }
     
     /**
      * Returns HTTP code from last HTTP request made using WebHttp::request()
-     * TODO: test
      * @return int 
      */
-    static function getCode(){
-        if( !$http_response_header ) throw new ExceptionWeb('No HTTP request was made', 400);
-        $lines = preg_grep('#HTTP/#i', $http_response_header);
-        foreach($lines as $line){
-            if( preg_match('#HTTP/\d.\d (\d\d\d)#i', $line, $matches) ) return intval($matches[1]);
-        }
-        return 0;
+    static function getRequestCode(){
+        return self::$response_code;
     }
 }
