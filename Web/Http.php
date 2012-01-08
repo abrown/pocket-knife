@@ -184,7 +184,10 @@ class WebHttp {
      * read 'sanitize() some $data for $purpose'. sanitize() will recursively 
      * clean objects and arrays. For cleaning URLs, see normalize().
      * @example
-     * 
+     * // for SQL:
+     * $cleaned_vars = WebHttp::sanitize($_GET, 'sql');
+     * // for HTML:
+     * echo WebHttp::sanitize($unsafe_html, 'html', '<b>No data given</b>');
      * @param mixed $input
      * @param string $type one of [alphanumeric, date, html, sql, integer, float]
      * @param mixed $default the value to return if $data is empty (uses PHP empty() function)
@@ -250,10 +253,10 @@ class WebHttp {
         header('Content-Type: '.$type);
     }
 
-	/**
-	 * Redirects client to the given URL
-	 * @param string $url
-	 */
+    /**
+     * Redirects client to the given URL
+     * @param string $url
+     */
     static function redirect($url) {
         if( headers_sent() ) throw new ExceptionWeb('HTTP headers already sent', 400);
         header('Location: ' . $url);
