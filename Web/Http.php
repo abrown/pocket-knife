@@ -117,72 +117,114 @@ class WebHttp {
      * @return string
      */
     static function normalize($url){
+        $parsed_url = parse_url($url);
+        if( isset($parsed_url['query']) ) parse_str($parsed_url['query'], $parsed_query);
+        else $parsed_query = array();
         // convert to lower case
-        $url = strtolower($url);
+        $parsed_url['scheme'] = strtolower($parsed_url['scheme']);
+        $parsed_url['host'] = strtolower($parsed_url['host']);
+        if( isset($parsed_url['path']) ) $parsed_url['path'] = strtolower($parsed_url['path']);
         // convert non-alphanumeric characters (except -_.~) to hex
-        $url = rawurlencode($url);
+        if( isset($parsed_url['user']) ) $parsed_url['user'] = rawurlencode($parsed_url['user']);
+        if( isset($parsed_url['pass']) ) $parsed_url['pass'] = rawurlencode($parsed_url['pass']);
+        if( isset($parsed_url['fragment']) ) $parsed_url['fragment'] = rawurlencode($parsed_url['fragment']);
+        if( isset($parsed_url['query']) ) $parsed_url['query'] = http_build_query($parsed_query, '', '&');
+        // remove dot segments (see http://tools.ietf.org/html/rfc3986, Remove Dot Segments)
+        if( isset($parsed_url['path']) ){
+            $input = explode('/', $parsed_url['path']);
+            $output = array();
+            while( count($input) ){
+                $segment = array_shift($input);
+                if( $segment == '' ) continue;
+                if( $segment == '.' ) continue;
+                if( $segment == '..' && count($output) ){ array_pop($output); continue; }
+                array_push($output, $segment);
+            }
+            if( $parsed_url['path'][0] == '/' ) $parsed_url['path'] = '/';
+            else $parsed_url['path'] == '';
+            $parsed_url['path'] .= implode('/', $output);
+        }
         // add trailing / to directories
+        if( isset($parsed_url['path']) && !isset($parsed_url['query']) && !isset($parsed_url['fragment']) ){
+            $last_slash = strrpos($parsed_url['path'], '/');
+            $last_char = strlen($parsed_url['path']) - 1;
+            if( strpos($parsed_url['path'], '.', $last_slash) === false && $parsed_url['path'][$last_char] !== '/' ){
+                $parsed_url['path'] .= '/';
+            }
+        }
+        elseif( !isset($parsed_url['path']) ){
+            $parsed_url['path'] = '/';
+        }
+        // re-build (from http://us2.php.net/manual/en/function.parse-url.php#106731)
+        $scheme   = isset($parsed_url['scheme']) ? $parsed_url['scheme'] . '://' : '';
+        $host     = isset($parsed_url['host']) ? $parsed_url['host'] : '';
+        $port     = isset($parsed_url['port']) && $parsed_url['port'] != '80' ? ':' . $parsed_url['port'] : ''; // remove default port
+        $user     = isset($parsed_url['user']) ? $parsed_url['user'] : '';
+        $pass     = isset($parsed_url['pass']) ? ':' . $parsed_url['pass']  : '';
+        $pass     = ($user || $pass) ? "$pass@" : '';
+        $path     = isset($parsed_url['path']) ? $parsed_url['path'] : '';
+        $query    = isset($parsed_url['query']) ? '?' . $parsed_url['query'] : '';
+        $fragment = isset($parsed_url['fragment']) ? '#' . $parsed_url['fragment'] : '';
+        $url = "$user$pass$host$port$path$query$fragment";
+        // remove duplicate slashes
+        $url = str_replace('//', '/', $url);
+        $url = $scheme.$url;
+        // return
         return $url;
     }
     
     /**
-     * Cleans inputs according to type
-     * TODO: test
-     * TODO: clarify purpose--cleans what? or from what?
+     * Sanitizes a piece of data for a specific purpose. The function should be
+     * read 'sanitize() some $data for $purpose'. sanitize() will recursively 
+     * clean objects and arrays. For cleaning URLs, see normalize().
+     * @example
+     * 
      * @param mixed $input
-     * @param string $type one of [url, string, date, html, integer, float]  
+     * @param string $type one of [alphanumeric, date, html, integer, float]
+     * @param mixed $default the value to return if $data is empty (uses PHP empty() function)
      * @return mixed
      */
-    static function clean($input, $type = 'text') {
+    static function sanitize($data, $type = 'alphanumeric', $default = null) {
         // recurse
-        if (is_array($input) || is_object($input)) {
-            foreach ($input as &$item) {
-                $item = self::clean($item, $type);
+        if (is_array($data) || is_object($data)) {
+            foreach ($data as &$item) {
+                $data = self::sanitize($data, $type, $default);
             }
-            return $input;
+            return $data;
         }
         // clean
         switch ($type) {
-            // remove all non-url characters
-            case 'url':
-                return preg_replace('/![a-zA-Z0-9\.\/-_]/', '', $input);
-                break;
-            // make it a safe string (nothing but normal letters)
+            // make it a safe string (nothing but normal letters and numbers, plus ./-_ )
             default:
-            case 'string':
-            case 'text':
-                return preg_replace('/![a-zA-Z0-9\.\/-_ ]/', ' ', $input);
+            case 'alphanumeric':
+                $data = preg_replace('/![a-zA-Z0-9\.\/-_ ]/', ' ', $data);
                 break;
-            // date format
+            // date format, using ISO 8601 (http://www.w3.org/TR/NOTE-datetime)
             case 'date':
-                $time = strtotime($input);
-                if ($time === false)
-                    return null;
-                else
-                    return date('Y-m-d H:i:s', $time);
+                $time = strtotime($data);
+                if ($time === false) $data = $default;
+                else $data = date('c', $time);
                 break;
-            // clean for html
+            // clean for html, prevents XSS
             case 'html':
-                $out = preg_replace('#<br ?/>|&nbsp;#i', ' ', $input);
-                $out = strip_tags($out);
-                $out = htmlentities($out);
-                return $out;
+                $data = htmlspecialchars($data, ENT_QUOTES);
                 break;
-            // clean/prepare for sql
+            // clean/prepare for SQL statement
             case 'sql':
-                return addslashes($input); // really? tag as todo
+                $data = mysql_real_escape_string($data);
                 break;
             // to integer
-            case 'int':
             case 'integer':
-            case 'number':
-                return intval($input);
+                $data = intval($data);
                 break;
             // to float
             case 'float':
-                return floatval($input);
+                $data = floatval($data);
                 break;
         }
+        // return
+        if( empty($data) ) return $default;
+        else return $data;
     }
 
     /**
