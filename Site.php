@@ -31,7 +31,7 @@ class Site{
      * Path to site files
      * @var string 
      */
-    private $location = '.';
+    public $location = '.';
     
     /**
      * Defines access to each page; set to true to allow all, 
@@ -228,9 +228,10 @@ class Site{
     
     /**
      * Creates and returns the applicable template for this request.
+     * Must be public because it is accessed by SiteAdministration.
      * @return WebTemplate
      */
-    protected function getTemplate() {
+    public function getTemplate() {
         static $object = null;
         if (!$object) {
             $template_file = $this->template;
@@ -240,10 +241,11 @@ class Site{
     }
     
     /**
-     * Returns the storage object for this request
-     * @var array
+     * Returns the storage object for this request.
+     * Must be public because it is accessed by SiteAdministration.
+     * @return StorageInterface
      * */
-    protected function getStorage() {
+    public function getStorage() {
         static $object = null;
         if (!$object) {
             $settings = new Settings($this->storage);
