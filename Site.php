@@ -31,7 +31,7 @@ class Site{
      * Path to site files
      * @var string 
      */
-    private $location = '.';
+    public $location = '.';
     
     /**
      * Defines access to each page; set to true to allow all, 
@@ -64,6 +64,13 @@ class Site{
     public $template;
     
     /**
+     * Template to apply to the admin HTML content. If left false,
+     * administration will be unavailable.
+     * @var string
+     */
+    public $admin;
+    
+    /**
      * Constructor
      * @param Settings $settings 
      */
@@ -74,7 +81,8 @@ class Site{
             'acl' => Settings::MANDATORY,
             'storage' => Settings::MANDATORY | Settings::MULTIPLE,
             'output' => Settings::OPTIONAL,
-            'template' => Settings::OPTIONAL | Settings::PATH
+            'template' => Settings::OPTIONAL | Settings::PATH,
+            'admin' => Settings::OPTIONAL | Settings::PATH
         );
         // accepts settings
         if (!$settings || !is_a($settings, 'Settings'))
@@ -113,26 +121,26 @@ class Site{
         // routing
         switch($name){
         	case 'admin':
-        		$path = null;
-        		$content = $this->executeAdmin();
-        		break;
-        	case 'clear':
-        		$path = null;
-        		$content = $this->executeClearIndex();
+        		if( !$this->admin ) throw new ExceptionWeb('Site administration is disabled.', 404);
+        		// create
+        		$admin = new SiteAdministration($this, $this->admin);
+        		$content = $admin->execute();
+        		return;
         		break;
         	default:
+        		// get content
         		$path = $this->find($name);
 		       	if( is_file($path) ) $content = file_get_contents($path);
 				else $content = null;
-        }
-        // do templating
-        if ($this->template) {
-            $this->getTemplate()->replace('content', $content);
-            $this->getTemplate()->setVariable('content', $content);
-            $this->getTemplate()->setVariable('name', $name);
-            $this->getTemplate()->setVariable('path', $path);
-            $this->getTemplate()->setVariable('site', $this);           
-            $content = $this->getTemplate()->toString();
+				// do templating
+				if ($this->template) {
+					$this->getTemplate()->replace('content', $content);
+					$this->getTemplate()->setVariable('content', $content);
+					$this->getTemplate()->setVariable('name', $name);
+					$this->getTemplate()->setVariable('path', $path);
+					$this->getTemplate()->setVariable('site', $this);
+					$content = $this->getTemplate()->toString();
+				}
         }
         // output
         echo $content;
@@ -228,9 +236,10 @@ class Site{
     
     /**
      * Creates and returns the applicable template for this request.
+     * Must be public because it is accessed by SiteAdministration.
      * @return WebTemplate
      */
-    protected function getTemplate() {
+    public function getTemplate() {
         static $object = null;
         if (!$object) {
             $template_file = $this->template;
@@ -240,10 +249,11 @@ class Site{
     }
     
     /**
-     * Returns the storage object for this request
-     * @var array
+     * Returns the storage object for this request.
+     * Must be public because it is accessed by SiteAdministration.
+     * @return StorageInterface
      * */
-    protected function getStorage() {
+    public function getStorage() {
         static $object = null;
         if (!$object) {
             $settings = new Settings($this->storage);
