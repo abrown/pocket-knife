@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title><K:title/></title>
+        <title><template:title/></title>
     </head>
     <body>
-        <K:content/>
+        <template:content/>
     </body>
 </html>
