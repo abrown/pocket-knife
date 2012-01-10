@@ -12,7 +12,7 @@
         <title>pocket-knife API: <?php echo $title; ?></title>
         <link href="/pocket-knife/www/styles/reset.css" media="all" type="text/css" rel="stylesheet" />
         <link href="/pocket-knife/www/styles/base.css" media="all" type="text/css" rel="stylesheet" />
-		<link href="/pocket-knife/www/styles/vertical-rhythm.css" media="all" type="text/css" rel="stylesheet" />
+	<!--<link href="/pocket-knife/www/styles/vertical-rhythm.css" media="all" type="text/css" rel="stylesheet" />-->
 
     </head>
     <body>
