@@ -267,10 +267,10 @@ class WebHttp {
      * Performs HTTP request
      * @example To grab a page: WebHttp::request('www.google.com')
      * @param string $url
-     * @param string $method, one of [GET, POST, PUT, DELETE, HEAD]
-     * @param string $content, 
-     * @param string $content_type, see http://www.iana.org/assignments/media-types/index.html
-     * @param array $headers, additional headers, see http://us2.php.net/manual/en/context.http.php
+     * @param string $method, one of [GET, POST, PUT, DELETE, HEAD, LIST]
+     * @param string $content
+     * @param string $content_type see http://www.iana.org/assignments/media-types/index.html
+     * @param array $headers additional headers, see http://us2.php.net/manual/en/context.http.php
      */
     static function request($url, $method = 'GET', $content = '', $content_type = 'text/html', $headers = array()) {
         $method = strtoupper($method);
