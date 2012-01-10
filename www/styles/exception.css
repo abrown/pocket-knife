@@ -1,0 +1,24 @@
+body{
+    background-color: #282626;
+    font-size: 16px;
+    font-family: 'Georgia', 'Times New Roman', serif;
+    line-height: 24px;
+}
+
+/** TEXT **/
+h1, h2, h3, h4, h5, h6{
+    font-family: 'Arial', 'Helvetica', 'Verdana', 'Tahoma', sans-serif;
+    font-weight: bold;
+}
+h1{
+    font-size: 2em;
+    line-height: 1em;
+}
+
+/** PLACEMENT **/
+.exception{
+    background-color: #fff;
+    margin: 8em auto 4em; 
+    padding: 2em;
+    width: 50%;
+}

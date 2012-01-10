@@ -6,9 +6,18 @@
  */
 
 /**
- * Provides static methods to handle common HTTP-related tasks.
+ * Provides static methods to handle common HTTP-related tasks. These include
+ * handling URLs, sanitizing data, and making HTTP requests. Any URL-related
+ * tasks that have to do with tokens after the anchor are listed in WebRouting.
+ * @uses ExceptionWeb
  */
 class WebHttp {
+
+    /**
+     * Storest HTTP codes for WebHttp::request();
+     * @var int 
+     */
+    private static $response_code;
 
     /**
      * Returns the HTTP request URL
@@ -49,6 +58,7 @@ class WebHttp {
      * Returns HTTP request tokens from the request URL
      * @example For the URL "http://www.example.com/a/1/delete",
      * this methods returns an array of the form [a, 1, delete]
+     * @deprecated fits better in WebRouting
      * @staticvar array $tokens
      * @return array
      */
@@ -56,7 +66,7 @@ class WebHttp {
         static $tokens = null;
         $pattern = '#\.php/([^?]+)#i';
         if (is_null($tokens)) {
-            if (preg_match($pattern, Http::getUrl(), $match)) {
+            if (preg_match($pattern, WebHttp::getUrl(), $match)) {
                 $tokens = explode('/', $match[1]);
             }
         }
@@ -72,17 +82,10 @@ class WebHttp {
      */
     static function getMethod() {
         $types = array('GET', 'PUT', 'POST', 'DELETE', 'HEAD', 'LIST');
-        if ($type = array_intersect(array_keys($_GET), $types)) {
+        if ($_GET && $type = array_intersect(array_keys($_GET), $types)) {
             return $type[0];
         }
         return $_SERVER['REQUEST_METHOD'];
-    }
-
-    /**
-     * TODO: implement getQuery function to get query string
-     */
-    static function getQuery() {
-        
     }
 
     /**
@@ -101,7 +104,7 @@ class WebHttp {
             elseif (array_key_exists($parameter, $_POST))
                 $out = $_POST[$parameter];
             elseif (strtoupper($parameter) == 'GET')
-                $out = $_POST;
+                $out = $_GET;
             elseif (strtoupper($parameter) == 'POST')
                 $out = $_POST;
         }
@@ -114,68 +117,130 @@ class WebHttp {
     }
 
     /**
-     * Cleans inputs according to type
-     * TODO: test
+     * Normalizes a URL according to the rules in RFC 3986
+     * @link http://en.wikipedia.org/wiki/URL_normalization
+     * @param string $url 
+     * @return string
+     */
+    static function normalize($url){
+        $parsed_url = parse_url($url);
+        if( isset($parsed_url['query']) ) parse_str($parsed_url['query'], $parsed_query);
+        else $parsed_query = array();
+        // convert to lower case
+        $parsed_url['scheme'] = strtolower($parsed_url['scheme']);
+        $parsed_url['host'] = strtolower($parsed_url['host']);
+        if( isset($parsed_url['path']) ) $parsed_url['path'] = strtolower($parsed_url['path']);
+        // convert non-alphanumeric characters (except -_.~) to hex
+        if( isset($parsed_url['user']) ) $parsed_url['user'] = rawurlencode($parsed_url['user']);
+        if( isset($parsed_url['pass']) ) $parsed_url['pass'] = rawurlencode($parsed_url['pass']);
+        if( isset($parsed_url['fragment']) ) $parsed_url['fragment'] = rawurlencode($parsed_url['fragment']);
+        if( isset($parsed_url['query']) ) $parsed_url['query'] = http_build_query($parsed_query, '', '&');
+        // remove dot segments (see http://tools.ietf.org/html/rfc3986, Remove Dot Segments)
+        if( isset($parsed_url['path']) ){
+            $input = explode('/', $parsed_url['path']);
+            $output = array();
+            while( count($input) ){
+                $segment = array_shift($input);
+                if( $segment == '' ) continue;
+                if( $segment == '.' ) continue;
+                if( $segment == '..' && count($output) ){ array_pop($output); continue; }
+                array_push($output, $segment);
+            }
+            if( $parsed_url['path'][0] == '/' ) $parsed_url['path'] = '/';
+            else $parsed_url['path'] == '';
+            $parsed_url['path'] .= implode('/', $output);
+        }
+        // add trailing / to directories
+        if( isset($parsed_url['path']) && !isset($parsed_url['query']) && !isset($parsed_url['fragment']) ){
+            $last_slash = strrpos($parsed_url['path'], '/');
+            $last_char = strlen($parsed_url['path']) - 1;
+            if( strpos($parsed_url['path'], '.', $last_slash) === false && $parsed_url['path'][$last_char] !== '/' ){
+                $parsed_url['path'] .= '/';
+            }
+        }
+        elseif( !isset($parsed_url['path']) ){
+            $parsed_url['path'] = '/';
+        }
+        // re-build (from http://us2.php.net/manual/en/function.parse-url.php#106731)
+        $scheme   = isset($parsed_url['scheme']) ? $parsed_url['scheme'] . '://' : '';
+        $host     = isset($parsed_url['host']) ? $parsed_url['host'] : '';
+        $port     = isset($parsed_url['port']) && $parsed_url['port'] != '80' ? ':' . $parsed_url['port'] : ''; // remove default port
+        $user     = isset($parsed_url['user']) ? $parsed_url['user'] : '';
+        $pass     = isset($parsed_url['pass']) ? ':' . $parsed_url['pass']  : '';
+        $pass     = ($user || $pass) ? "$pass@" : '';
+        $path     = isset($parsed_url['path']) ? $parsed_url['path'] : '';
+        $query    = isset($parsed_url['query']) ? '?' . $parsed_url['query'] : '';
+        $fragment = isset($parsed_url['fragment']) ? '#' . $parsed_url['fragment'] : '';
+        $url = "$user$pass$host$port$path$query$fragment";
+        // remove duplicate slashes
+        $url = str_replace('//', '/', $url);
+        $url = $scheme.$url;
+        // return
+        return $url;
+    }
+    
+    /**
+     * Sanitizes a piece of data for a specific purpose. The function should be
+     * read 'sanitize() some $data for $purpose'. sanitize() will recursively 
+     * clean objects and arrays. For cleaning URLs, see normalize().
+     * @example
+     * // for SQL:
+     * $cleaned_vars = WebHttp::sanitize($_GET, 'sql');
+     * // for HTML:
+     * echo WebHttp::sanitize($unsafe_html, 'html', '<b>No data given</b>');
      * @param mixed $input
-     * @param string $type one of [url, string, date, html, integer, float]  
+     * @param string $type one of [alphanumeric, date, html, sql, integer, float]
+     * @param mixed $default the value to return if $data is empty (uses PHP empty() function)
      * @return mixed
      */
-    static function clean($input, $type = 'text') {
+    static function sanitize($data, $type = 'alphanumeric', $default = null) {
         // recurse
-        if (is_array($input) || is_object($input)) {
-            foreach ($input as &$item) {
-                $item = self::clean($item, $type);
+        if (is_array($data) || is_object($data)) {
+            foreach ($data as &$item) {
+                $data = self::sanitize($data, $type, $default);
             }
-            return $input;
+            return $data;
         }
         // clean
         switch ($type) {
-            // remove all non-url characters
-            case 'url':
-                return preg_replace('/![a-zA-Z0-9\.\/-_]/', '', $input);
-                break;
-            // make it a safe string (nothing but normal letters)
+            // make it a safe string (nothing but normal letters and numbers, plus ./-_ )
             default:
-            case 'string':
-            case 'text':
-                return preg_replace('/![a-zA-Z0-9\.\/-_ ]/', ' ', $input);
+            case 'alphanumeric':
+                $data = preg_replace('/![a-zA-Z0-9\.\/-_ ]/', ' ', $data);
                 break;
-            // date format
+            // date format, using ISO 8601 (http://www.w3.org/TR/NOTE-datetime)
             case 'date':
-                $time = strtotime($input);
-                if ($time === false)
-                    return null;
-                else
-                    return date('Y-m-d H:i:s', $time);
+                $time = strtotime($data);
+                if ($time === false) $data = $default;
+                else $data = date('c', $time);
                 break;
-            // clean for html
+            // clean for html, prevents XSS
             case 'html':
-                $out = preg_replace('#<br ?/>|&nbsp;#i', ' ', $input);
-                $out = strip_tags($out);
-                $out = htmlentities($out);
-                return $out;
+                $data = htmlspecialchars($data, ENT_QUOTES);
                 break;
-            // clean/prepare for sql
+            // clean/prepare for SQL statement
             case 'sql':
-                return addslashes($input); // really? tag as todo
+                $data = mysql_real_escape_string($data);
                 break;
             // to integer
-            case 'int':
             case 'integer':
-            case 'number':
-                return intval($input);
+                $data = intval($data);
                 break;
             // to float
             case 'float':
-                return floatval($input);
+                $data = floatval($data);
                 break;
         }
+        // return
+        if( empty($data) ) return $default;
+        else return $data;
     }
 
     /**
      * Sends HTTP code to client
      */
     static function setCode($code) {
+        if( headers_sent() ) throw new ExceptionWeb('HTTP headers already sent', 400);
         header('HTTP/1.1 ' . intval($code));
     }
     
@@ -184,14 +249,16 @@ class WebHttp {
      * @param string $type 
      */
     static function setContentType($type){
+        if( headers_sent() ) throw new ExceptionWeb('HTTP headers already sent', 400);
         header('Content-Type: '.$type);
     }
 
-	/**
-	 * Redirects client to the given URL
-	 * @param string $url
-	 */
+    /**
+     * Redirects client to the given URL
+     * @param string $url
+     */
     static function redirect($url) {
+        if( headers_sent() ) throw new ExceptionWeb('HTTP headers already sent', 400);
         header('Location: ' . $url);
         exit();
     }
@@ -200,10 +267,10 @@ class WebHttp {
      * Performs HTTP request
      * @example To grab a page: WebHttp::request('www.google.com')
      * @param string $url
-     * @param string $method, one of [GET, POST, PUT, DELETE, HEAD]
-     * @param string $content, 
-     * @param string $content_type, see http://www.iana.org/assignments/media-types/index.html
-     * @param array $headers, additional headers, see http://us2.php.net/manual/en/context.http.php
+     * @param string $method, one of [GET, POST, PUT, DELETE, HEAD, LIST]
+     * @param string $content
+     * @param string $content_type see http://www.iana.org/assignments/media-types/index.html
+     * @param array $headers additional headers, see http://us2.php.net/manual/en/context.http.php
      */
     static function request($url, $method = 'GET', $content = '', $content_type = 'text/html', $headers = array()) {
         $method = strtoupper($method);
@@ -222,21 +289,27 @@ class WebHttp {
         if( $response === false ){
             throw new ExceptionWeb('Could not open url: '.$url, 404);
         }
+        // save response code
+        if( !isset($http_response_header) ){
+            throw new ExceptionWeb('No HTTP request was made', 400);
+        }
+        $lines = preg_grep('#HTTP/#i', $http_response_header);
+        self::$response_code = 0;
+        foreach($lines as $line){
+            if( preg_match('#HTTP/\d.\d (\d\d\d)#i', $line, $matches) ){
+                self::$response_code = intval($matches[1]);
+                break;
+            }
+        }
         // return 
         return $response;
     }
     
     /**
      * Returns HTTP code from last HTTP request made using WebHttp::request()
-     * TODO: test
      * @return int 
      */
-    static function getCode(){
-        if( !$http_response_header ) throw new ExceptionWeb('No HTTP request was made', 400);
-        $lines = preg_grep('#HTTP/#i', $http_response_header);
-        foreach($lines as $line){
-            if( preg_match('#HTTP/\d.\d (\d\d\d)#i', $line, $matches) ) return intval($matches[1]);
-        }
-        return 0;
+    static function getRequestCode(){
+        return self::$response_code;
     }
 }
