@@ -243,7 +243,7 @@ class BasicDocumentation {
                     $method->isPublic() ? 'public' : '', 
                     $method->isStatic() ? ' static' : '', 
                     $this->getMethodReturnType($method), 
-                    $method->getName(), 
+                    $this->getMethodName($method),
                     $this->getMethodParameterTypes($method)
             );
             $template->replace('title', $title);
@@ -256,6 +256,22 @@ class BasicDocumentation {
         return implode('', $html);
     }
 
+    /**
+     * Returns an HTML-formatted method name; strikes through deprecated methods
+     * @param type $method
+     * @return type 
+     */
+    private function getMethodName($method){
+        $annotations = $this->parseDocString($method->getDocComment());
+        foreach ($annotations as $a) {
+            if ($a['annotation'] == '@deprecated') {
+                return '<s>'.$method->getName().'</s>';
+            }
+        }
+        // else
+        return $method->getName();
+    }
+    
     /**
      * Returns an HTML-formatted method type; defaults to 'null'
      * @param ReflectionMethod $method
