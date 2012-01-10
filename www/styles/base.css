@@ -125,10 +125,15 @@ hr.title{
 ul.sitemap li{
     display: inline-block;
     width: 10em;
-    outline: 1px solid red; 
 }
 ul.sitemap a{
     background-color: #0B486B;
     color: #fff;
+    font-family: 'Arial', 'Helvetica', 'Verdana', 'Tahoma', sans-serif;
+    font-weight: bold;
+    padding: 0 0.5em;
+    text-decoration: none;
 }
-
+ul.sitemap a:hover{
+    background-color: #EE1C25;
+}
