@@ -59,7 +59,8 @@ class SiteAdministration{
 	protected $home_template = '
 	<p>
 		<a href="">Edit Settings</a>
-		<a href="">Edit Template</a>
+		<a href="<template:edit_template_url/>">Edit Template</a>
+		<a href="<template:create_url/>">New File</a>
 	</p>
 	<p>
 		Select a file to edit:
@@ -75,18 +76,64 @@ class SiteAdministration{
 	public function home(){
 		// create url
 		$url = WebRouting::getLocationUrl().'/admin';
+		$edit_template_url = $url.'?action=edit_template';
+		$create_url = $url.'?action=create';
 		// create site map
 		$files = '';
 	    foreach( $this->site->getSiteMap() as $file ){
 	    	//$_url = WebHttp::normalize($url.'?file='.$file.'&action=edit');
-        	$_url = $url.'?file='.$file.'&action=edit';
-	    	$files .= "<li><a href='$_url'>$file</a></li>";
+        	$edit_url = $url.'?file='.$file.'&action=edit';
+        	$delete_url = $url.'?file='.$file.'&action=delete';
+	    	$files .= "<li><a href='$edit_url'>$file</a> ";
+	    	$files .= "(<a href='$delete_url'>delete</a>)</li>";
         }
         // create page
         $template = new WebTemplate($this->home_template, WebTemplate::STRING);
         $template->replace('files', $files);
+        $template->replace('edit_template_url', $edit_template_url);
+        $template->replace('create_url', $create_url);
         // return
         return $template->toString();
+	}
+
+	protected $create_template = '
+	<h2>New File</h2>
+	<p>Enter the relative path to the new file below (e.g. "documents/example.html"):</p>
+	<form action="<template:url/>" method="GET">
+		Path: <input type="text" name="file" />
+		<input type="hidden" name="action" value="create_save" />
+		<br/>
+		<input type="submit" value="Create" />
+		<input type="submit" value="Cancel" onclick="window.location = \'<template:url/>\'; return false;" />
+	</form>
+	';
+	
+	public function create(){
+		// create url
+		$url = WebRouting::getLocationUrl().'/admin';
+		// create page
+		$template = new WebTemplate($this->create_template, WebTemplate::STRING);
+		$template->replace('url', $url);
+		// return
+		return $template->toString();
+	}
+	
+	public function create_save($file){
+		// find file
+		$created = false;
+		try{
+			$absolute_file = $this->site->find($file);
+		}
+		catch(Exception $e){
+			$absolute_file = $this->site->location.DS.$file;
+			file_put_contents($absolute_file, 'Enter content here...');
+			$created = true;
+		}
+		if( !$created ) throw new ExceptionFile("The file '$file' already exists.", 404);
+		// redirect
+		$url = WebRouting::getLocationUrl().'/admin';
+		$url .= "?file=$file&action=edit";
+		WebHttp::redirect($url);
 	}
 	
 	protected $edit_template = '
@@ -110,13 +157,15 @@ class SiteAdministration{
 		}
 	}
 	</script>
+	<h2><template:file_name/></h2>
 	<form action="<template:save_url/>" method="POST">
-		<textarea id="admin-file" name="file-contents"
-		onkeydown="if(window.event.keyCode==9){insertAtCursor(this, \'    \'); return false;}"><template:file/></textarea>
+		<textarea id="admin-file" name="file-contents" style="width:100%; height: 10em;"
+		onkeydown="if(window.event.keyCode==9){insertAtCursor(this, \'    \'); return false;}"><template:file_contents/></textarea>
 		<input type="submit" value="Save"/>
 		<input type="submit" value="Cancel" onclick="window.location = \'<template:back_url/>\'; return false;" />
 	</form>
 	';
+	
 	public function edit($file){
 		// find file
 		$absolute_file = $this->site->find($file);
@@ -127,16 +176,18 @@ class SiteAdministration{
 		$file_contents = file_get_contents($absolute_file);
 		// create page
 		$template = new WebTemplate($this->edit_template, WebTemplate::STRING);
+		$template->replace('file_name', $file);
 		$template->replace('save_url', $save_url);
-		$template->replace('file', $file_contents);
+		$template->replace('file_contents', $file_contents);
 		$template->replace('back_url', $url);
 		// return
 		return $template->toString();
 	}
 	
 	protected $save_template = '
-	<p>The file "<template:file/>" has been saved</p>
+	<p>The file "<template:file/>" has been saved.</p>
 	<p><a href="<template:back_url/>">Back</a></p>';
+	
 	public function save($file){
 		// find file
 		$absolute_file = $this->site->find($file);
@@ -150,11 +201,62 @@ class SiteAdministration{
 		$template->replace('back_url', $url);
 		// return
 		return $template->toString();
-		
 	}
+	
+	protected $delete_template = '
+	<p>The file "<template:file/>" has been deleted.</p>
+	<p><a href="<template:back_url/>">Back</a></p>';
+	
 	public function delete($file){
-		
+		// find file
+		$absolute_file = $this->site->find($file);
+		// create URLs
+		$url = WebRouting::getLocationUrl().'/admin';
+		// delete file
+		unlink($absolute_file);
+		// create page
+		$template = new WebTemplate($this->save_template, WebTemplate::STRING);
+		$template->replace('file', $file);
+		$template->replace('back_url', $url);
+		// return
+		return $template->toString();			
 	}
+	
+	public function edit_template(){
+		// find file
+		$absolute_file = $this->site->template;
+		$file = 'Site Template';
+		// create URLs
+		$url = WebRouting::getLocationUrl().'/admin';
+		$save_url = $url.'?action=save_template';
+		// get file contents
+		$file_contents = file_get_contents($absolute_file);
+		// create page
+		$template = new WebTemplate($this->edit_template, WebTemplate::STRING);
+		$template->replace('file_name', $file);
+		$template->replace('save_url', $save_url);
+		$template->replace('file_contents', $file_contents);
+		$template->replace('back_url', $url);
+		// return
+		return $template->toString();
+	}
+	
+	public function save_template(){
+		// find file
+		$absolute_file = $this->site->template;
+		$file = 'Site Template';
+		// create URLs
+		$url = WebRouting::getLocationUrl().'/admin';
+		// save file
+		file_put_contents($absolute_file, $_POST['file-contents']);
+		// create page
+		$template = new WebTemplate($this->save_template, WebTemplate::STRING);
+		$template->replace('file', $file);
+		$template->replace('back_url', $url);
+		// return
+		return $template->toString();		
+	}
+	
 	public function rebuild(){
 		
 	}
