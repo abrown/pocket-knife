@@ -74,7 +74,7 @@ ul, ol{
     margin-bottom: 1.5em;
 }
 ul li{
-    list-style: url("/pocket-knife/www/images/bullet.jpg");
+    list-style: url("/projects/pocket-knife/www/images/bullet.jpg");
 }
 ol li{
     list-style: decimal;
