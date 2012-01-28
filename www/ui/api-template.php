@@ -9,16 +9,16 @@
 <!doctype html>
 <html>
     <head>
-        <title>pocket-knife API: <?php echo $title; ?></title>
-        <link href="/pocket-knife/www/styles/reset.css" media="all" type="text/css" rel="stylesheet" />
-        <link href="/pocket-knife/www/styles/base.css" media="all" type="text/css" rel="stylesheet" />
+        <title>pocket-knife: API/<?php echo $title; ?></title>
+        <link href="<?php echo WebRouting::getDirectoryUrl(); ?>/styles/reset.css" media="all" type="text/css" rel="stylesheet" />
+        <link href="<?php echo WebRouting::getDirectoryUrl(); ?>/styles/base.css" media="all" type="text/css" rel="stylesheet" />
 	<!--<link href="/pocket-knife/www/styles/vertical-rhythm.css" media="all" type="text/css" rel="stylesheet" />-->
 
     </head>
     <body>
         
         <!-- TITLE -->
-        <h1>pocket-knife API</h1>
+        <h1>pocket-knife: API</h1>
         <hr class="title"/>
         
         <!-- DOCs -->
