@@ -15,14 +15,14 @@ interface StorageInterface{
      * Setup-related functions
      */
     public function begin();
-    public function commit();
+//     public function commit();
     public function rollback();
     public function isChanged();
 
     /**
      * Item-related functions
      */
-    public function create($record, $id);
+    public function create($record, $id = null);
     public function read($id);
     public function update($record, $id);
     public function delete($id);
