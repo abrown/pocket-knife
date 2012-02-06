@@ -6,7 +6,10 @@
  */
 
 /**
- * Sequence
+ * Provides a framework for a sequential process; the developer registers code
+ * for each desired step and this class manages the user responses--storing data
+ * as necessary, validating inputs, and handling errors.
+ * @example
  * @uses WebSession, WebRouting, WebHttp
  */
 class Sequence {

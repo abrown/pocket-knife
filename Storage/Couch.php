@@ -231,7 +231,7 @@ class StorageCouch implements StorageInterface{
      * Returns all records
      * @return array
      */
-    public function all(){
+    public function all($number_of_records = null, $page = null){
         // get all docs
         $response = WebHttp::request($this->url.'/_all_docs?include_docs=true', 'POST', '{}', 'application/json');
         // check response
@@ -271,10 +271,35 @@ class StorageCouch implements StorageInterface{
     }
     
     /**
+     * Returns a count of all elements
+     * @return int
+     */
+    public function count(){
+        // TODO:
+    }
+    
+    /**
+     * Returns first element
+     * @return mixed
+     */
+    public function first(){
+        // TODO:
+    }
+    
+    /**
      * Returns last element
      * @return mixed
      */
     public function last(){
         // TODO: 
+    }
+    
+    /**
+     * Returns whether the specified ID exists
+     * @param type $id 
+     * @return boolean
+     */
+    public function exists($id){
+        // TODO:
     }
 }

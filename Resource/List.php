@@ -5,6 +5,11 @@
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
 
+/**
+ * Provides a generic template for objects that are lists. Used in web 
+ * services, specifically Service.
+ * @uses ResourceInterface
+ */
 class ResourceList implements ResourceInterface{
     
     /**

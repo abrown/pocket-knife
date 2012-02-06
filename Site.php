@@ -221,7 +221,7 @@ class Site{
             		}
             		// case: file
             		if( is_file($absolute_path) ){
-						$relative_path = str_ireplace($this->location.DS, '', $absolute_path);
+				$relative_path = str_ireplace($this->location.DS, '', $absolute_path);
             			$this->getStorage()->create($relative_path);
             		}
             	}

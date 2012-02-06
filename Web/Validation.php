@@ -6,11 +6,19 @@
  */
 
 /**
- * BasicValidation
+ * Provides methods for validating any given input
  * @uses 
  * @example
+ *  // example 1:
+ *  $validation = new WebValidation();
+ *  $validation->addRule('example', WebValidation::NUMERIC, 'The input is not numeric. Try again!');
+ *  $errors = $validation->validate('example', 'not a number...'); // $errors == array('The input is not numeric. Try again!);
+ *  // example 2:
+ *  if( WebValidation::is( 'not an url', WebValidation::URL ) ){
+ *      ...
+ *  }
  */
-class BasicValidation {
+class WebValidation {
 
     const BOOLEAN = 'is_bool';
     const INTEGER = 'is_int';

@@ -205,7 +205,7 @@ class StorageMongo implements StorageInterface{
      * Returns all records
      * @return array
      */
-    public function all(){
+    public function all($number_of_records = null, $page = null){
         $out = array();
         $cursor = $this->collection->find();
         foreach($cursor as $item){
@@ -217,11 +217,36 @@ class StorageMongo implements StorageInterface{
     }
     
     /**
+     * Returns a count of all elements
+     * @return int
+     */
+    public function count(){
+        // TODO:
+    }
+    
+    /**
+     * Returns first element
+     * @return mixed
+     */
+    public function first(){
+        // TODO:
+    }
+    
+    /**
      * Returns last element
      * @return mixed
      */
     public function last(){
-        // TODO: can we even do this?
+        // TODO: 
+    }
+    
+    /**
+     * Returns whether the specified ID exists
+     * @param type $id 
+     * @return boolean
+     */
+    public function exists($id){
+        // TODO:
     }
     
     /**

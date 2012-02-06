@@ -6,7 +6,8 @@
  */
 
 /**
- * ResourceItem
+ * Provides a generic template for objects that are items in a list. Used in web 
+ * services, specifically Service.
  * @uses ResourceInterface
  */
 class ResourceItem implements ResourceInterface{
@@ -127,7 +128,7 @@ class ResourceItem implements ResourceInterface{
      * @param mixed $id
      * @return boolean 
      */
-    public function delete(){
+    public function exists(){
         $this->getStorage()->begin();
         $exists = $this->getStorage()->exists($this->getID());
         $this->getStorage()->commit();

@@ -5,9 +5,9 @@
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
 
-/* 
- * ResourceStatic: 
- * @uses ResourceInterface
+/** 
+ * Provides a generic template for an object that is neither a list nor an item
+ * in a list, but must be accessed by a web service. Does not implement ResourceInterface
  */
 class ResourceStatic{
     

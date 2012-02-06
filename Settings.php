@@ -6,7 +6,7 @@
  */
 
 /**
- * Settings
+ * Provides a framework for storing, editing, and using configurations.
  * @uses ExceptionFile, ExceptionSettings
  * @example
  * Should work like:
