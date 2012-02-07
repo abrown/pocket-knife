@@ -72,9 +72,10 @@ class ResourceList implements ResourceInterface{
     
     /**
      * Updates all records named in the given list
+     * @param array list
      * @return array IDs
      */
-    public function update(){
+    public function update($list){
         if( !is_array($list)  ) throw new ExceptionService('CREATE requires a list', 400);
         $this->getStorage()->begin();
         $ids = array();
