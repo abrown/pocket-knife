@@ -9,7 +9,7 @@
  * HTML representation of a RESTful resource.
  * @uses Representation
  */
-class RepresentationHtml implements Representation{
+class RepresentationHtml implements RepresentationInterface{
 
     /**
      * WebTemplate
@@ -65,11 +65,13 @@ class RepresentationHtml implements Representation{
             echo $this->data;
         }
         else{
+            /**
             $tokens = $this->getTemplate()->findTokens();
             $object = MathSet::flatten($this->data);
             foreach($tokens as $token){
                 $this->getTemplate()->replace($token, $object[$token]);
             }
+            */
             echo $this->getTemplate()->toString();
         }
     }

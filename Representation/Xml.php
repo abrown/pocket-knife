@@ -9,7 +9,7 @@
  * XML representation of a RESTful resource.
  * @uses Representation
  */
-class RepresentationXml implements Representation{
+class RepresentationXml implements RepresentationInterface{
     
     /**
      * @see Representation::getData()

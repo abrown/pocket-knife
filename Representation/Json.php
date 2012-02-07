@@ -9,7 +9,7 @@
  * JSON representation of a RESTful resource.
  * @uses Representation
  */
-class RepresentationJson implements Representation{
+class RepresentationJson implements RepresentationInterface{
     
     /**
      * @see Representation::getData()

@@ -9,7 +9,7 @@
  * File representation of a RESTful resource.
  * @uses Representation
  */
-class RepresentationFile implements Representation{
+class RepresentationFile implements RepresentationInterface{
     
     protected $name;
     

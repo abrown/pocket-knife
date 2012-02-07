@@ -9,7 +9,7 @@
  * Plain text representation of a RESTful resource.
  * @uses Representation
  */
-class RepresentationText implements Representation{
+class RepresentationText implements RepresentationInterface{
 
     /**
      * @see Representation::getData()

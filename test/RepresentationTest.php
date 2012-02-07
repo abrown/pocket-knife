@@ -6,7 +6,7 @@
  */
 
 /**
- * Replace file_get_contents for classes that use it to get
+ * Replaces file_get_contents for classes that use it to get
  * request bodies; set static variable in ServiceTest::$REQUEST_BODY
  * to simulate the request
  */
@@ -16,8 +16,7 @@ function file_get_contents($file){
     else return \file_get_contents($file);
 }
 
-
-class ServiceTest extends PHPUnit_Framework_TestCase{
+class RepresentationTest extends PHPUnit_Framework_TestCase{
 
     public static $REQUEST_BODY = "";
     
@@ -26,7 +25,7 @@ class ServiceTest extends PHPUnit_Framework_TestCase{
         $path = dirname(dirname(__FILE__));
         require $path.'/start.php';
         // get code
-        autoload('Representation');
+        autoload('RepresentationInterface');
         autoload('RepresentationFile');
         autoload('RepresentationForm');
         autoload('RepresentationHtml');
