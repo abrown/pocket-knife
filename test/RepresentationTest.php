@@ -45,7 +45,7 @@ class ServiceTest extends PHPUnit_Framework_TestCase{
     
     public function testFile(){
         self::$REQUEST_BODY = "c29tZSB0ZXh0";
-        $expected = "some text"
+        $expected = "some text";
         $f = new RepresentationForm();
         $f->receive();
         $actual = $f->getData();
