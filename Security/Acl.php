@@ -18,6 +18,10 @@ class SecurityAcl extends ResourceList{
      */
     public $default_access = 'deny'; // deny | allow
     
+    /**
+     * Type of ResourceItem in this ResourceList
+     * @var ResourceItem 
+     */
     public $item_type = 'SecurityRule';
     
     /**
