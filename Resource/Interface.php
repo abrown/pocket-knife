@@ -29,7 +29,7 @@ interface ResourceInterface{
         $class = RepresentationInterface::$MAP[$content_type];       
         $representation = new $class;
         $class->receive();
-        return $class->getData();
+        return $class;
     }
     
     /**
