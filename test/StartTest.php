@@ -41,6 +41,10 @@ class StartTest extends PHPUnit_Extensions_OutputTestCase {
         }
         $this->assertEquals(get_public_vars($class), $vars);
     }
+    
+    public function testToObject(){
+        
+    }
 
 }
 
