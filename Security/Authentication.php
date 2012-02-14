@@ -10,6 +10,14 @@
  */
 class SecurityAuthentication extends ResourceGeneric {
 
+    public function getUser(){
+        
+    }
+    
+    public function getGroup(){
+        
+    }
+    
     public function login($username, $password) {
         // get user
         $user = $this->getUsers()->find($username);

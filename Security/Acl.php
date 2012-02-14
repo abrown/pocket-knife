@@ -28,12 +28,12 @@ class SecurityAcl extends ResourceList{
      * Determines whether a user has access to perform an action
      * @param string $group
      * @param string $user
-     * @param string $resource
      * @param string $action
-     * @param string $id
+     * @param string $resource Resource type
+     * @param string $id Resource ID
      * @return boolean
      */
-    public function isAllowed($group, $user, $resource, $action, $id){
+    public function isAllowed($group, $user, $action, $resource, $id){
         // false = deny | true = allow
         $default = ($this->default_access == 'allow');
         // search through levels to find a proof of the default
@@ -42,7 +42,7 @@ class SecurityAcl extends ResourceList{
             // get rules for this level
             foreach($this->getStorage()->search("name", $level) as $rule){
                 // only consider rule if it matches the current context
-                if( $this->matches($resource, $action, $id, $rule) ){
+                if( $this->matches($action, $resource, $id, $rule) ){
                     if( $rule->access == $default ) return $default;
                 }
             }
@@ -54,16 +54,16 @@ class SecurityAcl extends ResourceList{
     /**
      * Matches a context (resource, action, id) to a rule, returning
      * true if they match
-     * @param string $resource
      * @param string $action
-     * @param string $id
+     * @param string $resource Resource type
+     * @param string $id Resource ID
      * @param stdClass $rule
      * @return boolean
      */
-    protected function matches($resource, $action, $id, $rule){
+    protected function matches($action, $resource, $id, $rule){
         return 
-            ( $resource == $rule->resource || $rule->resource == '*' ) &&
             ( $action == $rule->action || $rule->action == '*' ) &&
+            ( $resource == $rule->resource || $rule->resource == '*' ) &&
             ( $id == $rule->id || $rule->id == '*' || $rule->id == null );
     }
 }
