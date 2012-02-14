@@ -69,6 +69,26 @@ class Settings {
         }
         return $this->instance;
     }
+    
+    /**
+     * Copies the current configuration into an object's declared properties
+     * @param type $object 
+     */
+    public function toObject(&$object, $validation = null){
+        foreach($this->instance as $key => $value){
+            // check if settings are valid
+            if( $validation !== null ){
+                $this->validate($value, $validation[$key]); // throws ExceptionSettings
+            }
+            // check if property exists
+            if( !property_exists($object, $key) ){
+                $class = get_class($object);
+                throw new ExceptionSettings("Object '$class' does not have the property '$key'");
+            }
+            // add to object
+            $object->$key = $value;
+        }
+    }
 
     /**
      * Checks inaccessible keys in current instance for existence
