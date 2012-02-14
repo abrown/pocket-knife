@@ -54,11 +54,13 @@ class Service {
     public $template;
 
     /**
-     * Defines the class to interact with; typically set by WebRouting, but can be overriden manually
-     * @example $this->class = 'post';
+     * Defines the resource to interact with; typically set by WebRouting, 
+     * but can be overriden manually; is the same as the class name extending
+     * ResourceInterface
+     * @example $this->class = 'book'; // can be lower-cased
      * @var string
      * */
-    public $class;
+    public $resource;
 
     /**
      * Instance of class; typically set during normal execution
@@ -115,67 +117,56 @@ class Service {
     public function execute() {
 
         // find what we act upon
-        list($class, $id, $method) = $this->getRouting();
-        if (!$this->{'class'})
-            $this->{'class'} = $class;
-        if (!$this->method)
-            $this->method = $method;
+        list($resource, $id, $method) = $this->getRouting();
+        if (!$this->action)
+            $this->action = $method;
+        if (!$this->resource)
+            $this->resource = $resource;
         if (!$this->id)
             $this->id = $id;
+        
+        // content type
+        if (!$this->content_type)
+            $this->content_type = $_SERVER['CONTENT_TYPE'];
 
         // serve a response
         try {
 
             // check whether the client can access what he requested
-            if (!$this->allowed('class', $class))
-                throw new ExceptionAccess("Class '$class' is not allowed", 403);
-            if (!$this->allowed('method', $method))
-                throw new ExceptionAccess("Method '$method' is not allowed", 403);
-            //if( !$this->allowed('id', $id) )
-            //  throw new ExceptionAccess('ID is not allowed', 403);
-            // get object instance
+            if( $this->acl !== true ){
+                $user = SecurityAuthentication::getUser();
+                $group = SecurityAuthentication::getGroup();
+                if( !SecurityAcl::isAllowed($group, $user, $this->action, $this->resource, $this->id) ){
+                    throw new ExceptionAccess("'$group.$user' cannot perform the action '{$this->action}' on the resource '$resource.$id'", 403);
+                }
+            }
+            
+            // create object instance if necessary
             if (!$this->object) {
-                if (!class_exists($this->{'class'}))
-                    throw new ExceptionFile('Could not find class: ' . $this->{'class'}, 404);
-                if (!in_array('ServiceObjectInterface', class_implements($this->{'class'})))
-                    throw new ExceptionSettings('Class must implement ServiceObjectInterface.', 500);
-                $this->object = new $this->{'class'}($id);
+                if (!class_exists($this->resource))
+                    throw new ExceptionFile('Could not find Resource class: ' . $this->resource, 404);
+                if (!in_array('ResourceInterface', class_implements($this->resource)))
+                    throw new ExceptionSettings('Class must implement ResourceInterface.', 500);
+                $this->object = new $this->resource($this->resources[$this->resource]);
             }
 
-            // set storage method (if necessary)
-            if ($this->storage || $this->storage_map) {
-                $this->object->setStorage($this->getStorage());
-            }
-
+            // get representation and incoming data
+            $input_representation = $this->object->fromRepresentation($content_type);
+            $input_representation->receive();
+            
             // call method
-            if (!method_exists($this->object, $this->method))
-                throw new ExceptionSettings("Method '{$this->method}' does not exist", 404);
-            $input = $this->getInput()->getData();
-            $result = call_user_func_array(array($this->object, $this->method), array($input));
+            if (!method_exists($this->object, $this->action))
+                throw new ExceptionSettings("Action '{$this->action}' does not exist", 404);
+            $result = call_user_func_array(array($this->object, $this->action), array($input_representation->getData()));
 
-            // apply template (if necessary)
-            $this->getOutput()->setData($result);
-            if ($this->template) {
-                $this->getTemplate()->replace('content', $this->getOutput()->getResponse());
-                $this->getTemplate()->setVariable('data', $result);
-                $this->getOutput()->setResponse($this->getTemplate()->toString());
-            }
-
-            // send data
-            $this->getOutput()->send();
-        } catch (Exception $e) {
-
-            // apply template to error (if necessary)
-            $this->getOutput()->setData($e);
-            if ($this->template) {
-                $this->getTemplate()->replace('content', $this->getOutput()->getResponse());
-                $this->getTemplate()->setVariable('data', $e);
-                $this->getTemplate()->setVariable('error', $e);
-                $this->getOutput()->setResponse($this->getTemplate()->toString());
-            }
-
-            // send error data
-            $this->getOutput()->sendError();
+            // get representation and send data
+            $output_representation = $this->object->toRepresentation($content_type, $result);
+            $output_representation->send();
+        } 
+        catch (Exception $e) {
+            // get representation and send data
+            $output_representation = $e->toRepresentation($content_type, $result);
+            $output_representation->send();
         }
     }
 
