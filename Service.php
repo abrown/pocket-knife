@@ -34,18 +34,14 @@ class Service {
     public $storage = array('type' => 'json', 'location' => 'db.json');
 
     /**
-     * Defines the input data type for the request; should be a class implementing ServiceType
-     * @example $this->input = 'application/json';
-     * @var string
+     * Defines the representation formats to be used by this 
+     * web service; see Representation for a complete listing
+     * of the mapping from 'Content-Type' to Representation[Type]
+     * @example 
+     * 	$this->representation['request'] = 'application/json';
+     * @var array
      * */
-    public $input = 'application/x-www-form-urlencoded';
-
-    /**
-     * Defines the output data and content-type of the response; should be a class implementing ServiceType
-     * @example $this->output = 'application/json';
-     * @var string
-     * */
-    public $output = 'text/html';
+    public $representation = array('request' => 'application/x-www-form-urlencoded', 'response' => 'text/html');
 
     /**
      * Template to apply to the output after processing
@@ -112,7 +108,7 @@ class Service {
     /**
      * Handles requests, creates instances, and returns result
      */
-    public function execute() {
+    public function execute($return_as_string = false) {
 
         // find what we act upon
         list($class, $id, $method) = $this->getRouting();
@@ -214,7 +210,7 @@ class Service {
         // return
         return $routing;
     }
-
+    
     /**
      * Checks whether the specified type and value are allowed by the configured ACL
      * @return boolean
