@@ -23,19 +23,19 @@ class SecurityRule extends ResourceItem{
      * @var string
      */
     public $user;
-    
-    /**
-     * Resource name
-     * @var string
-     */
-    public $resource;
-    
+
     /**
      * Action on resource
      * @var string
      */
     public $action;
     
+    /**
+     * Resource type
+     * @var string
+     */
+    public $resource;
+
     /**
      * Resource ID
      * @var string
