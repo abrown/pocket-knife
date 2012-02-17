@@ -40,15 +40,15 @@ class BasicClassTest extends PHPUnit_Framework_TestCase {
     public function testFindDependencies(){
         $expected = 'BasicDocumentation';
         $actual = BasicClass::findDependencies('BasicClass');
-        $this->assertEquals($expected, $actual);
+        $this->assertContains($expected, $actual);
     }
     
     /**
      * Finds the absolute path in the filesystem to a class
      */
     public function testGetPathToClass(){
-        $expected = dirname(dirname(__FILE__)).DS.'Basic'.DS.'Class.php';
-        $actual = BasicClass::getPathToFileName('BasicClass');
+        $expected = dirname(dirname(dirname(__FILE__))).DS.'Basic'.DS.'Class.php';
+        $actual = BasicClass::getPathToClass('BasicClass');
         $this->assertEquals($expected, $actual);
     }
 }
