@@ -7,9 +7,10 @@ class BasicClassTest extends PHPUnit_Framework_TestCase {
 
     public static function setUpBeforeClass() {
         // start pocket knife
-        $path = dirname(dirname(__FILE__));
+        $path = dirname(dirname(dirname(__FILE__)));
         require $path . '/start.php';
-        // get Service code
+        // get code
+        autoload('BasicClass');
         BasicClass::autoloadAll('BasicClass');
     }
 
