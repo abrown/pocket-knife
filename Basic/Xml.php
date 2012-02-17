@@ -21,6 +21,7 @@ class BasicXml {
     public static function xml_encode($thing) {
         $w = new XMLWriter;
         $w->openMemory();
+        $w->setIndent(true);
         $w->startDocument('1.0', 'UTF-8');
         // get root name
         if (is_scalar($thing)) {
