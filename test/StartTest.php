@@ -45,6 +45,4 @@ class StartTest extends PHPUnit_Extensions_OutputTestCase {
     public function testToObject(){
         
     }
-
 }
-
