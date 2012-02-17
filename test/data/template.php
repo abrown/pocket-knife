@@ -1,9 +1,0 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <title><template:title/></title>
-    </head>
-    <body>
-        <template:content/>
-    </body>
-</html>
