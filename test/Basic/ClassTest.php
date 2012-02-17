@@ -3,7 +3,7 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-class ServiceTest extends PHPUnit_Framework_TestCase {
+class BasicClassTest extends PHPUnit_Framework_TestCase {
 
     public static function setUpBeforeClass() {
         // start pocket knife
