@@ -9,7 +9,7 @@ class BasicBenchmarkTest extends PHPUnit_Framework_TestCase {
         // start pocket knife
         $path = dirname(dirname(__FILE__));
         require $path . '/start.php';
-        // get Service code
+        // get code
         BasicClass::autoloadAll('BasicBenchmark');
     }
 
