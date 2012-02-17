@@ -31,7 +31,7 @@ class BasicXml {
         } elseif (is_array($thing)) {
             $name = 'array';
         } else {
-            throw new ExceptionSettings("Cannot encode an object of type " . gettype($object));
+            throw new ExceptionForbidden("Cannot encode an object of type " . gettype($object));
         }
         // encode recursively
         BasicXml::_xml_encode($thing, $name, $w);
