@@ -7,9 +7,10 @@ class BasicBenchmarkTest extends PHPUnit_Framework_TestCase {
 
     public static function setUpBeforeClass() {
         // start pocket knife
-        $path = dirname(dirname(__FILE__));
+        $path = dirname(dirname(dirname(__FILE__)));
         require $path . '/start.php';
         // get code
+        autoload('BasicClass');
         BasicClass::autoloadAll('BasicBenchmark');
     }
 
@@ -22,7 +23,7 @@ class BasicBenchmarkTest extends PHPUnit_Framework_TestCase {
         BasicBenchmark::endTimer();
         $expected = 1.0;
         $actual = BasicBenchmark::getTime();
-        $this->assertEquals($expected, $actual);
+        $this->assertLessThan($expected - $actual, 0.0001);
     }
     
     /**
