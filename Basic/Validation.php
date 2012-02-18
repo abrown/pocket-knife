@@ -88,7 +88,7 @@ class BasicValidation {
                 return false;
         }
         elseif ($bitmask & self::BOOLEAN) {
-            if (!is_boolean($value))
+            if (!is_bool($value))
                 return false;
         }
         elseif ($bitmask & self::INTEGER) {
