@@ -33,7 +33,7 @@ class BasicValidation {
     /**
      * META-TYPES
      */
-    const STRICT = 128;
+    //const STRICT = 128;
     const SCALAR = 256;
     const NUMERIC = 512;
     const IS_EMPTY = 1024;
@@ -102,41 +102,8 @@ class BasicValidation {
         elseif ($bitmask & self::STRING) {
             if (!is_string($value))
                 return false;
-            // STRING
-            if ($bitmask & self::ALPHANUMERIC) {
-                $regex = '~[a-z0-9 -_]~i';
-                if (!preg_match($regex, $value))
-                    return false;
-            }
-            if ($bitmask & self::EMAIL) {
-                $regex = '~\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}\b~i';
-                if (!preg_match($regex, $value))
-                    return false;
-            }
-            if ($bitmask & self::URL) {
-                // from: http://mathiasbynens.be/demo/url-regex
-                $regex = '~(https?|ftp)://(-\.)?([^\s/?\.#-]+\.?)+(/[^\s]*)?$~iS';
-                if (!preg_match($regex, $value))
-                    return false;
-            }
-            if ($bitmask & self::DATE) {
-                if (!strtotime($value))
-                    return false;
-            }
-            if ($bitmask & self::HTML) {
-                libxml_use_internal_errors(true);
-                libxml_clear_errors();
-                $xml = simplexml_load_string($value);
-                if (count(libxml_get_errors()) > 0)
-                    return false;
-            }
-            if ($bitmask & self::SQL) {
-                // TODO:
-                $regex = '~^(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER)\w~i';
-                if (!preg_match($regex, $value))
-                    return false;
-            }
-        } elseif ($bitmask & self::OBJECT) {
+        }
+        elseif ($bitmask & self::OBJECT) {
             if (!is_object($value))
                 return false;
         }
@@ -155,6 +122,40 @@ class BasicValidation {
         }
         if ($bitmask & self::NOT_EMPTY) {
             if (empty($value))
+                return false;
+        }
+        // STRING
+        if ($bitmask & self::ALPHANUMERIC) {
+            $regex = '~^[a-z0-9 _-]+$~i';
+            if (!preg_match($regex, $value))
+                return false;
+        }
+        if ($bitmask & self::EMAIL) {
+            $regex = '~^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$~i';
+            if (!preg_match($regex, $value))
+                return false;
+        }
+        if ($bitmask & self::URL) {
+            // from: http://mathiasbynens.be/demo/url-regex
+            $regex = '~(https?|ftp)://(-\.)?([^\s/?\.#-]+\.?)+(/[^\s]*)?$~iS';
+            if (!preg_match($regex, $value))
+                return false;
+        }
+        if ($bitmask & self::DATE) {
+            if (strtotime($value) === false)
+                return false;
+        }
+        if ($bitmask & self::HTML) {
+            libxml_use_internal_errors(true);
+            libxml_clear_errors();
+            $xml = simplexml_load_string($value);
+            if (count(libxml_get_errors()) > 0)
+                return false;
+        }
+        if ($bitmask & self::SQL) {
+            // TODO:
+            $regex = '~^(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER)\s~i';
+            if (!preg_match($regex, $value))
                 return false;
         }
         // all else failed,
