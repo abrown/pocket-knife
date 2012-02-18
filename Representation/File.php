@@ -7,66 +7,79 @@
 
 /**
  * File representation of a RESTful resource.
- * @uses Representation
+ * @uses Representation, ExceptionSettings, ExceptionWeb
  */
-class RepresentationFile implements RepresentationInterface{
-    
+class RepresentationFile extends Representation {
+
     protected $name;
-    
+
     /**
      * Returns the file name
      * @throws ExceptionSettings
      * @return string
      */
-    public function getName(){
-        if( $name === null ) throw new ExceptionSettings("RepresentationFile name is not yet set", 500);
+    public function getName() {
+        if ($this->name === null)
+            throw new ExceptionSettings("RepresentationFile name is not yet set", 500);
         return $this->name;
     }
-    
+
     /**
      * Sets the file name
      * @param string $filename
      */
-    public function setName($filename){
-        $this->name = $filename;   
+    public function setName($filename) {
+        $this->name = $filename;
     }
-    
+
     /**
      * @see Representation::getData()
      */
-    public function getData(){
+    public function getData() {
         return $this->data;
     }
-    
+
     /**
      * @see Representation::setData()
      */
-    public function setData($data){
+    public function setData($data) {
         $this->data = $data;
     }
-    
+
     /**
      * @see Representation::receive()
      */
-    public function receive(){
-        // grab first POST uploaded file
-        $upload = reset($_FILES);
-        if( !$upload ) throw new ExceptionWeb("No uploaded file could be found", 404);
-        if( $upload['error'] ) throw new ExceptionWeb("Upload failed: ".$upload['error'], 400);
+    public function receive() {
         // get name
-        $this->setName($upload['name']);
+        $name = md5(date('r'));
+        if( function_exists('apache_ request_ headers')){
+            $headers = apache_request_headers();
+            foreach($headers as $key => $value){
+                if($key == 'Content-Disposition'){
+                    $start = strpos($value, 'filename=');
+                    if( $start !== false ){
+                        $start += strlen('filename=');
+                        $name = substr($value, $start);
+                    }
+                    break;
+                }
+            }
+        }
+        $this->setName($name);
         // get data
-        $this->setData(file_get_contents($upload['tmp_name']));
+        $in = base64_decode(get_http_body());
+        $this->setData($in);
     }
-    
+
     /**
      * @see Representation::send()
      */
-    public function send(){
+    public function send() {
         header('Content-Type: application/octet-stream');
-        header('Content-Disposition: attachment; filename='.$this->getName());
+        header('Content-Disposition: attachment; filename=' . $this->getName());
         header('Content-Transfer-Encoding: binary');
-        header('Content-Length: '.strlen($this->getData()));
+        header('Content-Length: ' . strlen($this->getData()));
         echo $this->getData();
     }
+
 }

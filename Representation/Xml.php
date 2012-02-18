@@ -7,37 +7,38 @@
 
 /**
  * XML representation of a RESTful resource.
- * @uses Representation
+ * @uses Representation, BasicXml
  */
-class RepresentationXml implements RepresentationInterface{
-    
+class RepresentationXml extends Representation {
+
     /**
      * @see Representation::getData()
      */
-    public function getData(){
+    public function getData() {
         return $this->data;
     }
-    
+
     /**
      * @see Representation::setData()
      */
-    public function setData($data){
+    public function setData($data) {
         $this->data = to_object($data);
     }
-    
+
     /**
      * @see Representation::receive()
      */
-    public function receive(){
-        $in = file_get_contents('php://input');
+    public function receive() {
+        $in = get_http_body();
         $this->data = BasicXml::xml_decode($in);
     }
-    
+
     /**
      * @see Representation::send()
      */
-    public function send(){
-         header('Content-Type: application/json');
+    public function send() {
+        header('Content-Type: application/json');
         echo BasicXml::xml_encode($this->data);
     }
+
 }

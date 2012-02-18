@@ -9,7 +9,7 @@
  * JSON representation of a RESTful resource.
  * @uses Representation
  */
-class RepresentationJson implements RepresentationInterface {
+class RepresentationJson extends Representation {
 
     /**
      * @see Representation::getData()
@@ -29,8 +29,9 @@ class RepresentationJson implements RepresentationInterface {
      * @see Representation::receive()
      */
     public function receive() {
-        $in = file_get_contents('php://input');
-        $this->data = json_decode($in);
+        $in = get_http_body();
+        $array = json_decode($in, true);
+        $this->setData($array);
     }
 
     /**

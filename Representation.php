@@ -8,10 +8,10 @@
 /**
  * Representation of a RESTful resource. It must be able to be
  * sent or received.
- *
+ * @uses RepresentationFile, RepresentationForm, RepresentationHtml, RepresentationJson, RepresentationText, RepresentationUpload, RepresentationXml
  * @author andrew
  */
-interface RepresentationInterface {
+abstract class Representation {
 
     /**
      * Maps content types to representation types
@@ -22,43 +22,44 @@ interface RepresentationInterface {
         'application/octet-stream' => 'RepresentationFile',
         //'application/rss+xml' => 'RepresentationRss',
         //'application/soap+xml' => 'RepresentationSoap',
-		'application/xml' => 'RepresentationXml',
-		'application/x-www-form-urlencoded' => 'RepresentationForm',
+        'application/xml' => 'RepresentationXml',
+        'application/x-www-form-urlencoded' => 'RepresentationForm',
+        'multipart/form-data' => 'RepresentationUpload',
         'text/html' => 'RepresentationHtml',
         'text/plain' => 'RepresentationText'
     );
-    
+
     /**
      * Stores the object 
      * @var stdClass
      */
     protected $data;
-    
+
     /**
      * Accesses data object
      * @return stdClass
      */
-    public function getData();
-    
+    public abstract function getData();
+
     /**
      * Modifies data object
      */
-    public function setData($data);
-    
+    public abstract function setData($data);
+
     /**
      * Checks whether data has been initialized
      */
-    public function hasData(){
+    public function hasData() {
         return ($this->data === null);
     }
-    
+
     /**
-     * Receives and parses the data from the client
+     * Receives and decodes the data from the client
      */
-    public function receive();
-    
+    public abstract function receive();
+ 
     /**
-     * Sends the data to the client
+     * Encodes and sends the data to the client
      */
-    public function send();
+    public abstract function send();
 }
