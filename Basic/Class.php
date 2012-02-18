@@ -52,6 +52,7 @@ class BasicClass{
             $classes = explode(',', $matches[1]);
             foreach($classes as $_class){
                 $_class = trim($_class);
+                if( !$_class ) continue;
                 if( in_array($_class, $dependencies) ) continue;
                 else $dependencies[] = $_class;
                 $dependencies = BasicClass::findDependencies($_class, $dependencies);
