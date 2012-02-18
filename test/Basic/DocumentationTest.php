@@ -21,5 +21,6 @@ class BasicDocumentationTest extends PHPUnit_Framework_TestCase {
     public function testDocumentation(){
         $documentation = new BasicDocumentation('BasicDocumentation');
         $html = $documentation->getHtml();
+        echo $html;
     }
 }
