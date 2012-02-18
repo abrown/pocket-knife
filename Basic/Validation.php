@@ -20,56 +20,34 @@
  * }
  */
 class BasicValidation {
-    
     /**
      * TYPES
      */
     const IS_NULL = 1;
     const BOOLEAN = 2;
-    const INTEGER = 3;
-    const FLOAT = 4;
-    const STRING = 5;
-    const OBJECT = 6;
+    const INTEGER = 4;
+    const FLOAT = 8;
+    const STRING = 16;
+    const OBJECT = 32;
 
     /**
      * META-TYPES
      */
-    const STRICT = 10;
-    const SCALAR = 11;
-    const NUMERIC = 12;
-    const IS_EMPTY = 13;
-    const NOT_EMPTY = 14;
+    const STRICT = 128;
+    const SCALAR = 256;
+    const NUMERIC = 512;
+    const IS_EMPTY = 1024;
+    const NOT_EMPTY = 2048;
 
     /**
      * STRING-TYPES
      */
-    const ALPHANUMERIC = 20;
-    const EMAIL = 21;
-    const URL = 22;
-    const DATE = 23;
-    const HTML = 24;
-    const SQL = 25;
-
-
-    /**
-     * 
-      const BOOLEAN = 'is_bool';
-      const INTEGER = 'is_int';
-      const FLOAT = 'is_float';
-      const NUMERIC = 'is_numeric';
-      const STRING = 'is_string';
-      const SCALAR = 'is_scalar'; // scalar variables are those containing an integer, float, string or boolean.
-      // const ARRAY = 'is_array';
-      const OBJECT = 'is_object';
-      const EMAIL = '~\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}\b~i';
-      const URL = '~(https?|ftp)://(-\.)?([^\s/?\.#-]+\.?)+(/[^\s]*)?$~iS'; //http://mathiasbynens.be/demo/url-regex
-      const NOT_NULL = '!is_null';
-      const NOT_EMPTY = 'strlen';
-      const IS_NULL = 'is_null';
-      const IS_EMPTY = '!strlen';
-     *
-     * 
-     */
+    const ALPHANUMERIC = 16384;
+    const EMAIL = 32768;
+    const URL = 65536;
+    const DATE = 131072;
+    const HTML = 262144;
+    const SQL = 524288;
 
     /**
      * Holds rules
@@ -94,8 +72,8 @@ class BasicValidation {
     );
 
     /**
-     * Checks whether a value conforms to a group of rules. Rules
-     * are created by ORing the BasicValidation constants
+     * Checks whether a value conforms to a set of rules. Rules
+     * are created by ORing the BasicValidation constants into a bitmask
      * @example
      * $bitmask = BasicValidation::STRING | BasicValidation::EMAIL;
      * BasicValidation::is('address@site.com', $bitmask); // returns true
@@ -146,12 +124,14 @@ class BasicValidation {
                     return false;
             }
             if ($bitmask & self::HTML) {
-                $regex = '~<html~i';
-                $content = substr($value, 0, 100); // should be in first 100 characters
-                if (!preg_match($regex, $content))
+                libxml_use_internal_errors(true);
+                libxml_clear_errors();
+                $xml = simplexml_load_string($value);
+                if (count(libxml_get_errors()) > 0)
                     return false;
             }
             if ($bitmask & self::SQL) {
+                // TODO:
                 $regex = '~^(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER)\w~i';
                 if (!preg_match($regex, $value))
                     return false;
@@ -177,6 +157,8 @@ class BasicValidation {
             if (is_empty($value))
                 return false;
         }
+        // all else failed,
+        return true;
     }
 
     /**
@@ -353,4 +335,5 @@ class BasicValidation {
         else
             return $data;
     }
+
 }
