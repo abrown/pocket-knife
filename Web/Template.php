@@ -109,6 +109,7 @@ class WebTemplate {
             throw new ExceptionSettings('Template input type must be an integer (see class constants)', 500);
         $this->input = $input;
         $this->type = $type;
+        $this->setVariable('template', $this);
     }
 
     /**
