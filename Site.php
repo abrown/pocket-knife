@@ -23,7 +23,7 @@
  * // the 'site' variable references the Site service (the actual
  * // object created with this class)
  * echo $site->search('...'); 
- * @uses Settings, WebRouting, WebTemplate, ExceptionFile, ExceptionAccess
+ * @uses Settings, WebTemplate, ExceptionFile, ExceptionAccess
  */
 class Site{
     
@@ -102,7 +102,7 @@ class Site{
      * @return string
      */
     public function getURI( $file = null ){
-        return WebRouting::getLocationUrl(); // e.g. http://example.com/site.php
+        return WebUrl::getLocationUrl(); // e.g. http://example.com/site.php
     }
     
     /**
@@ -117,7 +117,7 @@ class Site{
     	// send header (if necessary)
     	if( $this->output ) header( 'Content-Type: '.$this->output );
         // get name, find file
-        $name = WebRouting::getAnchoredUrl();
+        $name = WebUrl::getAnchoredUrl();
         // routing
         switch($name){
         	case 'admin':
