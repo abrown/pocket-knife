@@ -114,7 +114,12 @@ class BasicXml {
         if ($reader->name == 'scalar' || in_array($reader->getAttribute('type'), $scalars)) {
             $type = $reader->getAttribute('type');
             $variable = $reader->readString();
-            settype($variable, $type);
+            if( $type == 'boolean' && $variable == 'false' ){
+                $variable = false;
+            }
+            else{
+                settype($variable, $type);
+            }            
         }
         // get array
         elseif ($reader->name == 'array' || $reader->getAttribute('type') == 'array') {
