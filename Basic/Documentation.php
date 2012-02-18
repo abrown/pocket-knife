@@ -14,7 +14,7 @@
  * 
  * // alternately, use BasicClass
  * echo BasicClass:getDocumentation('BasicScheduler');
- * @uses BasicClass, WebTemplate, WebRouting
+ * @uses BasicClass, WebTemplate, WebUrl
  */
 class BasicDocumentation {
 
@@ -125,7 +125,7 @@ class BasicDocumentation {
         foreach ($dependencies as $dependency) {
             if ($dependency == $this->getClass()->getName())
                 continue; // skip this class
-            $url = WebRouting::getLocationUrl() . '/' . $dependency;
+            $url = WebUrl::getLocationUrl() . '/' . $dependency;
             $html[] = sprintf('<a href="%s">%s</a>', $url, $dependency);
         }
         // return
