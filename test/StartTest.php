@@ -4,13 +4,14 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-
 class StartTest extends PHPUnit_Extensions_OutputTestCase {
 
     public static function setUpBeforeClass() {
         // start pocket knife
         $path = dirname(dirname(__FILE__));
         require $path . '/start.php';
+        // load classes
+        autoload('ExceptionFile');
     }
 
     public function testGetBaseDir() {
@@ -23,8 +24,8 @@ class StartTest extends PHPUnit_Extensions_OutputTestCase {
     }
 
     public function testAutoload() {
-        autoload('TestDataExample');
-        $this->assertContains('TestDataExample', get_declared_classes());
+        autoload('Service');
+        $this->assertContains('Service', get_declared_classes());
     }
 
     public function testPr() {
@@ -33,16 +34,29 @@ class StartTest extends PHPUnit_Extensions_OutputTestCase {
     }
 
     public function testGetPublicVars() {
-        $class = new TestDataExample();
+        $class = new Example();
         $reflect = new ReflectionClass($class);
-        $vars = array();
-        foreach( $reflect->getProperties(ReflectionProperty::IS_PUBLIC) as $var ){
-            $vars[$var->name] = null;
+        $expected = array();
+        foreach ($reflect->getProperties(ReflectionProperty::IS_PUBLIC) as $var) {
+            $expected[$var->name] = null;
         }
-        $this->assertEquals(get_public_vars($class), $vars);
+        $actual = get_public_vars($class);
+        $this->assertEquals($expected, $actual);
     }
-    
-    public function testToObject(){
+
+    public function testToObject() {
         
     }
+
+}
+
+/**
+ * Simple test class
+ */
+class Example {
+
+    public $a;
+    protected $b;
+    private $c;
+
 }
