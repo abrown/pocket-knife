@@ -150,11 +150,11 @@ class BasicValidation {
                 return false;
         }
         if ($bitmask & self::IS_EMPTY) {
-            if (!is_empty($value))
+            if (!empty($value))
                 return false;
         }
         if ($bitmask & self::NOT_EMPTY) {
-            if (is_empty($value))
+            if (empty($value))
                 return false;
         }
         // all else failed,
