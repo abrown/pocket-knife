@@ -7,7 +7,7 @@
 
 /**
  * BasicClass
- * @uses BasicDocumentation
+ * @uses BasicDocumentation, ExceptionFile
  */
 class BasicClass{
     
