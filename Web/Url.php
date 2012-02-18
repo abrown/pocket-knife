@@ -196,7 +196,7 @@ class WebUrl {
         // check host name
         if (!isset($parsed_url['host'])) {
             $regex = '/[a-z0-9-_]+\.[a-z]{2,4}/i';
-            if (!preg_match($regex, $url)) {
+            if (preg_match($regex, $url)) {
                 $parsed_url['path'] = '';
                 $parsed_url['host'] = $url;
             } else {
