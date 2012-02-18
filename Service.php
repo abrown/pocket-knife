@@ -15,7 +15,7 @@
  * ));
  * $service = new Service($settings);
  * $service->execute();
- * @uses Settings, WebRouting, WebHttp, WebTemplate, ExceptionFile, ExceptionSettings
+ * @uses Settings, WebHttp, WebTemplate, ExceptionFile, ExceptionSettings
  */
 class Service {
 
