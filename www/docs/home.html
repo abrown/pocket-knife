@@ -1,10 +1,10 @@
 <!-- ASIDE -->
 <div class="aside">
-	<a href="/projects/pocket-knife/www/api.php">API</a> 
+	<a href="/pocket-knife/www/api.php">API</a> 
 	<a href="#site-map">SiteMap</a> 
 	<a href="http://www.github.com/andrewsbrown/pocket-knife/downloads">Download</a> 
 	<br/>
-	<img src="/projects/pocket-knife/www/images/pocket-knife2.jpg"
+	<img src="/pocket-knife/www/images/pocket-knife2.jpg"
 		title="A real pocket knife... buy it here http://www.overstock.com/Sports-Toys/Swiss-Army-Swiss-Champ-30-tool-Pocket-Knife/4408380/product.html" />
 </div>
 
@@ -42,7 +42,7 @@
 	<li>Get the code: <pre><code>git clone git://github.com/andrewsbrown/pocket-knife.git</code></pre>
 	</li>
 	<li>Create the calculator class, <code>calculator.php</code>: 
-			<pre><code><?php 
+			<pre><code>&lt;?php 
 class Calculator extends ResourceStatic{ 
 	public $a; 
 	public $b; 
@@ -52,7 +52,7 @@ class Calculator extends ResourceStatic{
 		return $this->a + $this->b; 
 	} 
 } 
-?> </code></pre>
+?&gt; </code></pre>
 	</li>
 	<li>Create the resource anchor, <code>service.php</code>, and
 		include <code>pocket-knife</code> (see below).
@@ -64,7 +64,7 @@ class Calculator extends ResourceStatic{
 		using GET variables as input and JSON as output (see below).
 	</li>
 	<li>Create the service and let it run free: 
-		<pre><code><?php
+		<pre><code>&lt;?php
 include('pocket-knife/start.php'); include('calculator.php');
 
 $settings = new Settings(array[ 
@@ -75,7 +75,7 @@ $settings = new Settings(array[
 
 $service = new Service($settings); 
 $service->execute(); 
-?> </code></pre>
+?&gt; </code></pre>
 	</li>
 	<li>Access it from the browser with: <pre><code>http://[your_server_here]/[path_to_files]/service.php/calculator/sum?a=100&b=200</code></pre>
 	</li>
