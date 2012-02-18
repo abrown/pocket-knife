@@ -7,29 +7,37 @@
 
 class SettingsTest extends PHPUnit_Framework_TestCase{
     
+    public $array;
+    public $config;
+    
     public static function setUpBeforeClass() {
         // start pocket knife
         $path = dirname(dirname(__FILE__));
         require $path . '/start.php';
         // get code
-        autoload('Settings');
-        autoload('ExceptionSettings');
+        autoload('BasicClass');
+        BasicClass::autoloadAll('Settings');
     }
 
     public function setUp() {
-        $this->a = array(
+        // setup array
+        $this->array = array(
             'one' => 1,
             'two' => 2,
             'list1' => array('item1', 'item2', 'item3'),
             'list2' => array('four'=>4, 'five'=>5, 'six'=>6),
             'LIST3' => array('list4'=>array(7, 8, 9))
         );
-        $this->c = new Settings($this->a);
+        // setup config
+        $this->config = new Settings($this->array);
     }
     
+    /**
+     * Demonstrates how to access configuration settings
+     */
     public function testInstanceConstruction(){
-        $array = $this->a;
-        $config = $this->c;
+        $array = $this->array;
+        $config = $this->config;
         // test
         $this->assertTrue( is_object($config->getInstance()) );
         $this->assertEquals($array['one'], $config->one);
@@ -39,17 +47,26 @@ class SettingsTest extends PHPUnit_Framework_TestCase{
         // this fails: $this->assertEquals((object) $array['list1'], $config->list1);
     }
     
+    /**
+     * Demonstrates how to set configuration settings with object notation
+     */
     public function testOverloading(){
-        $this->c->ten = 10;
-        $this->assertEquals(10, $this->c->ten);    
+        $this->config->ten = 10;
+        $this->assertEquals(10, $this->config->ten);    
     }
     
+    /**
+     * Demonstrates how to set configuration settings with dot notation
+     */
     public function testDotNotation(){
-        $this->c->set('x.y.z', 11);
-        $this->assertEquals(11, $this->c->x->y->z); 
-        $this->assertEquals(11, $this->c->get('x.y.z')); 
+        $this->config->set('x.y.z', 11);
+        $this->assertEquals(11, $this->config->x->y->z); 
+        $this->assertEquals(11, $this->config->get('x.y.z')); 
     }
     
+    /**
+     * 
+     */
     public function testValidate(){
         $template = array(
             'one' => Settings::MANDATORY,
@@ -60,28 +77,32 @@ class SettingsTest extends PHPUnit_Framework_TestCase{
             'list2.five' => Settings::OPTIONAL | Settings::NUMERIC,
             'list10' => Settings::OPTIONAL
         );
-        $this->assertTrue( $this->c->validate($template) );
+        $this->assertTrue( $this->config->validate($template) );
     }
     
     /**
+     * Demonstrates what exception is thrown when validation fails
      * @expectedException ExceptionSettings
      */
     public function testValidateException(){
         $template = array(
             'list2' => Settings::OPTIONAL | Settings::SINGLE,
         );
-        $this->assertTrue( $this->c->validate($template) );
+        $this->assertTrue( $this->config->validate($template) );
     }
     
+    /**
+     * Demonstrates validation of paths
+     */
     public function testValidatePath(){
         $template = array(
             'path' => Settings::MANDATORY | Settings::PATH,
             'dir' => Settings::PATH,
         );
-        $this->c->path = __FILE__;
-        $this->c->dir = dirname(__FILE__);
+        $this->config->path = __FILE__;
+        $this->config->dir = dirname(__FILE__);
         // test
-        $this->assertTrue( $this->c->validate($template) );
+        $this->assertTrue( $this->config->validate($template) );
     }
     
     public function testFileWrite(){
