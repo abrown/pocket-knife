@@ -9,22 +9,9 @@
  * Provides a generic template for an object that is neither a 
  * list nor an item in a list, but must be accessed by 
  * a web service.
+ * @uses Resource
  */
-class ResourceGeneric implements ResourceInterface{
-    
-    /**
-     * Constructor
-     */
-    /**
-    public function __construct(){
-        $properties = get_public_vars($this);
-        foreach($properties as $property => $value){
-            if( array_key_exists($property, $_GET) ){
-                $this->$property = $_GET[$property];
-            }
-        }
-    } 
-    */
+class ResourceGeneric extends Resource{
     
     /**
      * Returns the object URI
