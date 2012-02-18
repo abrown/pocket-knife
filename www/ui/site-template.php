@@ -5,18 +5,18 @@
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
 
-$lang = new LanguageInflection($name);
+$template->tidy = true;
+$lang = new BasicText($name);
 $title = $lang->toParagraphStyle()->removeFileExtension()->toString();
 if( !$title ) $title = 'Home';
-
 ?>
 <!doctype html>
 <html>
     <head>
         <title>pocket-knife: <?php echo $title; ?></title>
-        <link href="<?php echo WebRouting::getDirectoryUrl(); ?>/styles/reset.css" media="all" type="text/css" rel="stylesheet" />
-        <link href="<?php echo WebRouting::getDirectoryUrl(); ?>/styles/base.css" media="all" type="text/css" rel="stylesheet" />
-        <!--<link href="<?php echo WebRouting::getDirectoryUrl(); ?>/styles/vertical-rhythm.css" media="all" type="text/css" rel="stylesheet" />-->
+        <link href="<?php echo WebUrl::getDirectoryUrl(); ?>/styles/reset.css" media="all" type="text/css" rel="stylesheet" />
+        <link href="<?php echo WebUrl::getDirectoryUrl(); ?>/styles/base.css" media="all" type="text/css" rel="stylesheet" />
+        <!--<link href="<?php echo WebUrl::getDirectoryUrl(); ?>/styles/vertical-rhythm.css" media="all" type="text/css" rel="stylesheet" />-->
     </head>
     <body>
         
@@ -40,8 +40,8 @@ if( !$title ) $title = 'Home';
         <h2>Site Map</h2>
         <ul class="sitemap">
         <?php 
-        $url = WebRouting::getLocationUrl();
-        $lang = new LanguageInflection('');
+        $url = WebUrl::getLocationUrl();
+        $lang = new BasicText('');
         foreach( $site->getSiteMap() as $file ){
         	$lang->setWord($file);
         	$name = $lang->toParagraphStyle()->removeFileExtension()->toString();
