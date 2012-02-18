@@ -333,7 +333,7 @@ class BasicDocumentation {
         // regex
         foreach ($lines as $line) {
             if (preg_match('/\* (@\w+) ?(.+)?/', $line, $matches)) {
-                $annotations[] = array('annotation' => $matches[1], 'text' => trim($matches[2]));
+                $annotations[] = array('annotation' => @$matches[1], 'text' => trim(@$matches[2]));
                 end($annotations);
             } else {
                 $line = preg_replace('/\s*\*/', '', $line, 1);
