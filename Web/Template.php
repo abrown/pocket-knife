@@ -153,18 +153,14 @@ class WebTemplate {
     }
 
     /**
-     * Returns the contents of a file as a string. Will look for the
-     * file first as an absolute path and then as a relative path to
-     * the pocket-knife directory (using get_base_dir()).
-     * @param string $file a path to a file--absolute or relative to the pocket-knife directory
+     * Returns the contents of a file as a string. 
+     * @param string $file a path to a file
      * @return string
      */
     public function getFile($file) {
         // check file
         if (!is_file($file)) {
-            $file = get_base_dir() . DS . $file;
-            if (!is_file($file))
-                throw new ExceptionFile('Could not find ' . $file, 404);
+            throw new ExceptionFile('Could not find ' . $file, 404);
         }
         // return
         return file_get_contents($file);
@@ -230,9 +226,7 @@ class WebTemplate {
     public function getPHPFile($file__hide__, $variables__hide__ = array()) {
         // check file
         if (!is_file($file__hide__)) {
-            $file__hide__ = get_base_dir() . DS . $file__hide__;
-            if (!is_file($file__hide__))
-                return '<b>Error:</b> Could not find ' . $file__hide__;
+            throw new ExceptionFile('Could not find ' . $file__hide__, 404);
         }
         // get output
         if (is_array($variables__hide__))
