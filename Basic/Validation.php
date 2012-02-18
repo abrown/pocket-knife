@@ -7,17 +7,14 @@
 
 /**
  * Provides methods for validating any given input
- * @uses 
+ * @uses ExceptionForbidden, WebUrl
  * @example
- * // example 1:
- * $validation = new BasicValidation();
- * $validation->addRule('example', BasicValidation::NUMERIC, 'The input is not numeric. Try again!');
- * $errors = $validation->validate('example', 'not a number...'); // $errors == array('The input is not numeric. Try again!);
+ * $a = 'google.com';
+ * $errors = BasicValidation::validate($a, BasicValidation::NOT_EMPTY|BasicValidation::STRING|BasicValidation::URL);
+ * pr($errors); // prints an array of rule failures
  * 
- * // example 2:
- * if( BasicValidation::is( 'not an url', WebValidation::URL ) ){
- *   ...
- * }
+ * $_a = BasicValidation::sanitize($a, BasicValidation::STRING|BasicValidation::URL);
+ * pr($_a); // $_a should now pass the validation tests it failed before 
  */
 class BasicValidation {
     /**
@@ -50,28 +47,6 @@ class BasicValidation {
     const SQL = 524288;
 
     /**
-     * Holds rules
-     * @var array 
-     */
-    private $rules = array();
-    private $messages = array(
-        'DEFAULT' => '"%s" failed rule "%s"',
-        'BOOLEAN' => '"%s" is not boolean',
-        'INTEGER' => '"%s" is not an integer',
-        'FLOAT' => '"%s" is not a float',
-        'NUMERIC' => '"%s" is not numeric',
-        'STRING' => '"%s" is not a string',
-        'SCALAR' => '"%s" is not a scalar value (integer, float, string or boolean)',
-        'OBJECT' => '"%s" is not a PHP object',
-        'EMAIL' => '"%s" is not a valid e-mail',
-        'URL' => '"%s" is not a valid URL',
-        'NOT_NULL' => '"%s" is null',
-        'NOT_EMPTY' => '"%s" is empty',
-        'IS_NULL' => '"%s" must be null',
-        'IS_EMPTY' => '"%s" must be empty',
-    );
-
-    /**
      * Checks whether a value conforms to a set of rules. Rules
      * are created by ORing the BasicValidation constants into a bitmask
      * @example
@@ -81,7 +56,7 @@ class BasicValidation {
      * @param mixed $value
      * @param int $bitmask 
      */
-    static public function is($value, $bitmask) {
+    public static function is($value, $bitmask) {
         // TYPES
         if ($bitmask & self::IS_NULL) {
             if (!is_null($value))
@@ -120,7 +95,7 @@ class BasicValidation {
             if (!empty($value))
                 return false;
         }
-        if ($bitmask & self::NOT_EMPTY) {
+        elseif ($bitmask & self::NOT_EMPTY) {
             if (empty($value))
                 return false;
         }
@@ -163,178 +138,191 @@ class BasicValidation {
     }
 
     /**
-     * Adds rule to set. 
-     * @example
-     * A rule may be:
-     * a function, given in string format, like 'is_string'
-     * a negation function, given in the format '!is_string'
-     * a regex pattern, delimited by ~
-     * @param string $id
-     * @param string $rule 
+     * Returns error messages based on failed rules
+     * @param mixed $value
+     * @param int $bitmask 
+     * @return array
      */
-    public function addRule($id, $rule, $message = null) {
-        // add rule
-        if (!array_key_exists($id, $this->rules))
-            $this->rules[$id] = array($rule);
-        else
-            $this->rules[$id][] = $rule;
-        // add message
-        if (!is_null($message)) {
-            $this->addMessage($id, $rule, $message);
-        }
-    }
-
-    /**
-     * Adds custom message
-     * messages can include sprintf formatting for $id and $rule (in that order)
-     * e.g.: '%s is not %s', 'id', 'empty'
-     * @param type $id
-     * @param type $rule
-     * @param type $message 
-     */
-    public function addMessage($id, $rule, $message) {
-        // add rule
-        if (!array_key_exists($id, $this->messages))
-            $this->messages[$id] = array($rule => $message);
-        else
-            $this->messages[$id][$rule] = $message;
-    }
-
-    /**
-     * Returns error list
-     * @param array $list 
-     */
-    public function validateList($list) {
+    public static function validate($value, $bitmask) {
+        // set error messages for each rule
+        $messages = array(
+            self::IS_NULL => '"%s" is not null',
+            self::BOOLEAN => '"%s" is not boolean',
+            self::INTEGER => '"%s" is not an integer',
+            self::FLOAT => '"%s" is not a float',
+            self::STRING => '"%s" is not a string',
+            self::OBJECT => '"%s" is not a PHP object',
+            self::SCALAR => '"%s" is not a scalar value (integer, float, string or boolean)',
+            self::NUMERIC => '"%s" is not numeric',
+            self::IS_EMPTY => '"%s" is not empty according to PHP\'s empty() function',
+            self::NOT_EMPTY => '"%s" is empty according to PHP\'s empty() function',
+            self::ALPHANUMERIC => '"%s" contains more than letters, numbers, hyphens, underscores, and spaces',
+            self::EMAIL => '"%s" is not a valid e-mail address',
+            self::URL => '"%s" is not a valid URL',
+            self::DATE => '"%s" is not a valid date according to PHP\'s strtotime() function',
+            self::HTML => '"%s" is not valid HTML, i.e. cannot be parsed by libxml',
+            self::SQL => '"%s" is not a valid SQL statement'
+        );
+        // loop through applicable rules and compile errors
         $errors = array();
-        foreach ($list as $id => $value) {
-            $e = $this->validate($id, $value);
-            if ($e)
-                $errors[$id] = $e;
-        }
-        return $errors;
-    }
-
-    /**
-     * Returns errors with a given id/value
-     * @param string $id
-     * @param any $value 
-     */
-    public function validate($id, $value) {
-        if (!array_key_exists($id, $this->rules))
-            return null;
-        $errors = array();
-        foreach ($this->rules[$id] as $rule) {
-            if (!$this->is($value, $rule))
-                $errors[] = $this->getMessage($id, $rule);
-        }
-        return $errors;
-    }
-
-    /**
-      static public function is($value, $rule){
-      // regex
-      if( $rule[0] == '~' ){
-      return (preg_match($rule, $value)) return false;
-      }
-      // negation
-      elseif( $rule[0] == '!' ){
-      $function = substr($rule, 1);
-      pr(get_defined_functions());
-      if( !function_exists($function) ) throw new Exception("Attempting to validate with unknown function '$function'", 500);
-      return (!$function($value)) return false;
-      }
-      // function
-      else{
-      $function = $rule;
-      if( !function_exists($function) ) throw new Exception("Attempting to validate with unknown function '$function'", 500);
-      return ($function($value)) return false;
-      }
-      }
-     * 
-     */
-
-    /**
-     * Returns error message; messages can include sprintf formatting for $id and $rule (in that order)
-     * @param string $id
-     * @param string $rule
-     * @return string 
-     */
-    public function getMessage($id, $rule) {
-        // get custom messages
-        if (array_key_exists($id, $this->messages) && array_key_exists($rule, $this->messages[$id])) {
-            $message = $this->messages[$id][$rule];
-        }
-        // get built-in messages
-        elseif ($key = array_search($rule, $this->rules)) {
-            $message = $this->messages[$key];
-        }
-        // default
-        else {
-            $message = $this->messages['DEFAULT'];
+        foreach ($messages as $_bitmask => $message) {
+            if( $bitmask & $_bitmask ){
+                if( !self::is($value, $_bitmask) ){
+                    $errors[] = sprintf($message, $value);
+                }
+            }  
         }
         // return
-        return sprintf($message, $id, $rule);
+        return $errors;
+    }
+    
+    /**
+     * Given a list of values, this function will test them against a 
+     * list of rules; uses wildcard '*' functionality
+     * @example
+     * $list = array('a' => 1, 'b' => 2, 'c' => 3);
+     * $rules = array('*' => BasicValidation::NUMERIC, 'a' => BasicValidation::FLOAT);
+     * $errors = BasicValidation::validateList($list, $rules);
+     * // $errors will contain an entry like 'a => "1" is not a float'
+     * @param array $list
+     * @param array $rules
+     * @return array 
+     */
+    public static function validateList($list, $rules){
+        $errors = array();
+        foreach($list as $key => $value){
+            // test specific rules
+            if(array_key_exists($key, $rules)){
+                $e = self::validate($value, $rules[$key]);
+                if( $e ) $errors[$key] = $e;
+            }
+            // test wildcard '*' rules
+            if(array_key_exists('*', $rules)){
+                $e = self::validate($value, $rules['*']);
+                if( $e ) $errors[$key] = array_merge($errors[$key], $e);
+            }
+        }
+        // return 
+        return $errors;
     }
 
     /**
-     * Sanitizes a piece of data for a specific purpose. The function should be
-     * read 'sanitize() some $data for $purpose'. sanitize() will recursively 
-     * clean objects and arrays. For cleaning URLs, see normalize().
+     * Sanitizes a value for a specific purpose; uses the same constants as
+     * validate() and is().
      * @example
-     * // for SQL:
-     * $cleaned_vars = WebHttp::sanitize($_GET, 'sql');
-     * // for HTML:
-     * echo WebHttp::sanitize($unsafe_html, 'html', '<b>No data given</b>');
-     * @param mixed $input
-     * @param string $type one of [alphanumeric, date, html, sql, integer, float]
-     * @param mixed $default the value to return if $data is empty (uses PHP empty() function)
+     * // for HTTP input:
+     * $cleaned_username = BasicValidation::sanitize($_GET['username'], WebValidation::ALPHANUMERIC);
+     * // for HTML (cleans tags , etc.):
+     * $cleaned_html = BasicValidation::sanitize($_GET['html'], WebValidation::HTML, '<b>No data given</b>');
+     * @param mixed $value
+     * @param int $bitmask one or more of the constants defined in BasicValidation
+     * @param mixed $default the value to return if all else fails
      * @return mixed
      */
-    static function sanitize($data, $type = 'alphanumeric', $default = null) {
-        // recurse
-        if (is_array($data) || is_object($data)) {
-            foreach ($data as &$item) {
-                $data = self::sanitize($data, $type, $default);
-            }
-            return $data;
+    public static function sanitize($value, $bitmask, $default = null) {
+        $out = null;
+        // TYPES
+        if ($bitmask & self::IS_NULL) {
+            return null;
         }
-        // clean
-        switch ($type) {
-            // make it a safe string (nothing but normal letters and numbers, plus ./-_ )
-            default:
-            case 'alphanumeric':
-                $data = preg_replace('/![a-zA-Z0-9\.\/-_ ]/', ' ', $data);
-                break;
-            // date format, using ISO 8601 (http://www.w3.org/TR/NOTE-datetime)
-            case 'date':
-                $time = strtotime($data);
-                if ($time === false)
-                    $data = $default;
-                else
-                    $data = date('c', $time);
-                break;
-            // clean for html, prevents XSS
-            case 'html':
-                $data = htmlspecialchars($data, ENT_QUOTES);
-                break;
-            // clean/prepare for SQL statement
-            case 'sql':
-                $data = mysql_real_escape_string($data);
-                break;
-            // to integer
-            case 'integer':
-                $data = intval($data);
-                break;
-            // to float
-            case 'float':
-                $data = floatval($data);
-                break;
+        elseif ($bitmask & self::BOOLEAN) {
+            if( self::is($value, self::BOOLEAN) ) $out = $value;
+            else $out = $default;
+        }
+        elseif ($bitmask & self::INTEGER) {
+            if( self::is($value, self::INTEGER) ) $out = $value;
+            else $out = $default;
+        }
+        elseif ($bitmask & self::FLOAT) {
+            if( self::is($value, self::FLOAT) ) $out = $value;
+            else $out = $default;
+        }
+        elseif ($bitmask & self::STRING) {
+            if( self::is($value, self::STRING) ) $out = $value;
+            else $out = $default;
+        }
+        elseif ($bitmask & self::OBJECT) {
+            if( self::is($value, self::OBJECT) ) $out = $value;
+            else $out = $default;
+        }
+        // META-TYPES
+        if ($bitmask & self::SCALAR) {
+            if( self::is($value, self::SCALAR) ) $out = $value;
+            else $out = $default;
+        }
+        if ($bitmask & self::NUMERIC) {
+            if( self::is($value, self::NUMERIC) ) $out = floatval($value);
+            else $out = $default;
+        }
+        if ($bitmask & self::IS_EMPTY) {
+            if( self::is($value, self::IS_EMPTY) ) $out = $value;
+            else $out = $default;
+        }
+        elseif ($bitmask & self::NOT_EMPTY) {
+            if( self::is($value, self::NOT_EMTPY) ) $out = $value;
+            else $out = $default;
+        }
+        // STRING
+        if ($bitmask & self::ALPHANUMERIC) {
+            $regex = '~![a-zA-Z0-9 _-]~i';
+            $out = preg_replace($regex, '', $value);
+        }
+        if ($bitmask & self::EMAIL) {
+            if( self::is($value, self::EMAIL) ) $out = $value;
+            else $out = $default;
+        }
+        if ($bitmask & self::URL) {
+            $out = WebUrl::normalize($value);
+            if( !self::is($out, self::URL) ) $out = $default;
+        }
+        if ($bitmask & self::DATE) {
+            $out = strtotime($value); // returns timestamp
+            if( $out === false ) $out = $default;
+        }
+        if ($bitmask & self::HTML) {
+            $out = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+        }
+        if ($bitmask & self::SQL) {
+            $out = mysql_real_escape_string($value);
+            if( !$out ) $out = $default;
         }
         // return
-        if (empty($data))
-            return $default;
-        else
-            return $data;
+        return $out;
     }
-
+    
+    /**
+     *
+     * @param type $list
+     * @param type $rules
+     * @param type $defaults
+     * @return type 
+     */
+    public static function sanitizeList($list, $rules, $defaults = null){
+        if( is_scalar($list) ){
+            return self::sanitize($list, $rules, $defaults);
+        }
+        elseif( is_array($list) || is_object($list) ){
+            // setup
+            if( is_array($list) ) $out = array();
+            else $out = new stdClass();
+            // loop through values
+            foreach($list as $key => $value){
+                // get specific rule
+                $rule = 0;
+                if( array_key_exists($key, $rules) ) $rule |= $rules[$key];
+                if( array_key_exists('*', $rules) ) $rule |= $rules['*'];
+                // get specific default
+                $default = null;
+                if( is_array($defaults) && array_key_exists('*', $defaults) ) $default = $defaults['*'];
+                if( is_array($defaults) && array_key_exists($key, $defaults) ) $default = $defaults[$key];
+                // sanitize
+                if( is_array($list) ) $out[$key] = self::sanitizeList($value, $rule, $default);
+                else $out->$key = self::sanitizeList($value, $rule, $default);
+            }
+            return $out;
+        }
+        else{
+            throw new ExceptionForbidden("Unknown type to sanitize", 500);
+        }
+    }
 }
