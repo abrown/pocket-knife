@@ -66,26 +66,51 @@ function get_public_vars($object) {
 }
 
 /**
+ * Returns a string containing the body of the HTTP request
+ * @return string
+ */
+if( !function_exists('get_http_body') ){
+    function get_http_body() {
+        return file_get_contents('php://input');
+    }
+}
+
+/**
  * Converts arrays into objects
  * From Richard Castera, http://www.richardcastera.com/blog/php-convert-array-to-object-with-stdclass
- * @param array $array
+ * @param array $thing
  * @return stdClass 
  */
-function to_object($array) {
-    // case: all values/objects
-    if (!is_array($array)) {
-        return $array;
+function to_object($thing) {
+    // case: numeric strings
+    if (is_string($thing) && is_numeric($thing)){
+        if( strpos($thing, '.') !== false ) return floatval($thing);
+        else return intval($thing);
     }
-    // create object
-    $object = new stdClass();
-    // case: is valid array
-    if (is_array($array) && count($array) > 0) {
-        foreach ($array as $name => $value) {
+    // case: boolean
+    elseif( $thing === 'true' ){
+        return true;
+    }
+    // case: boolean
+    elseif( $thing === 'false' ){
+        return false;
+    }
+    // case: rest of values objects
+    elseif( is_scalar($thing) ){
+        return $thing;
+    }
+    // case: valid array
+    elseif(is_array($thing) && count($thing) > 0) {
+        // create object
+        $object = new stdClass();
+        // loop through array
+        foreach ($thing as $name => $value) {
             $name = strtolower(trim($name));
             if (strlen($name) > 0) {
                 $object->$name = to_object($value);
             }
         }
+        // return
         return $object;
     }
     // case: nothing to return
