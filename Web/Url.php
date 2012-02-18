@@ -11,7 +11,7 @@
  * normalizing.
  * @uses ExceptionWeb
  */
-class WebUrl{
+class WebUrl {
 
     /**
      * Returns the HTTP request URL
@@ -26,13 +26,19 @@ class WebUrl{
             if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') {
                 $url .= 's';
             }
-            $url .= '://' . $_SERVER['SERVER_NAME'];
+            $url .= '://';
+            // get server name
+            if (isset($_SERVER['SERVER_NAME'])) {
+                $url .= $_SERVER['SERVER_NAME'];
+            }
             // check port
-            if ($_SERVER['SERVER_PORT'] != '80') {
+            if (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] != '80') {
                 $url .= ':' . $_SERVER['SERVER_PORT'];
             }
             // add uri
-            $url .= $_SERVER['REQUEST_URI'];
+            if (isset($_SERVER['REQUEST_URI'])) {
+                $url .= $_SERVER['REQUEST_URI'];
+            }
         }
         return $url;
     }
@@ -49,46 +55,134 @@ class WebUrl{
     }
 
     /**
-     * Returns HTTP request method. Checks the request URI 
-     * for a parameter like "PUT" or "POST" before checking the 
-     * real HTTP method. This allows all types of requests from 
-     * the browser.
-     * @return string one of [GET, PUT, POST, DELETE, HEAD, LIST]
+     * Returns the URL anchor. This is hardcoded to be '.php' because
+     * the intended practice is to use PHP files as web service endpoints.
+     * Optionally, the developer can use .htaccess redirects to remove
+     * this from the URL.
+     * @return string
      */
-    static function getMethod() {
-        $types = array('GET', 'PUT', 'POST', 'DELETE', 'HEAD', 'LIST');
-        if ($_GET && $type = array_intersect(array_keys($_GET), $types)) {
-            return $type[0];
-        }
-        return $_SERVER['REQUEST_METHOD'];
+    protected function getAnchor() {
+        return '.php';
     }
 
     /**
-     * Get a parameter from the HTTP request; will clean the 
-     * value using Http::clean() if necessary
-     * @param string $parameter a key in the GET or POST array
-     * @param boolean $clean a boolean determining whether to use Http::clean() on the parameter
-     * @return mixed
+     * Returns the request URL from its beginning through the 
+     * directory holding the current script.
+     * @example
+     * // for a request like 'http://www.example.com/dir/index.php'
+     * echo WebRouting::getDirectoryUrl();
+     * // should print 'http://www.example.com/dir'
+     * @staticvar string $directory_url
+     * @return string 
      */
-    static function getParameter($parameter = null, $clean = false) {
-        $out = null;
-        // get parameter
-        if ($parameter) {
-            if (array_key_exists($parameter, $_GET))
-                $out = $_GET[$parameter];
-            elseif (array_key_exists($parameter, $_POST))
-                $out = $_POST[$parameter];
-            elseif (strtoupper($parameter) == 'GET')
-                $out = $_GET;
-            elseif (strtoupper($parameter) == 'POST')
-                $out = $_POST;
+    public static function getDirectoryUrl() {
+        static $directory_url = null;
+        if ($directory_url === null) {
+            $url = self::getLocationUrl();
+            $end = strrpos($url, '/');
+            if ($end !== false)
+                $directory_url = substr($url, 0, $end + 1);
+            else
+                $directory_url = $url;
         }
-        // clean?
-        if ($clean) {
-            $out = self::clean($out, $clean);
+        return $directory_url;
+    }
+
+    /**
+     * Returns the request URL from its beginning through the
+     * anchor ('.php' unless getAnchor() is overriden).
+     * @return string
+     */
+    public static function getLocationUrl() {
+        static $location_url = null;
+        if ($location_url === null) {
+            if (!self::getAnchor())
+                throw new ExceptionWeb('No anchor set', 500);
+            $url = self::getUrl();
+            $anchor = self::getAnchor();
+            $start = 0;
+            // find url end
+            $anchor_start = strpos($url, $anchor);
+            if ($anchor_start !== false) {
+                $end = $anchor_start + strlen($anchor);
+            } elseif (strpos($url, '?') !== false) {
+                $end = strpos($url, '?');
+            } else {
+                $end = strlen($url);
+            }
+            // make url
+            $location_url = substr($url, $start, $end);
+            // test for filename 
+            if (strpos($location_url, '.php') === false) {
+                $parts = explode('/', $_SERVER['SCRIPT_FILENAME']);
+                $filename = end($parts);
+                if ($location_url[strlen($location_url) - 1] !== '/')
+                    $location_url .= '/';
+                $location_url .= $filename;
+            }
         }
-        // return
-        return $out;
+        return $location_url;
+    }
+
+    /**
+     * Returns the filename (a.k.a. tokens, but not yet in array
+     * form) after the anchor and up to the '?'.
+     * @return string
+     */
+    public static function getAnchoredUrl() {
+        static $anchored_url = null;
+        if ($anchored_url === null) {
+            if (!self::getAnchor())
+                throw new ExceptionWeb('No anchor set', 500);
+            $anchored = strpos(self::getUrl(), self::getAnchor());
+            if ($anchored === false)
+                throw new ExceptionWeb('Anchor not found in URL', 400);
+            $start = $anchored + strlen(self::getAnchor()) + 1;
+            $end = @strpos(self::getUrl(), '?', $start);
+            if ($end === false)
+                $end = strlen(self::getUrl());
+            $anchored_url = substr(self::getUrl(), $start, $end - $start);
+        }
+        return $anchored_url;
+    }
+
+    /**
+     * Builds a URL with current location, given tokens, and
+     * GET variables (if $pass_get_variables is set).
+     * @example
+     * // For an HTTP request like "http://example.com/index.php?search=..."
+     * $_GET['page'] = 1;
+     * $_GET['page-limit' = 10;
+     * $url = WebRouting::createUrl('object/id/action', true);
+     * // $url => "http://example.com/index.php/object/id/action?search=...&page=1&page-limit=10"
+     * @param string $tokens
+     * @param boolean $pass_get_variables
+     */
+    public static function create($tokens, $pass_get_variables = true) {
+        if (@$tokens[0] == '/')
+            $tokens = substr($tokens, 1);
+        $url = self::getLocationUrl() . '/' . $tokens . '?' . http_build_query($_GET);
+        return $url;
+    }
+
+    /**
+     * Returns unparsed tokens from a RESTful URL by index.
+     * @return array an ordered list of tokens like [0 => ..., 1 => ...]
+     */
+    public static function getTokens() {
+        static $tokens = null;
+        if ($tokens === null) {
+            $token_string = self::getAnchoredUrl();
+            // split and remove empty
+            $tokens = explode('/', $token_string);
+            foreach ($tokens as $index => $token) {
+                if (strlen($token) < 1)
+                    unset($tokens[$index]);
+            }
+            if (!$tokens)
+                throw new ExceptionWeb('No URL tokens', 400);
+        }
+        return $tokens;
     }
 
     /**
@@ -97,60 +191,94 @@ class WebUrl{
      * @param string $url 
      * @return string
      */
-    static function normalize($url){
+    static function normalize($url) {
         $parsed_url = parse_url($url);
-        if( isset($parsed_url['query']) ) parse_str($parsed_url['query'], $parsed_query);
-        else $parsed_query = array();
+        // check host name
+        if (!isset($parsed_url['host'])) {
+            $regex = '/[a-z0-9-_]+\.[a-z]{2,4}/i';
+            if (!preg_match($regex, $url)) {
+                $parsed_url['path'] = '';
+                $parsed_url['host'] = $url;
+            } else {
+                return null;
+            }
+        }
+        // check scheme
+        if (!isset($parsed_url['scheme'])) {
+            $parsed_url['scheme'] = 'http';
+        }
+        // parse query
+        if (isset($parsed_url['query']))
+            parse_str($parsed_url['query'], $parsed_query);
+        else
+            $parsed_query = array();
         // convert to lower case
-        $parsed_url['scheme'] = strtolower($parsed_url['scheme']);
-        $parsed_url['host'] = strtolower($parsed_url['host']);
-        if( isset($parsed_url['path']) ) $parsed_url['path'] = strtolower($parsed_url['path']);
+        if (isset($parsed_url['scheme']))
+            $parsed_url['scheme'] = strtolower($parsed_url['scheme']);
+        if (isset($parsed_url['host']))
+            $parsed_url['host'] = strtolower($parsed_url['host']);
+        if (isset($parsed_url['path']))
+            $parsed_url['path'] = strtolower($parsed_url['path']);
         // convert non-alphanumeric characters (except -_.~) to hex
-        if( isset($parsed_url['user']) ) $parsed_url['user'] = rawurlencode($parsed_url['user']);
-        if( isset($parsed_url['pass']) ) $parsed_url['pass'] = rawurlencode($parsed_url['pass']);
-        if( isset($parsed_url['fragment']) ) $parsed_url['fragment'] = rawurlencode($parsed_url['fragment']);
-        if( isset($parsed_url['query']) ) $parsed_url['query'] = http_build_query($parsed_query, '', '&');
+        if (isset($parsed_url['user']))
+            $parsed_url['user'] = rawurlencode($parsed_url['user']);
+        if (isset($parsed_url['pass']))
+            $parsed_url['pass'] = rawurlencode($parsed_url['pass']);
+        if (isset($parsed_url['fragment']))
+            $parsed_url['fragment'] = rawurlencode($parsed_url['fragment']);
+        if (isset($parsed_url['query']))
+            $parsed_url['query'] = http_build_query($parsed_query, '', '&');
         // remove dot segments (see http://tools.ietf.org/html/rfc3986, Remove Dot Segments)
-        if( isset($parsed_url['path']) ){
+        if (isset($parsed_url['path'])) {
             $input = explode('/', $parsed_url['path']);
             $output = array();
-            while( count($input) ){
+            while (count($input)) {
                 $segment = array_shift($input);
-                if( $segment == '' ) continue;
-                if( $segment == '.' ) continue;
-                if( $segment == '..' && count($output) ){ array_pop($output); continue; }
+                if ($segment == '')
+                    continue;
+                if ($segment == '.')
+                    continue;
+                if ($segment == '..' && count($output)) {
+                    array_pop($output);
+                    continue;
+                }
                 array_push($output, $segment);
             }
-            if( $parsed_url['path'][0] == '/' ) $parsed_url['path'] = '/';
-            else $parsed_url['path'] == '';
+            if (isset($parsed_url['path'][0]) && $parsed_url['path'][0] == '/')
+                $parsed_url['path'] = '/';
+            else
+                $parsed_url['path'] == '';
             $parsed_url['path'] .= implode('/', $output);
         }
         // add trailing / to directories
-        if( isset($parsed_url['path']) && !isset($parsed_url['query']) && !isset($parsed_url['fragment']) ){
-            $last_slash = strrpos($parsed_url['path'], '/');
-            $last_char = strlen($parsed_url['path']) - 1;
-            if( strpos($parsed_url['path'], '.', $last_slash) === false && $parsed_url['path'][$last_char] !== '/' ){
-                $parsed_url['path'] .= '/';
+        if (!isset($parsed_url['query']) && !isset($parsed_url['fragment'])) {
+            if (!isset($parsed_url['path'])) {
+                $parsed_url['path'] = '/';
+            } else {
+                $last_slash = strrpos($parsed_url['path'], '/');
+                $has_last_slash = ($last_slash !== false);
+                $has_file_name = (strpos($parsed_url['path'], '.', $last_slash) !== false);
+                if (!$has_last_slash && !$has_file_name) {
+                    $parsed_url['path'] .= '/';
+                }
             }
         }
-        elseif( !isset($parsed_url['path']) ){
-            $parsed_url['path'] = '/';
-        }
         // re-build (from http://us2.php.net/manual/en/function.parse-url.php#106731)
-        $scheme   = isset($parsed_url['scheme']) ? $parsed_url['scheme'] . '://' : '';
-        $host     = isset($parsed_url['host']) ? $parsed_url['host'] : '';
-        $port     = isset($parsed_url['port']) && $parsed_url['port'] != '80' ? ':' . $parsed_url['port'] : ''; // remove default port
-        $user     = isset($parsed_url['user']) ? $parsed_url['user'] : '';
-        $pass     = isset($parsed_url['pass']) ? ':' . $parsed_url['pass']  : '';
-        $pass     = ($user || $pass) ? "$pass@" : '';
-        $path     = isset($parsed_url['path']) ? $parsed_url['path'] : '';
-        $query    = isset($parsed_url['query']) ? '?' . $parsed_url['query'] : '';
+        $scheme = isset($parsed_url['scheme']) ? $parsed_url['scheme'] . '://' : '';
+        $host = isset($parsed_url['host']) ? $parsed_url['host'] : '';
+        $port = isset($parsed_url['port']) && $parsed_url['port'] != '80' ? ':' . $parsed_url['port'] : ''; // remove default port
+        $user = isset($parsed_url['user']) ? $parsed_url['user'] : '';
+        $pass = isset($parsed_url['pass']) ? ':' . $parsed_url['pass'] : '';
+        $pass = ($user || $pass) ? "$pass@" : '';
+        $path = isset($parsed_url['path']) ? $parsed_url['path'] : '';
+        $query = isset($parsed_url['query']) ? '?' . $parsed_url['query'] : '';
         $fragment = isset($parsed_url['fragment']) ? '#' . $parsed_url['fragment'] : '';
         $url = "$user$pass$host$port$path$query$fragment";
         // remove duplicate slashes
         $url = str_replace('//', '/', $url);
-        $url = $scheme.$url;
+        $url = $scheme . $url;
         // return
         return $url;
     }
+
 }

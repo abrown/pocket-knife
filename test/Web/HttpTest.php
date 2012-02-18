@@ -23,35 +23,8 @@ class WebHttpTest extends PHPUnit_Framework_TestCase{
     }
     
     /**
-     * Sets environment before for each test
+     * getMethod() gets the current HTTP method from the server or URL
      */
-    public function setUp(){
-        // unnecessary
-    }
-    
-    public function testGetUrl(){
-        // setup URL
-        global $_SERVER;
-        $_SERVER['SERVER_NAME'] = 'www.example.com';
-        $_SERVER['SERVER_PORT'] = '80';
-        $_SERVER['REQUEST_URI'] = '/directory/index.php/objects/35/read?param1=a&param2=b';
-        // test
-        $expected = 'http://www.example.com/directory/index.php/objects/35/read?param1=a&param2=b';
-        $actual = WebHttp::getUrl();
-        $this->assertEquals($expected, $actual);
-    }
-    
-    public function testGetUri(){
-        $_SERVER['REQUEST_URI'] = '/directory/index.php/objects/35/read?param1=a&param2=b';
-        $expected = '/directory/index.php/objects/35/read?param1=a&param2=b';
-        $actual = WebHttp::getUri();
-        $this->assertEquals($expected, $actual);
-    }
-    
-    public function testGetTokens(){
-        // deprecated
-    }
-    
     public function testGetMethod(){
         // test URL query
         $_GET['PUT'] = 1;
@@ -66,6 +39,9 @@ class WebHttpTest extends PHPUnit_Framework_TestCase{
         $this->assertEquals($expected, $actual);
     }
     
+    /**
+     * Retrieve a parameter from the HTTP request
+     */
     public function testGetParameter(){
         $_GET['parameter'] = 'b';
         $_POST['parameter2'] = 'a';
@@ -74,33 +50,8 @@ class WebHttpTest extends PHPUnit_Framework_TestCase{
         $this->assertEquals($expected, $actual);
     }
     
-    public function testNormalize(){
-        // test 1
-        $expected = 'http://www.example.com/dir1/dir2?a=b%2Fs%24';
-        $actual = WebHttp::normalize('http://www.EXAMPLE.com/Dir1/A/../Dir2?a=b/s$');
-        $this->assertEquals($expected, $actual);
-        // test 2
-        $expected = 'http://www.example.com/';
-        $actual = WebHttp::normalize('http://www.EXAMPLE.com');
-        $this->assertEquals($expected, $actual);
-        // test 3
-        $expected = 'http://www.example.com/dir/page.html';
-        $actual = WebHttp::normalize('http://www.EXAMPLE.com//dir/./Page.html?');
-        $this->assertEquals($expected, $actual);
-    }
-    
-    public function testClean(){
-        // test XSS
-        $expected = "&#039;&#039;;!--&quot;&lt;XSS&gt;=&amp;{()}";
-        $actual = WebHttp::sanitize("'';!--\"<XSS>=&{()}", 'html');
-        $this->assertEquals($expected, $actual);
-        // test numeric
-        $expected = 25;
-        $actual = WebHttp::sanitize('25nd', 'integer');
-        $this->assertEquals($expected, $actual);
-    }
-    
     /**
+     * Sets the HTTP code
      * @expectedException ExceptionWeb
      */
     public function testSetCode(){
@@ -111,6 +62,7 @@ class WebHttpTest extends PHPUnit_Framework_TestCase{
     }
     
     /**
+     * Set the HTTP content type
      * @expectedException ExceptionWeb
      */
     public function testSetContentType(){
@@ -121,6 +73,7 @@ class WebHttpTest extends PHPUnit_Framework_TestCase{
     }
     
     /**
+     * Redirects the user to a new location
      * @expectedException ExceptionWeb
      */
     public function testRedirect(){
@@ -130,11 +83,18 @@ class WebHttpTest extends PHPUnit_Framework_TestCase{
         $this->assertEquals($expected, $actual);
     }
     
+    /**
+     * Tests HTTP request
+     */
     public function testRequest(){
         $actual = WebHttp::request('http://www.google.com');
         $this->assertNotNull($actual);
+        echo (substr($actual, 0, 100).'...');
     }
     
+    /**
+     * Should return HTTP request code
+     */
     public function testGetRequestCode(){
         $expected = 200;
         $actual = WebHttp::getRequestCode();
