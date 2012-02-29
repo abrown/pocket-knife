@@ -1,37 +1,35 @@
 <!-- ASIDE -->
 <div class="aside">
-	<a href="/pocket-knife/www/api.php">API</a> 
-	<a href="#site-map">SiteMap</a> 
-	<a href="http://www.github.com/andrewsbrown/pocket-knife/downloads">Download</a> 
-	<br/>
-	<img src="/pocket-knife/www/images/pocket-knife2.jpg"
-		title="A real pocket knife... buy it here http://www.overstock.com/Sports-Toys/Swiss-Army-Swiss-Champ-30-tool-Pocket-Knife/4408380/product.html" />
+    <a href="/pocket-knife/www/api.php">API</a> 
+    <a href="#site-map">SiteMap</a> 
+    <a href="http://www.github.com/andrewsbrown/pocket-knife/downloads">Download</a> 
+    <br/>
+    <img src="/pocket-knife/www/images/pocket-knife2.jpg"
+         title="A real pocket knife... buy it here http://www.overstock.com/Sports-Toys/Swiss-Army-Swiss-Champ-30-tool-Pocket-Knife/4408380/product.html" />
 </div>
 
 <!-- PRELIMINARIES -->
 <h2>About</h2>
 <p>
-	<code>pocket-knife</code>
-	is a mini-framework for making sites and services. It is fast and
-	simple. It is RESTful. It is minimal. It is a collection of the tools I
-	use every day to make web development easy.
+    <code>pocket-knife</code>
+    is a mini-framework for building RESTful services. It is fast, simple,
+    and minimal. If you like, go <a href="">more in-depth</a>
 </p>
+
+<h2>Features</h2>
 <p>
-	The idea is that RESTful PHP applications do not have to be complex to
-	be powerful and fast. Web applications build the same components
-	(services, settings, sites, and sequences) again and again; the
-	<code>pocket-knife</code>
-	components are lightweight so they can be easily extended and fully
-	tested for so you can trust their reliability.
-</p>
-<h2>Requirements</h2>
-<p>
-	<code>pocket-knife</code>
-	uses the following:
+    <code>pocket-knife</code>
+    includes the following:
 </p>
 <ul>
-	<li>PHP5</li>
-	<li>PDO, if you choose to connect to MySQL</li>
+    <li>PHP5</li>
+    <li>Content-type detection</li>
+    <li>Comprehensive security mechanism with ACL</li>
+    <li>Web management console; <a href="/demo/index.php/admin">try it</a></li>
+    <li><code>__autoload</code>, to load classes</li>
+    <li>Support for 10 different storage methods, including SQL, Mongo, S3, CSV...</li>
+    <li>PDO, if you choose to connect to MySQL</li>
+    <li>Tested code; 100% code coverage</li>
 </ul>
 <p>That is it. Let's start.</p>
 
@@ -39,10 +37,12 @@
 <h2>Getting Started</h2>
 <p>We can make a calculator quite easily:</p>
 <ol>
-	<li>Get the code: <pre><code>git clone git://github.com/andrewsbrown/pocket-knife.git</code></pre>
-	</li>
-	<li>Create the calculator class, <code>calculator.php</code>: 
-			<pre><code>&lt;?php 
+    <!-- STEP ONE -->
+    <li>Get the code: <pre><code>git clone git://github.com/andrewsbrown/pocket-knife.git</code></pre>
+    </li>
+    <!-- STEP TWO -->
+    <li>Create the calculator class, <code>calculator.php</code>: 
+        <pre><code>&lt;?php 
 class Calculator extends ResourceStatic{ 
 	public $a; 
 	public $b; 
@@ -53,19 +53,19 @@ class Calculator extends ResourceStatic{
 	} 
 } 
 ?&gt; </code></pre>
-	</li>
-	<li>Create the resource anchor, <code>service.php</code>, and
-		include <code>pocket-knife</code> (see below).
-	</li>
-	<li>Include that <code>Calculator</code> class we just made (see below).
-	</li>
-	<li>Create a <code>Settings</code> object that allows all users
-		access to all classes (don't worry, the ACL can get more complex)
-		using GET variables as input and JSON as output (see below).
-	</li>
-	<li>Create the service and let it run free: 
-		<pre><code>&lt;?php
-include('pocket-knife/start.php'); include('calculator.php');
+    </li>
+    <!-- STEP THREE -->
+    <li>Create the resource anchor, <code>service.php</code>, and
+        include <code>pocket-knife</code> (see below). Include that 
+        <code>Calculator</code> class we just made (see below).
+    </li>
+    <!-- STEP FOUR -->
+    <li>Create a <code>Settings</code> object that allows all users
+        access to all classes (don't worry, the ACL can get more complex)
+        using GET variables as input and JSON as output (see below).
+        <pre><code>&lt;?php
+include('pocket-knife/start.php'); 
+include('calculator.php');
 
 $settings = new Settings(array[ 
 	'acl' => true, 
@@ -76,54 +76,8 @@ $settings = new Settings(array[
 $service = new Service($settings); 
 $service->execute(); 
 ?&gt; </code></pre>
-	</li>
-	<li>Access it from the browser with: <pre><code>http://[your_server_here]/[path_to_files]/service.php/calculator/sum?a=100&b=200</code></pre>
-	</li>
+    </li>
+    <li>Let your web service run free (<a href="">try this demo</a>): 
+        <pre><code>http://[your_server_here]/[path_to_files]/service.php/calculator/sum?a=100&b=200</code></pre>
+    </li>
 </ol>
-<p>
-	Too simplistic, right? We could make the same thing happen with one
-	line of PHP (let's see...
-	<code><?php echo json_encode($_GET['a'] + $_GET['b']); ?></code>
-	). Please, read on.
-</p>
-
-<!-- MORE AND MORE -->
-<h2>More and More</h2>
-<p>
-	The
-	<code>pocket-knife</code>
-	framework is a collection of common-sense components.
-	<!-- SERVICE -->
-	The
-	<code>Service</code>
-	component exposes a RESTful web service with content-type detection,
-	customizable ACL and authentication, templating, and a bunch of
-	supported database drivers (<a href="Help/index.php/service">learn
-		more</a>).
-	<!-- SETTINGS -->
-	The
-	<code>Settings</code>
-	component edits and stores Settingss--again, with all of the buzzwords
-	(<a href="Help/index.php/settings">learn more</a>).
-	<!-- SEQUENCE -->
-	The
-	<code>Sequence</code>
-	component is a multi-step web service (think shopping cart or sign-up
-	form) (<a href="Help/index.php/sequence">learn more</a>).
-	<!-- SITE -->
-	Finally, the
-	<code>Site</code>
-	component picks up any stray HTML/PHP pages and organizes them with
-	site-mapping and search functions (<a href="Help/index.php/site">learn
-		more</a>).
-	<!-- SUMMARY -->
-	Together, the components make up an entire framework covering most web
-	application architectures. A blog? Basically a
-	<code>Service</code>
-	. The admin section of a mail client? A
-	<code>Settings</code>
-	component. A sign-up form for new users? A simple
-	<code>Sequence</code>
-	. And the conglomerate of HTML and text files on my home server? A
-	<code>Site</code>
-	.
