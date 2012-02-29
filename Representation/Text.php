@@ -22,15 +22,7 @@ class RepresentationText extends Representation {
      * @see Representation::setData()
      */
     public function setData($data) {
-        if (is_null($data)) {
-            $this->data = 'NULL';
-        } elseif (is_bool($data)) {
-            $this->data = $data ? 'TRUE' : 'FALSE';
-        } elseif (is_object($data) || is_array($data)) {
-            $this->data = print_r($data, true);
-        } else {
-            $this->data = $data;
-        }
+        $this->data = $data;
     }
 
     /**
@@ -45,7 +37,14 @@ class RepresentationText extends Representation {
      */
     public function send() {
         header('Content-Type: text/plain');
-        echo $this->data;
+        if (is_null( $this->getData())) {
+            echo 'NULL';
+        } elseif (is_bool( $this->getData())) {
+            echo $this->getData() ? 'TRUE' : 'FALSE';
+        } elseif (is_object( $this->getData()) || is_array( $this->getData())) {
+            echo print_r( $this->getData(), true);
+        } else {
+            echo $this->getData();
+        }
     }
-
 }
