@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @copyright Copyright 2011 Andrew Brown. All rights reserved.
+ * @license GNU/GPL, see 'help/LICENSE.html'.
+ */
+
+/**
 * Replaces file_get_contents for classes that use it to get
 * request bodies; set static variable in ServiceTest::$REQUEST_BODY
 * to simulate the request
@@ -11,26 +16,25 @@ function file_get_contents($file){
     else return \file_get_contents($file);
 }
 
-/**
- * @copyright Copyright 2011 Andrew Brown. All rights reserved.
- * @license GNU/GPL, see 'help/LICENSE.html'.
- */
-class ServiceTest extends PHPUnit_Framework_TestCase {
+class ServiceTest extends \PHPUnit_Framework_TestCase {
 
+    public $instance;
+    
     public static function setUpBeforeClass() {
         // start pocket knife
         $path = dirname(dirname(__FILE__));
         require $path . '/start.php';
-        // get Service code
+        // get code
+        autoload('BasicClass');
         BasicClass::autoloadAll('Service');
     }
 
     public function setUp() {
-        $this->instance = new Service();
+        $this->instance = new \Service();
     }
 
     public function testExistence() {
-        $this->assertNotNull($this->s);
+        $this->assertNotNull($this->instance);
     }
 
     /**
@@ -41,7 +45,7 @@ class ServiceTest extends PHPUnit_Framework_TestCase {
         self::$REQUEST_BODY = "http://www.google.com";
         $expected = "Content-Type: application/json\n\n"+
             '{"url":"ed646a3334","time:"'.date('r').'"}';
-        $service = new Service();
+        $service = new \Service();
         $service->class = 'UrlShortener';
         $service->method = 'shorten';
         $service->content_type = 'application/json';
