@@ -27,9 +27,8 @@ class ResourceItem extends Resource {
     /**
      * Constructor
      */
-    public function __construct() {
-        list($object, $id, $method) = Service::getRouting();
-        if ($id !== '*')
+    public function __construct($id = null) {
+        if ($id !== null && $id !== '*')
             $this->setID($id);
     }
 
