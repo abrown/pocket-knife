@@ -8,7 +8,7 @@
 /**
  * Provides a system for managing a user access control list and
  * restricting/permitting access to resources
- * @uses ExceptionWeb
+ * @uses SecurityRule, ResourceList
  */
 class SecurityAcl extends ResourceList{
     
@@ -26,44 +26,45 @@ class SecurityAcl extends ResourceList{
     
     /**
      * Determines whether a user has access to perform an action
-     * @param string $group
-     * @param string $user
+     * @param string $name
+     * @param array $roles
      * @param string $action
      * @param string $resource Resource type
      * @param string $id Resource ID
      * @return boolean
      */
-    public function isAllowed($group, $user, $action, $resource, $id){
+    public function isAllowed($name, $roles, $action, $resource, $id){
         // false = deny | true = allow
         $default = ($this->default_access == 'allow');
         // search through levels to find a proof of the default
-        $levels = array('*', $group, $user);
+        $levels = array_merge( (array) $name, (array) $roles, (array) '*');
         foreach($levels as $level){
             // get rules for this level
-            foreach($this->getStorage()->search("name", $level) as $rule){
+            foreach($this->getRulesFor($level) as $rule){
                 // only consider rule if it matches the current context
-                if( $this->matches($action, $resource, $id, $rule) ){
-                    if( $rule->access == $default ) return $default;
+                if( $rule->matches($action, $resource, $id) ){
+                    return $rule->access;
                 }
             }
         }
-        // if no rule found, send the opposite
-        return !$default;
+        // if no rule found, send the default
+        return $default;
     }
     
     /**
-     * Matches a context (resource, action, id) to a rule, returning
-     * true if they match
-     * @param string $action
-     * @param string $resource Resource type
-     * @param string $id Resource ID
-     * @param stdClass $rule
-     * @return boolean
+     * Returns rules applying to this name
+     * @param string $name 
      */
-    protected function matches($action, $resource, $id, $rule){
-        return 
-            ( $action == $rule->action || $rule->action == '*' ) &&
-            ( $resource == $rule->resource || $rule->resource == '*' ) &&
-            ( $id == $rule->id || $rule->id == '*' || $rule->id == null );
+    public function getRulesFor($name){
+        $rules = $this->getStorage()->search('name', $name);
+        // to SecurityRules
+        $out = array();
+        foreach($rules as $rule){
+            $out[] = new SecurityRule($rule->name, $rule->action, $rule->resource, $rule->id, $rule->access);
+        }
+        // sort by specificity; most specific rules on top (i.e. those with the least number of '*')
+        usort($out, array('SecurityRule', 'compare'));
+        // return
+        return $out;
     }
 }
