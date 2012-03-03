@@ -112,6 +112,10 @@ class Service {
      */
     public function execute($return_as_string = false) {
 
+        if( $this->authentication && !$this->getAuthentication()->getUser() ){
+            $this->getAuthentication()->login();
+        }
+        
         // find what we act upon
         list($resource, $id, $method) = $this->getRouting();
         if (!$this->action)
@@ -125,6 +129,20 @@ class Service {
         if (!$this->content_type)
             $this->content_type = $_SERVER['CONTENT_TYPE'];
 
+        // special mappping
+        switch($this->resource){
+            case 'admin':
+                $this->resource = 'SiteAdministration';
+                break;
+            case 'config':
+                $this->resource = 'SiteConfiguration';
+                break;
+            case 'auth':
+                $this->resource = 'SecurityAuthentication';
+                break;
+            
+        }
+        
         // serve a response
         try {
 
