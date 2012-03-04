@@ -17,6 +17,7 @@
  * pr($_a); // $_a should now pass the validation tests it failed before 
  */
 class BasicValidation {
+    
     /**
      * TYPES
      */
@@ -26,11 +27,12 @@ class BasicValidation {
     const FLOAT = 8;
     const STRING = 16;
     const OBJECT = 32;
+    const IS_ARRAY = 64;
 
     /**
      * META-TYPES
      */
-    //const STRICT = 128;
+    const EITHER_OR = 0;
     const SCALAR = 256;
     const NUMERIC = 512;
     const IS_EMPTY = 1024;
@@ -56,7 +58,30 @@ class BasicValidation {
      * @param mixed $value
      * @param int $bitmask 
      */
-    public static function is($value, $bitmask) {
+    public static function is($value, $bitmask){
+        // complex validation: cycle through options
+        if( $bitmask & self::EITHER_OR ){
+            $max = 524288;
+            for($i=1; $i<=$max; $i*=2){
+                if( self::_is($value, $i) ){
+                    return true;
+                }
+            }
+            return false;
+        }
+        // simple validation
+        else{
+            return self::_is($value, $bitmask);
+        }
+    }
+    
+    /**
+     * Work method for is()
+     * @param mixed $value
+     * @param int $bitmask
+     * @return boolean 
+     */
+    protected static function _is($value, $bitmask) {
         // TYPES
         if ($bitmask & self::IS_NULL) {
             if (!is_null($value))
@@ -80,6 +105,10 @@ class BasicValidation {
         }
         elseif ($bitmask & self::OBJECT) {
             if (!is_object($value))
+                return false;
+        }
+        elseif ($bitmask & self::IS_ARRAY) {
+            if (!is_array($value))
                 return false;
         }
         // META-TYPES
@@ -152,6 +181,7 @@ class BasicValidation {
             self::FLOAT => '"%s" is not a float',
             self::STRING => '"%s" is not a string',
             self::OBJECT => '"%s" is not a PHP object',
+            self::IS_ARRAY => '"%s" is not an array',
             self::SCALAR => '"%s" is not a scalar value (integer, float, string or boolean)',
             self::NUMERIC => '"%s" is not numeric',
             self::IS_EMPTY => '"%s" is not empty according to PHP\'s empty() function',
@@ -243,6 +273,10 @@ class BasicValidation {
         }
         elseif ($bitmask & self::OBJECT) {
             if( self::is($value, self::OBJECT) ) $out = $value;
+            else $out = $default;
+        }
+        elseif ($bitmask & self::IS_ARRAY) {
+            if( self::is($value, self::IS_ARRAY) ) $out = $value;
             else $out = $default;
         }
         // META-TYPES

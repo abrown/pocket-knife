@@ -26,8 +26,14 @@ class StorageMemory implements StorageInterface{
     /**
      * Constructor
      */
-    public function __construct(){        
-        // nothing to do
+    public function __construct($settings){
+        BasicValidation::with($settings)
+                ->withOptionalProperty('data')
+                ->isArray();
+        // import data
+        if( isset($settings->data) ){
+            $this->data = $settings->data;
+        }
     }
     
     /**

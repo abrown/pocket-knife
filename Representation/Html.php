@@ -65,16 +65,10 @@ class RepresentationHtml extends Representation {
      */
     public function send() {
         header('Content-Type: text/html');
-        if (is_string($data)) {
+        if (is_string($this->data)) {
             echo $this->data;
         } else {
-            /**
-              $tokens = $this->getTemplate()->findTokens();
-              $object = MathSet::flatten($this->data);
-              foreach($tokens as $token){
-              $this->getTemplate()->replace($token, $object[$token]);
-              }
-             */
+            $this->getTemplate()->setVariable('data', $this->data);
             echo $this->getTemplate()->toString();
         }
     }

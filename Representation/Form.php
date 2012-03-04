@@ -9,21 +9,7 @@
  * HTML form data representation of a RESTful resource.
  * @uses Representation, WebHttp
  */
-class RepresentationForm extends Representation {
-
-    /**
-     * @see Representation::getData()
-     */
-    public function getData() {
-        return $this->data;
-    }
-
-    /**
-     * @see Representation::setData()
-     */
-    public function setData($data) {
-        $this->data = to_object($data);
-    }
+class RepresentationForm extends RepresentationHtml {
 
     /**
      * @see Representation::receive()
@@ -38,14 +24,6 @@ class RepresentationForm extends Representation {
             parse_str($in, $this->data);
             $this->setData($this->data);
         }
-    }
-
-    /**
-     * @see Representation::send()
-     */
-    public function send() {
-        header('Content-Type: application/x-www-form-urlencoded');
-        echo http_build_query($this->data);
     }
 
 }

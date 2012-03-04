@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
@@ -22,7 +23,7 @@ function autoload($class) {
     $replaced = str_replace('/', DS, $replaced);
     $path = get_base_dir() . DS . $replaced . '.php';
     if (!is_file($path)) {
-        throw new ExceptionFile('Class '.$class.' not found at: '.$path, 404);
+        throw new ExceptionFile('Class ' . $class . ' not found at: ' . $path, 404);
         return false;
     }
     require $path;
@@ -32,10 +33,12 @@ function autoload($class) {
 /**
  * Hooks autoload function into PHP __autoload; will not work in PHP CLI mode
  */
-if( !function_exists('__autoload') ){
-    function __autoload( $class ) {
+if (!function_exists('__autoload')) {
+
+    function __autoload($class) {
         return autoload($class);
     }
+
 }
 
 /**
@@ -51,7 +54,7 @@ function pr($thing) {
         echo $thing ? 'TRUE' : 'FALSE';
     else
         print_r($thing);
-    echo '</pre>'."\n";
+    echo '</pre>' . "\n";
     return ($thing) ? true : false; // for testing purposes
 }
 
@@ -69,10 +72,12 @@ function get_public_vars($object) {
  * Returns a string containing the body of the HTTP request
  * @return string
  */
-if( !function_exists('get_http_body') ){
+if (!function_exists('get_http_body')) {
+
     function get_http_body() {
         return file_get_contents('php://input');
     }
+
 }
 
 /**
@@ -83,24 +88,26 @@ if( !function_exists('get_http_body') ){
  */
 function to_object($thing) {
     // case: numeric strings
-    if (is_string($thing) && is_numeric($thing)){
-        if( strpos($thing, '.') !== false ) return floatval($thing);
-        else return intval($thing);
+    if (is_string($thing) && is_numeric($thing)) {
+        if (strpos($thing, '.') !== false)
+            return floatval($thing);
+        else
+            return intval($thing);
     }
     // case: boolean
-    elseif( $thing === 'true' ){
+    elseif ($thing === 'true') {
         return true;
     }
     // case: boolean
-    elseif( $thing === 'false' ){
+    elseif ($thing === 'false') {
         return false;
     }
     // case: rest of values objects
-    elseif( is_scalar($thing) ){
+    elseif (is_scalar($thing)) {
         return $thing;
     }
     // case: valid array
-    elseif(is_array($thing) && count($thing) > 0) {
+    elseif (is_array($thing) && count($thing) > 0) {
         // create object
         $object = new stdClass();
         // loop through array
@@ -113,6 +120,10 @@ function to_object($thing) {
         // return
         return $object;
     }
+    // case: already an object
+    elseif( is_object($thing) ){
+        return $thing;
+    }
     // case: nothing to return
     else {
         return null;
@@ -122,12 +133,12 @@ function to_object($thing) {
 /**
  * Report errors
  */
-ini_set('display_errors','2');
+ini_set('display_errors', '2');
 ERROR_REPORTING(E_ALL);
 
 /**
  * Directory Separator (convenience)
  */
-if( !defined('DS') ){
-    define( 'DS', DIRECTORY_SEPARATOR );
+if (!defined('DS')) {
+    define('DS', DIRECTORY_SEPARATOR);
 }

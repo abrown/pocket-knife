@@ -6,7 +6,10 @@
  */
 
 require '../../start.php';
+require 'Book.php';
+require 'Library.php';
+
 $configuration = new Settings();
 $configuration->load('config.json');
-$service = new Service();
+$service = new Service($configuration);
 $service->execute();

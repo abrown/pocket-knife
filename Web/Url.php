@@ -66,6 +66,28 @@ class WebUrl {
     }
 
     /**
+     * Returns the site URL
+     * @example 
+     * // for a request like 'http://www.example.com/dir/index.php'
+     * echo WebUrl::getSiteUrl();
+     * // prints 'http://www.example.com'
+     * @staticvar string $site_url
+     * @return type 
+     */
+    public static function getSiteUrl(){
+        static $site_url = null;
+        if( $site_url === null ){
+            $url = self::getUrl();
+            $end = strpos($url, '/', 8);
+            if ($end !== false)
+                $site_url = substr($url, 0, $end + 1);
+            else
+                $site_url = $url;
+        }
+        return $site_url;
+    }
+    
+    /**
      * Returns the request URL from its beginning through the 
      * directory holding the current script.
      * @example

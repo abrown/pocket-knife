@@ -11,7 +11,7 @@
  * @example
  * Should work like:
  *  add "Settings::setPath('path/to/Settings.php');"
- *  use "$config = Settings::getInstance(); $config['var']; ..."
+ *  use "$config = Settings::getdata(); $config['var']; ..."
  */
 class Settings {
 
@@ -19,7 +19,7 @@ class Settings {
      * Current Settings data
      * @var object 
      */
-    private $instance;
+    private $data;
 
     /**
      * Path to load/save Settings file
@@ -53,33 +53,31 @@ class Settings {
             
         } elseif (is_array($list)) {
             $object = to_object($list);
-            $this->instance = $object;
+            $this->data = $object;
         } elseif (is_object($list)) {
-            $this->instance = $list;
+            $this->data = $list;
         }
     }
 
     /**
      * Returns current Settings data
-     * @return type 
+     * @return mixed 
      */
-    public function getInstance() {
-        if (!$this->instance && $this->path) {
-            $this->instance = $this->read();
-        }
-        return $this->instance;
+    public function getData() {
+        return $this->data;
     }
     
     /**
-     * Copies the current configuration into an object's declared properties
-     * @param type $object 
+     * Copies a given configuration into an object's declared properties
+     * @param mixed $settings 
+     * @param mixed $object
      */
-    public function toObject(&$object, $validation = null){
-        foreach($this->instance as $key => $value){
-            // check if settings are valid
-            if( $validation !== null ){
-                $this->validate($value, $validation[$key]); // throws ExceptionSettings
-            }
+    static public function toObject($settings, &$object){
+        if( is_a($settings, 'Settings') ){
+            $settings = $settings->getData();
+        }
+        // add to object
+        foreach($settings as $key => $value){
             // check if property exists
             if( !property_exists($object, $key) ){
                 $class = get_class($object);
@@ -91,26 +89,26 @@ class Settings {
     }
 
     /**
-     * Checks inaccessible keys in current instance for existence
+     * Checks inaccessible keys in current data for existence
      * @param string $key
      * @return booolean
      * @example when calling property_exists( $settings, $key );
      * */
     public function __isset($key) {
-        return isset($this->instance->$key);
+        return isset($this->data->$key);
     }
 
     /**
-     * Gets inaccessible key from current instance
+     * Gets inaccessible key from current data
      * @param string $key
      * @return any 
      * @example when calling $settings->some_property
      */
     public function __get($key) {
-        if (!isset($this->instance->$key))
+        if (!isset($this->data->$key))
             return null;
         else
-            return $this->instance->$key;
+            return $this->data->$key;
     }
 
     /**
@@ -121,7 +119,7 @@ class Settings {
      */
     public function get($key) {
         $keys = explode('.', $key);
-        $object = $this->instance;
+        $object = $this->data;
         foreach ($keys as $k) {
             if (!property_exists($object, $k))
                 return null;
@@ -132,7 +130,7 @@ class Settings {
     }
 
     /**
-     * Sets inaccessible key from current instance
+     * Sets inaccessible key from current data
      * @param string $key
      * @param any $value
      * @return any 
@@ -140,7 +138,7 @@ class Settings {
      */
     public function __set($key, $value) {
         $this->changed = true;
-        $this->instance->$key = $value;
+        $this->data->$key = $value;
     }
 
     /**
@@ -153,7 +151,7 @@ class Settings {
     public function set($key, $value) {
         $this->changed = true;
         $keys = explode('.', $key);
-        $object = &$this->instance;
+        $object = &$this->data;
         foreach ($keys as $k) {
             if (!property_exists($object, $k))
                 $object->$k = new stdClass();
@@ -219,34 +217,37 @@ class Settings {
     }
 
     /**
-     * Reset Settings instance
+     * Reset Settings data
      * @return void
      */
     public function reset() {
         $this->changed = true;
-        $this->$instance = null;
+        $this->data = null;
     }
 
     /**
-     * Read Settings from path
-     * @return <array>
+     * Load Settings from file
+     * @return Settings
      */
-    static public function read($path) {
+    public function load($path) {
         if (!$path || !is_file($path))
             throw new ExceptionSettings('Could not find Settings file: ' . $path, 500);
+        // save path
+        $this->path = $path;        
+        // get configuration from file type
         $info = pathinfo($path);
         switch ($info['extension']) {
             // JSON
             case 'json':
                 $content = file_get_contents($path);
-                $result = json_decode($content);
+                $this->data = json_decode($content);
                 break;
             // PHP
             case 'php':
-                include(self::$path);
+                include($path);
                 $result = get_defined_vars();
                 unset($result['_'], $result['_SERVER'], $result['argv']);
-                $result = to_object($result);
+                $this->data = to_object($result);
                 break;
             // LINUX-STYLE
             // TODO: could probably speed this up
@@ -265,7 +266,7 @@ class Settings {
                     // heading change
                     elseif (preg_match('/^\[(.*)\]\s*$/m', $lines, $match)) {
                         $heading = $match[1];
-                        $result->$heading = new stdClass();
+                        $this->data->$heading = new stdClass();
                         continue;
                     }
                     // new key/pair
@@ -281,30 +282,28 @@ class Settings {
                         }
                         // set
                         if ($heading)
-                            $result->$heading->$key = $value;
+                            $this->data->$heading->$key = $value;
                         else
-                            $result->$key = $value;
+                            $this->data->$key = $value;
                     }
                 }
                 break;
         }
-        // return
-        return $result;
     }
 
     /**
-     * Write an array to the Settings file
-     * @param array $config 
+     * Write the Settings object to file
+     * @param Settings $config 
      */
-    static public function write($config) {
-        if (!is_file(self::$path))
-            throw new ExceptionFile('Could not find Settings file: ' . self::$path, 500);
+    public function store() {
+        if (!is_file($this->path))
+            throw new ExceptionFile('Could not find Settings file: ' . $config->path, 500);
         $output = "<?php\n";
         foreach ($config as $key => $value) {
             $output .= self::write_key($key, $value) . "\n";
         }
         $output .= "?>";
-        return file_put_contents(self::$path, $output);
+        return file_put_contents($this->path, $output);
     }
 
     /**

@@ -4,6 +4,9 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
+
+// start session
+session_name('pocket-knife');
 session_start();
 
 /**
@@ -38,6 +41,20 @@ class WebSession {
      */
     static public function put($key, $value) {
         $_SESSION[$key] = $value;
+    }
+    
+    /**
+     * Clears a session key or the entire session
+     * @param mixed $key 
+     */
+    static public function clear($key = null){
+        if( is_null($key)){
+            $_SESSION = array();
+            session_destroy();
+        }
+        else{
+            unset($_SESSION[$key]);
+        }
     }
 
 }

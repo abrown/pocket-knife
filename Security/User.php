@@ -14,15 +14,25 @@ class SecurityUser extends ResourceItem {
 
     public $username;
     public $password;
+    public $roles = array();
 
     /**
      * Constructor
      * @param string $username
      * @param string $password 
      */
-    function __construct($username, $password) {
+    function __construct($username, $password, $roles = array()) {
         $this->username = $username;
         $this->password = $password;
+        $this->roles = $roles;
+    }
+
+    /**
+     * Returns the URI for this resource
+     * @return type 
+     */
+    public function getUri() {
+        return 'user';
     }
 
     /**
@@ -34,13 +44,13 @@ class SecurityUser extends ResourceItem {
      */
     public function isPassword($password, $encryption, $key = null) {
         switch ($encryption) {
-            case SecurityAuthentication::PLAINTEXT:
+            case 'plaintext':
                 return $password == $this->password;
                 break;
-            case SecurityAuthentication::HASHED:
+            case 'hashed':
                 return $this->hash($password) == $this->password;
                 break;
-            case SecurityAuthentication::ENCRYPTED:
+            case 'encrypted':
                 return $password == $this->decrypt($this->password, $key);
                 break;
             default:
@@ -58,13 +68,13 @@ class SecurityUser extends ResourceItem {
      */
     public function setPassword($password, $encryption, $key = null) {
         switch ($encryption) {
-            case SecurityAuthentication::PLAINTEXT:
+            case 'plaintext':
                 $this->password = $password;
                 break;
-            case SecurityAuthentication::HASHED:
+            case 'hashed':
                 $this->password = $this->hash($password, $key);
                 break;
-            case SecurityAuthentication::ENCRYPTED:
+            case 'encrypted':
                 $this->password = $this->encrypt($password, $key);
                 break;
             default:
@@ -81,13 +91,13 @@ class SecurityUser extends ResourceItem {
      */
     public function getPassword($encryption, $key = null) {
         switch ($encryption) {
-            case SecurityAuthentication::PLAINTEXT:
+            case 'plaintext':
                 return $this->password;
                 break;
-            case SecurityAuthentication::HASHED:
+            case 'hashed':
                 throw new ExceptionSettings('Cannot get password from hash.');
                 break;
-            case SecurityAuthentication::ENCRYPTED:
+            case 'encrypted':
                 return $this->decrypt($this->password, $key);
                 break;
             default:

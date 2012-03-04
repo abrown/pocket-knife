@@ -21,16 +21,23 @@ class WebHttp {
 
     /**
      * Returns HTTP request method. Checks the request URI 
-     * for a parameter like "PUT" or "POST" before checking the 
+     * for the 'action' parameter before checking the 
      * real HTTP method. This allows all types of requests from 
      * the browser.
      * @return string one of [GET, PUT, POST, DELETE, HEAD, LIST]
      */
     static function getMethod() {
+        /**
         $types = array('GET', 'PUT', 'POST', 'DELETE', 'HEAD', 'LIST');
         if ($_GET && $type = array_intersect(array_keys($_GET), $types)) {
             return $type[0];
         }
+        */
+        // check for parameter
+        if( array_key_exists('action', $_GET)){
+            return $_GET['action'];
+        }
+        // else:
         return $_SERVER['REQUEST_METHOD'];
     }
 
@@ -55,6 +62,24 @@ class WebHttp {
         }
         // return
         return $out;
+    }
+    
+    /**
+     * Returns the Content-Type of the incoming HTTP request. Checks the request
+     * URI first for a 'content-type' parameter; then uses apache-as-a-module
+     * to find a content-type; defaults to 'text/html'
+     * @return string 
+     */
+    static function getContentType(){
+        if( array_key_exists('content-type', $_GET) ){
+            return $_GET['content-type'];
+        }
+        $headers = apache_request_headers();
+        if(array_key_exists('Content-Type', $headers)){
+            return $headers['Content-Type'];
+        }
+        // else
+        return 'text/html';
     }
 
     /**

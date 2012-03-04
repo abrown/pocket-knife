@@ -21,6 +21,29 @@
 abstract class Resource {
 
     /**
+     * Defines storage method for the resource; see classes in Storage for specific parameters required
+     * @example $this->storage = array('type'=>'mysql', 'username'=>'test', 'password'=>'password', 'location'=>'localhost', 'database'=>'db');
+     * @var array
+     */
+    protected $storage = array('type' => 'json', 'location' => 'db.json');
+
+    /**
+     * Defines the representations allowed by this resource; '*' indicates that
+     * any content-type may be used to access this resource
+     * @example $this->representation = array('text/html', 'application/json');
+     * @var array 
+     */
+    protected $representation = '*';
+
+    /**
+     * Template settings to apply to the output after processing; see 
+     * WebTemplate for order of constructor parameters
+     * @example $this->template = array('some/file.php', WebTemplate::PHP_FILE);
+     * @var array
+     */
+    protected $template;
+
+    /**
      * Returns the object URI
      */
     public abstract function getURI();
@@ -35,12 +58,12 @@ abstract class Resource {
      * @return stdClass
      */
     public function fromRepresentation($content_type) {
-        if (!array_key_exists($content_type, Representation::MAP))
+        if (!array_key_exists($content_type, Representation::$MAP))
             throw new ExceptionSettings('Unknown request content-type.', 500);
         $class = Representation::$MAP[$content_type];
         $representation = new $class;
-        $class->receive();
-        return $class;
+        $representation->receive();
+        return $representation;
     }
 
     /**
@@ -53,12 +76,19 @@ abstract class Resource {
      * @return Representation
      */
     public function toRepresentation($content_type, $data) {
-        if (!array_key_exists($content_type, Representation::MAP))
+        if (!array_key_exists($content_type, Representation::$MAP))
             throw new ExceptionSettings('Unknown request content-type.', 500);
         $class = Representation::$MAP[$content_type];
         $representation = new $class;
-        $class->setData($data);
-        return $class;
+        // templating
+        if ($this->template && method_exists($representation, 'setTemplate')) {
+            $template = new WebTemplate($this->template[0], $this->template[1]);
+            $representation->setTemplate($template);
+        }
+        // set data
+        $representation->setData($data);
+        // return
+        return $representation;
     }
 
     /**

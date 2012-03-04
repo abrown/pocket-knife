@@ -28,19 +28,33 @@ class ResourceList extends Resource {
     }
 
     /**
-     * Returns storage
+     * Creates and returns storage object
      * @return StorageInterface
      */
     public function getStorage() {
-        return $this->storage;
+        static $storage = null;
+        if (!$storage) {
+            $settings = $this->storage;
+            // check Settings
+            if (!isset($settings->type))
+                throw new ExceptionSettings('Storage type is not defined', 500);
+            // get class
+            $class = 'Storage' . ucfirst($settings->type);
+            // check parents
+            if (!in_array('StorageInterface', class_implements($class)))
+                throw new ExceptionSettings($class . ' must implement StorageInterface.', 500);
+            // create object
+            $storage = new $class($settings);
+        }
+        return $storage;
     }
 
     /**
-     * Sets storage
-     * @param StorageInterface $storage 
+     * Sets storage configuration
+     * @param Settings $settings 
      */
-    public function setStorage($storage) {
-        $this->storage = $storage;
+    public function setStorage($settings) {
+        $this->storage = $settings;
     }
 
     /**
