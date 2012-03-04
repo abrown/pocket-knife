@@ -1,0 +1,545 @@
+<?php
+
+/**
+ * @copyright Copyright 2011 Andrew Brown. All rights reserved.
+ * @license GNU/GPL, see 'help/LICENSE.html'.
+ */
+/**
+ * Provides methods for validating any given input
+ * @uses ExceptionForbidden, WebUrl
+ * @example
+ * $a = 'google.com';
+ * $errors = BasicValidation::validate($a, BasicValidation::NOT_EMPTY|BasicValidation::STRING|BasicValidation::URL);
+ * pr($errors); // prints an array of rule failures
+ * 
+ * $_a = BasicValidation::sanitize($a, BasicValidation::STRING|BasicValidation::URL);
+ * pr($_a); // $_a should now pass the validation tests it failed before 
+ */
+
+/**
+ * Provides methods for validating any given input;
+ * uses HTTP code 416 Requested Range Not Satisfiable to signify that some
+ * validation condition is not met
+ * (see http://en.wikipedia.org/wiki/List_of_HTTP_status_codes)
+ * @example
+ * BasicValidation::with(42)->isInteger(); // returns BasicValidation object
+ * BasicValidation::with(42)->isString()->isEmail(); // throws ExceptionValidation
+ * @uses ExceptionForbidden
+ */
+class BasicValidation {
+
+    /**
+     * value to test against
+     * @var mixed 
+     */
+    protected $value;
+
+    /**
+     * Name of the value to test; changes with property/key traversal
+     * @var string 
+     */
+    protected $name = 'input';
+
+    /**
+     * For hierarchical values, allows walking using withProperty()/withKey() and up()
+     * @var array 
+     */
+    protected $stack = array();
+
+    /**
+     * Used to skip rules for an optional property/key that is not present in the object
+     * @var array
+     */
+    protected $unavailable_optional_properties = array();
+
+    /**
+     * Factory constructor for BasicValidation
+     */
+    static public function with(&$value) {
+        return new BasicValidation($value);
+    }
+
+    /**
+     * Constructor
+     * @param mixed $value
+     */
+    public function __construct(&$value) {
+        $this->value = $value;
+    }
+
+    /**
+     * Moves to a property within an object
+     * @param string $property 
+     * @return BasicValidation
+     */
+    public function withProperty($property) {
+        if ($this->hasProperty($property)) {
+            array_push($this->stack, array($this->name, $this->value));
+            $this->name = $this->name . '.' . $property;
+            $this->value = $this->value->$property;
+        }
+        return $this;
+    }
+
+    /**
+     * Moves to an optional property within an object, or skips the following
+     * rules
+     * @param string $property
+     * @return BasicValidation 
+     */
+    public function withOptionalProperty($property) {
+        if (!is_object($this->value)) {
+            throw new ExceptionValidation("'{$this->name}' is not an object.", 416);
+        }
+        // case: unavailable
+        if (!isset($this->value->$property)) {
+            array_push($this->stack, array($this->name, $this->value));
+            $this->name = $this->name . '.' . $property;
+            $this->value = null;
+            array_push($this->unavailable_optional_properties, $this->name);
+        }
+        // case: available
+        else {
+            array_push($this->stack, array($this->name, $this->value));
+            $this->name = $this->name . '.' . $property;
+            $this->value = $this->value->$property;
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Returns whether the current rule is part of an optional property/key
+     * @return boolean 
+     */
+    protected function isOptional() {
+        return end($this->unavailable_optional_properties) === $this->name;
+    }
+
+    /**
+     * Checks for property existence in an object; uses isset() instead of 
+     * property_existst() to handle classes with property overloading 
+     * (i.e. __isset, __unset).
+     * @param string $property 
+     * @return BasicValidation
+     */
+    public function hasProperty($property) {
+        if (!is_object($this->value))
+            throw new ExceptionValidation("'{$this->name}' is not an object.", 416);
+        if (!isset($this->value->$property))
+            throw new ExceptionValidation("Property '$property' does not exist in '{$this->name}'.", 416);
+        return $this;
+    }
+
+    /**
+     * Moves to a key within an array
+     * @param string $key
+     * @return BasicValidation 
+     */
+    public function withKey($key) {
+        if ($this->hasKey($key)) {
+            array_push($this->stack, array($this->name, $this->value));
+            $this->name = $this->name . '.' . $key;
+            $this->value = $this->value[$key];
+        }
+        return $this;
+    }
+    
+    /**
+     * Moves to an optional key within an object, or skips the following
+     * rules
+     * @param string $key
+     * @return BasicValidation 
+     */
+    public function withOptionalKey($key) {
+        if (!is_array($this->value)) {
+            throw new ExceptionValidation("'{$this->name}' is not an object.", 416);
+        }
+        // case: unavailable
+        if (!isset($this->value[$key])) {
+            array_push($this->stack, array($this->name, $this->value));
+            $this->name = $this->name . '.' . $key;
+            $this->value = null;
+            array_push($this->unavailable_optional_properties, $this->name);
+        }
+        // case: available
+        else {
+            array_push($this->stack, array($this->name, $this->value));
+            $this->name = $this->name . '.' . $key;
+            $this->value = $this->value[$key];
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks for key existence in an array
+     * @param string $key 
+     * @return BasicValidation
+     */
+    public function hasKey($key) {
+        if (!is_array($this->value))
+            throw new ExceptionValidation("'{$this->name}' is not an array.", 416);
+        if (!isset($this->value[$key]))
+            throw new ExceptionValidation("Key '$key' does not exist in '{$this->name}'.", 416);
+        return $this;
+    }
+
+    /**
+     * Returns to a higher-level value; opposite of withKey() and withProperty()
+     * @return BasicValidation
+     */
+    public function upOne() {
+        // go to higher level
+        list($this->name, $this->value) = array_pop($this->stack);
+        // exit optional blanket
+        if( $this->isOptional() ) array_pop($this->unavailable_optional_properties);
+        // return
+        return $this;
+    }
+
+    /**
+     * Returns to highest-level value
+     * @return BasicValidation 
+     */
+    public function upAll() {
+        // go to highest level
+        list($this->name, $this->value) = $this->stack[0];
+        $this->stack = array();
+        // exit optional blanket
+        $this->unavailable_optional_properties = array();
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks whether the value in question is one the passed parameters
+     * @example BasicValidation::with($var)->oneOf('a', 'b', 'c');
+     * @param mixed
+     * @return BasicValidation 
+     */
+    public function oneOf() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        foreach (func_get_args() as $parameter) {
+            if ($this->value === $parameter)
+                return $this;
+        }
+        // else
+        throw new ExceptionValidation("'{$this->name}' is not one of [" . implode(', ', func_get_args()) . '].', 416);
+    }
+
+    /**
+     * Checks whether this value is null
+     * @return BasicValidation 
+     */
+    public function isNull() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if (!is_null($this->value)) {
+            throw new ExceptionValidation("'{$this->name}' is not null.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks whether this value is boolean
+     * @return BasicValidation 
+     */
+    public function isBoolean() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if (!is_bool($this->value)) {
+            throw new ExceptionValidation("'{$this->name}' is not boolean.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks whether this value is an integer
+     * @return BasicValidation 
+     */
+    public function isInteger() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if (!is_int($this->value)) {
+            throw new ExceptionValidation("'{$this->name}' is not an integer.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks whether this value is a float
+     * @return BasicValidation 
+     */
+    public function isFloat() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if (!is_float($this->value)) {
+            throw new ExceptionValidation("'{$this->name}' is not a float.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks whether the given value is numeric
+     * @return BasicValidation 
+     */
+    public function isNumeric() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if (!is_numeric($this->value)) {
+            throw new ExceptionValidation("'{$this->name}' is not numeric.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks whether this value is a string
+     * @return BasicValidation 
+     */
+    public function isString() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if (!is_string($this->value)) {
+            throw new ExceptionValidation("'{$this->name}' is not a string.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks whether this value is an array
+     * @return BasicValidation 
+     */
+    public function isArray() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if (!is_array($this->value)) {
+            throw new ExceptionValidation("'{$this->name}' is not an array.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks whether this value is an object
+     * @return BasicValidation 
+     */
+    public function isObject() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if (!is_object($this->value)) {
+            throw new ExceptionValidation("'{$this->name}' is not an object.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks whether the given value is an object or array
+     * @return BasicValidation 
+     */
+    public function isScalar() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if (!is_scalar($this->value)) {
+            throw new ExceptionValidation("'{$this->name}' is not an object or array.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks whether the given value is empty
+     * @return BasicValidation 
+     */
+    public function isEmpty() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if (!is_empty($this->value)) {
+            throw new ExceptionValidation("'{$this->name}' is not empty according to PHP's empty() function.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks whether the given value is not empty
+     * @return BasicValidation 
+     */
+    public function isNotEmpty() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if (is_empty($this->value)) {
+            throw new ExceptionValidation("'{$this->name}' is empty according to PHP's empty() function.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks whether the given string is alpha-numeric
+     * @return BasicValidation 
+     */
+    public function isAlphanumeric() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        $regex = '~^[a-z0-9 _-]+$~i';
+        if (!preg_match($regex, $this->value)) {
+            throw new ExceptionValidation("'{$this->name}' is not alpha-numeric.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks whether the given value is a valid e-mail address
+     * @return BasicValidation 
+     */
+    public function isEmail() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        $regex = '~^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$~i';
+        if (!preg_match($regex, $this->value)) {
+            throw new ExceptionValidation("'{$this->name}' is not a valid e-mail address.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks whether the given value is a valid URL
+     * @return BasicValidation 
+     */
+    public function isUrl() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        // from: http://mathiasbynens.be/demo/url-regex
+        $regex = '~(https?|ftp)://(-\.)?([^\s/?\.#-]+\.?)+(/[^\s]*)?$~iS';
+        if (!preg_match($regex, $this->value)) {
+            throw new ExceptionValidation("'{$this->name}' is not a valid URL.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks whether the given value is a valid path
+     * @return BasicValidation 
+     */
+    public function isPath() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if (!is_file($this->value)) {
+            throw new ExceptionValidation("'{$this->name}' is not a valid path.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks whether the given value is a PHP-readable date
+     * @return BasicValidation 
+     */
+    public function isDate() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if (strtotime($this->value) === false) {
+            throw new ExceptionValidation("'{$this->name}' is not a valid date.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks whether the given string is valid HTML
+     * @return BasicValidation 
+     */
+    public function isHtml() {// is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        libxml_use_internal_errors(true);
+        libxml_clear_errors();
+        $xml = simplexml_load_string($this->value);
+        if (count(libxml_get_errors()) > 0) {
+            throw new ExceptionValidation("'{$this->name}' is not valid HTML.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Checks whether the given value is valid SQL
+     * @return BasicValidation 
+     */
+    public function isSql() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        throw new ExceptionForbidden('Not yet implemented.', 500);
+        // return
+        return $this;
+    }
+
+}
