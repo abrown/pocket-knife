@@ -61,8 +61,8 @@ function pr($thing) {
 /**
  * Get publicly accessible properties of an object
  * Works by calling get_object_vars from outside the class scope
- * @param <object> $object
- * @return <array>
+ * @param mixed $object
+ * @return array
  */
 function get_public_vars($object) {
     return get_object_vars($object);
