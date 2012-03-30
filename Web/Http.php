@@ -76,7 +76,8 @@ class WebHttp {
         }
         $headers = apache_request_headers();
         if(array_key_exists('Content-Type', $headers)){
-            return $headers['Content-Type'];
+            $parts = explode(';', $headers['Content-Type']);
+            return trim($parts[0]);
         }
         // else
         return 'text/html';
