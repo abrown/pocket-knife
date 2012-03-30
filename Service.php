@@ -166,6 +166,10 @@ class Service {
             $input_representation = $this->object->fromRepresentation($this->content_type);
             $input_representation->receive();
 
+            // set ID
+            if( isset($this->id) && method_exists($this->object, 'setID') ){
+                $this->object->setID($this->id);
+            }
             // call method
             if (!method_exists($this->object, $this->action)){
                 throw new ExceptionSettings("Action '{$this->action}' does not exist", 404);
