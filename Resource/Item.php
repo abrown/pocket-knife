@@ -47,7 +47,7 @@ class ResourceItem extends Resource {
     public function getStorage() {
         static $storage = null;
         if (!$storage) {
-            $settings = $this->storage;
+            $settings = new Settings($this->storage);
             // check Settings
             if (!isset($settings->type))
                 throw new ExceptionSettings('Storage type is not defined', 500);
@@ -74,7 +74,7 @@ class ResourceItem extends Resource {
      * Returns item ID
      * @return mixed 
      */
-    protected function getID() {
+    public function getID() {
         return $this->id;
     }
 
@@ -82,90 +82,115 @@ class ResourceItem extends Resource {
      * Sets item ID
      * @param mixed $id 
      */
-    protected function setID($id) {
+    public function setID($id) {
         $this->id = $id;
     }
 
     /**
-     * Creates an item
-     * @param mixed $item
-     * @return mixed 
+     * GET a resource; retrieves item information identified by request URI
+     * (RFC2616, p.53)
+     * @return ResourceItem
      */
-    public function create($item = null) {
-        if ($item === null)
-            throw new ExceptionService('No item given to create', 400);
+    public function GET() {
         $this->getStorage()->begin();
-        $id = $this->getStorage()->create($item, $this->getID());
+        $this->bind($this->getStorage()->read($this->getID()));
+        $this->getStorage()->commit();
+        return $this;
+    }
+
+    /**
+     * POST an entity; request to accept the entity enclosed as a new 
+     * subordinate (RFC2616, p.54); synonym for "create".
+     * @param stdClass $entity 
+     * @return mixed
+     */
+    public function POST($entity) {
+        if ($entity === null)
+            throw new ExceptionService('No item given to create', 400);
+        // bind
+        $this->bind($entity);
+        // create
+        $this->getStorage()->begin();
+        $id = $this->getStorage()->create($this, $this->getID());
         $this->getStorage()->commit();
         return $id;
     }
 
     /**
-     * Reads an item
-     * @param mixed $id
-     * @return mixed 
+     * PUT an entity; requests that the enclosed entity be stored under 
+     * the supplied request URI (RFC2616, p.54); does not bind the properties 
+     * to this object and rejects non-public properties; synonym for "update"
+     * @param stdClass $entity 
      */
-    public function read() {
-        $this->getStorage()->begin();
-        $item = $this->getStorage()->read($this->getID());
-        $this->getStorage()->commit();
-        return $item;
-    }
-
-    /**
-     * Updates an item
-     * @param mixed $item
-     * @param mixed $id
-     * @return mixed 
-     */
-    public function update($item = null) {
-        if ($item === null)
+    public function PUT($entity = null) {
+        if ($entity === null)
             throw new ExceptionService('No item given to create', 400);
+        // get properties
+        $public_properties = array();
+        foreach (get_public_properties($this) as $property => $value) {
+            $public_properties[] = $property;
+        }
+        // check properties
+        if (is_object($entity)) {
+            foreach ($entity as $property => $value) {
+                if (!in_array($property, $public_properties)) {
+                    unset($entity->$property);
+                }
+            }
+        }
+        // update
         $this->getStorage()->begin();
-        $item = $this->getStorage()->update($item, $this->getID());
+        $this->bind($this->getStorage()->update($entity, $this->getID()));
         $this->getStorage()->commit();
-        return $item;
+        return $this;
     }
 
     /**
-     * Deletes an item
-     * @param mixed $id
-     * @return mixed 
+     * DELETE a resource; request to delete the resource identified by 
+     * the request URI (RFC2616, p.55)
+     * @return Resource
      */
-    public function delete() {
+    public function DELETE() {
         $this->getStorage()->begin();
-        $item = $this->getStorage()->delete($this->getID());
+        $this->bind($this->getStorage()->delete($this->getID()));
         $this->getStorage()->commit();
-        return $item;
+        return $this;
     }
 
     /**
-     * Determines whether an item exists
-     * @param mixed $id
-     * @return boolean 
+     * Returns a blank message if the resource exists (HTTP code 200) or 
+     * an exception (HTTP code 404) if it does not; similar to "exists".
+     * @return null 
      */
-    public function exists() {
+    public function HEAD() {
         $this->getStorage()->begin();
-        $exists = $this->getStorage()->exists($this->getID());
+        if (!$this->getStorage()->exists($this->getID())) {
+            throw new ExceptionService($this->getUri() . " does not exist.", 404);
+        }
         $this->getStorage()->commit();
-        return $exists;
     }
 
     /**
-     * Returns editable fields for an item
-     * @return mixed
+     * Returns an object describing all upper-case methods (i.e. HTTP verbs)
+     * defined in the class and all public properties.
+     * @return stdClass 
      */
-    public function fields() {
-        $this->getStorage()->begin();
-        $first = $this->getStorage()->first();
-        $this->getStorage()->commit();
-        // extract
-        $properties = array();
-        foreach ($first as $property => $value) {
-            $properties[] = $property;
+    public function OPTIONS() {
+        $response = new stdClass();
+        $response->methods = array();
+        $response->properties = array();
+        // get methods
+        foreach (get_class_methods($this) as $method) {
+            if (ctype_upper($method)) {
+                $response->methods[] = $method;
+            }
+        }
+        // get properties
+        foreach (get_public_vars($this) as $property => $value) {
+            $response->properties[] = $property;
         }
         // return
-        return $properties;
+        return $response;
     }
 
 }

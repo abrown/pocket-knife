@@ -13,6 +13,18 @@
 class ResourceList extends Resource {
 
     /**
+     * Contains a list of ResourceItems corresponding to this ResourceList
+     * @var array
+     */
+    public $items = array();
+
+    /**
+     * Class of item to create in $items
+     * @var string 
+     */
+    protected $item_type = 'ResourceItem';
+
+    /**
      * Constructor
      */
     public function __construct() {
@@ -34,7 +46,7 @@ class ResourceList extends Resource {
     public function getStorage() {
         static $storage = null;
         if (!$storage) {
-            $settings = $this->storage;
+            $settings = new Settings($this->storage);
             // check Settings
             if (!isset($settings->type))
                 throw new ExceptionSettings('Storage type is not defined', 500);
@@ -58,41 +70,60 @@ class ResourceList extends Resource {
     }
 
     /**
-     * Inserts a list of items into the stored list
-     * @param array $list
-     * @return array IDs 
+     * GET a list of resources; retrieves item information identified 
+     * by request URI (RFC2616, p.53).
+     * @return ResourceList
      */
-    public function create($list) {
-        if (!is_array($list))
-            throw new ExceptionService('CREATE requires a list', 400);
+    public function GET() {
+        $this->getStorage()->begin();
+        foreach ($this->getStorage()->all() as $id => $data) {
+            $item = new $item_type();
+            $item->bind($data);
+            $this->items[$id] = $item;
+        }
+        $this->getStorage()->commit();
+        return $this;
+    }
+
+    /**
+     * POST a list of entities; request to accept the list enclosed as a new 
+     * subordinate (RFC2616, p.54); synonym for "create".
+     * @param stdClass $list with "items" property as array of entities
+     * @return array list of IDs created
+     */
+    public function POST($list) {
+        if (!isset($list->items)) {
+            throw new ExceptionService('POST "items" field must be set', 400);
+        }
+        if (!is_array($list->items)) {
+            throw new ExceptionService('POST requires list items', 400);
+        }
+        // create
         $this->getStorage()->begin();
         $ids = array();
         foreach ($list as $item) {
             $ids[] = $this->getStorage()->create($item);
         }
         $this->getStorage()->commit();
+        // return
         return $ids;
     }
 
     /**
-     * Reads all items in list
-     * @return array 
+     * PUT a list; requests that the enclosed entity be stored under 
+     * the supplied request URI (RFC2616, p.54); does not bind the properties 
+     * to this object and rejects non-public properties; synonym for "update"
+     * @param stdClass $list
+     * @return array list of IDs updated
      */
-    public function read() {
-        $this->getStorage()->begin();
-        $items = $this->getStorage()->all();
-        $this->getStorage()->commit();
-        return $items;
-    }
-
-    /**
-     * Updates all records named in the given list
-     * @param array list
-     * @return array IDs
-     */
-    public function update($list) {
-        if (!is_array($list))
-            throw new ExceptionService('CREATE requires a list', 400);
+    public function PUT($list = null) {
+        if (!isset($list->items)) {
+            throw new ExceptionService('PUT "items" field must be set', 400);
+        }
+        if (!is_array($list->items)) {
+            throw new ExceptionService('PUT requires list items', 400);
+        }
+        // update
         $this->getStorage()->begin();
         $ids = array();
         foreach ($list as $id => $item) {
@@ -103,10 +134,11 @@ class ResourceList extends Resource {
     }
 
     /**
-     * Deletes all items in a list
-     * @return boolean 
+     * DELETE a resource; request to delete the resource identified by 
+     * the request URI (RFC2616, p.55)
+     * @return boolean whether the list was successfully deleted
      */
-    public function delete() {
+    public function DELETE() {
         $this->getStorage()->begin();
         $success = $this->getStorage()->deleteAll();
         $this->getStorage()->commit();
@@ -114,14 +146,38 @@ class ResourceList extends Resource {
     }
 
     /**
-     * Returns item count in list
-     * @return int
+     * Returns an almost blank message if the resource exists (HTTP code 200) 
+     * or an exception (HTTP code 404) if it does not; similar to "count".
+     * @return int 
      */
-    public function count() {
+    public function HEAD() {
         $this->getStorage()->begin();
         $count = $this->getStorage()->count();
         $this->getStorage()->commit();
         return $count;
+    }
+
+    /**
+     * Returns an object describing all upper-case methods (i.e. HTTP verbs)
+     * defined in the class and all public properties.
+     * @return stdClass 
+     */
+    public function OPTIONS() {
+        $response = new stdClass();
+        $response->methods = array();
+        $response->properties = array();
+        // get methods
+        foreach (get_class_methods($this) as $method) {
+            if (ctype_upper($method)) {
+                $response->methods[] = $method;
+            }
+        }
+        // get properties
+        foreach (get_public_vars($this) as $property => $value) {
+            $response->properties[] = $property;
+        }
+        // return
+        return $response;
     }
 
 }

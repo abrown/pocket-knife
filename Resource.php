@@ -13,7 +13,7 @@
  * // step 1: receive
  * $input = $resource->fromRepresentation($content_type);
  * // step 2: process
- * $output = $resource->action($input);
+ * $output = $resource->HTTP_METHOD($input);
  * // step 3: send
  * $resource->toRepresentation($content_type, $output);
  * @uses ExceptionSettings, ResourceGeneric, ResourceItem, ResourceList
@@ -42,12 +42,18 @@ abstract class Resource {
      * @var array
      */
     protected $template;
+    
+    /**
+     * Validation settings...
+     * @var array 
+     */
+    protected $validation = false;
 
     /**
      * Returns the object URI
      */
     public abstract function getURI();
-
+    
     /**
      * Returns the request object given a content type;
      * should be overloaded in descendant classes to 
@@ -101,4 +107,20 @@ abstract class Resource {
      * Returns the storage object
      */
     public abstract function getStorage();
+    
+    /**
+     * Binds the given properties to $this; checks if properties exist and
+     * if values are valid according to the validation scheme
+     * @param stdClass $object 
+     */
+    protected function bind($object){
+        foreach(get_public_vars($this) as $property => $value){
+            if( isset($object->$property) ){
+                if( $this->validation ){
+                    // todo
+                }
+                $this->$property = $object->$property;
+            }
+        }
+    }
 }

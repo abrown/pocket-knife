@@ -12,7 +12,7 @@
  * @uses Resource
  */
 class ResourceGeneric extends Resource{
-    
+
     /**
      * Returns the object URI
      * @return string
@@ -20,7 +20,7 @@ class ResourceGeneric extends Resource{
     public function getURI(){
         return '/'.strtolower(get_class($this));
     }
-       
+     
     /**
      * Initializes the storage object; uses class variables to store data
      * @return this
@@ -34,6 +34,15 @@ class ResourceGeneric extends Resource{
      * @return this
      */
     public function getStorage(){
+        return $this;
+    }
+    
+    /**
+     * GET a resource; retrieves information identified by request URI
+     * (RFC2616, p.53)
+     * @return ResourceGeneric 
+     */
+    public function GET(){
         return $this;
     }
 }
