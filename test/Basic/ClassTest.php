@@ -12,7 +12,7 @@ class BasicClassTest extends PHPUnit_Framework_TestCase {
         // get code
         autoload('BasicClass');
         autoload('BasicDocumentation');
-        autoload('ExceptionFile');
+        autoload('Error');
     }
 
     /**
@@ -24,14 +24,14 @@ class BasicClassTest extends PHPUnit_Framework_TestCase {
         // test not loaded
         $loaded_classes = get_declared_classes();
         $this->assertNotContains('WebHttp', $loaded_classes);
-        $this->assertNotContains('ExceptionSettings', $loaded_classes);
+        $this->assertNotContains('Error', $loaded_classes);
         $this->assertNotContains('Service', $loaded_classes);
         // load
         BasicClass::autoloadAll('Service');
         // test loaded
         $loaded_classes = get_declared_classes();
         $this->assertContains('WebHttp', $loaded_classes);
-        $this->assertContains('ExceptionSettings', $loaded_classes);
+        $this->assertContains('Error', $loaded_classes);
         $this->assertContains('Service', $loaded_classes);
     }
     

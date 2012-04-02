@@ -16,7 +16,7 @@ class StorageCouchTest extends PHPUnit_Framework_TestCase{
         autoload('StorageCouch');
         autoload('WebHttp');
         autoload('Settings');
-        autoload('ExceptionStorage');
+        autoload('Error');
     }
     
     public function setUp(){
@@ -76,7 +76,7 @@ class StorageCouchTest extends PHPUnit_Framework_TestCase{
     }
     
     /**
-     * @expectedException ExceptionStorage
+     * @expectedError Error
      */
     public function testDelete(){
         $updated_object = $this->db->delete(1);

@@ -6,7 +6,7 @@
 
 /**
  * StoragePdo
- * @uses StorageInterface, ExceptionStorage, Settings
+ * @uses StorageInterface, Error, Settings
  */
 class StoragePdo implements StorageInterface{
 
@@ -131,7 +131,7 @@ class StoragePdo implements StorageInterface{
         $sql->execute();
         if( !$sql->rowCount() ){
             $error = $sql->errorInfo();
-            throw new Exception('Failed to create record: '.$error[2], 400); 
+            throw new Error('Failed to create record: '.$error[2], 400); 
         }
         // object changed
         $this->isChanged = true;
@@ -185,7 +185,7 @@ class StoragePdo implements StorageInterface{
     public function update($record, $id){
         if( is_null($id) ) throw new Error('UPDATE action requires an ID', 400);
         // check if exists
-        // if( !$this->exists() ){ throw new Exception('Could not find record to update', 404); }
+        // if( !$this->exists() ){ throw new Error('Could not find record to update', 404); }
         // TODO: delete cache
         // if( $this->__cache ) Cache::delete($this->getCacheKey($id));
         // prepare fields
@@ -206,7 +206,7 @@ class StoragePdo implements StorageInterface{
         $sql->execute();
         if( !$sql->rowCount() ){ 
             $error = $sql->errorInfo();
-            throw new Exception('Failed to update record: '.$error[2], 400); 
+            throw new Error('Failed to update record: '.$error[2], 400); 
         }
         // object changed
         $this->isChanged = true;
@@ -310,7 +310,7 @@ class StoragePdo implements StorageInterface{
         // error
         if( !$sql->rowCount() ){ 
             $error = $sql->errorInfo();
-            throw new Exception('Failed to delete all records: '.$error[2], 400); 
+            throw new Error('Failed to delete all records: '.$error[2], 400); 
         }
         // return
         return true;
@@ -407,7 +407,7 @@ class StoragePdo implements StorageInterface{
      */
     /**
     public function with(){
-        if( !$this->__foreign ) throw new Exception('Class is configured without a foreign key.', 500);
+        if( !$this->__foreign ) throw new Error('Class is configured without a foreign key.', 500);
         // get object class
         $inflector = new Inflection( Routing::getToken(4) );
         $pluralname = $inflector->toLowerCase()->toString();
@@ -424,7 +424,7 @@ class StoragePdo implements StorageInterface{
         foreach($this->__foreign as $table => $_key){
             if( $table == $object->__table ) $key = $_key;
         }
-        if( $key === null ) throw new Exception('No foreign key defined for '.$classname.' in '.get_class($this), 500);
+        if( $key === null ) throw new Error('No foreign key defined for '.$classname.' in '.get_class($this), 500);
         // get data
         $this->read();
         $object->{$key} = $this->id;
@@ -450,7 +450,7 @@ class StoragePdo implements StorageInterface{
     protected function describe(){
         // prepare statement
         $sql = $this->getDatabase()->query( "DESCRIBE `{$this->__table}`" );
-        if( !$sql ){ throw new Exception('Could not find table to describe', 404); }
+        if( !$sql ){ throw new Error('Could not find table to describe', 404); }
         foreach( $sql as $row ){
             $property = $row['Field'];
             $this->$property = null;
@@ -505,8 +505,8 @@ class StoragePdo implements StorageInterface{
             try {
                 $dsn = "mysql:dbname={$this->Settings->database};host={$this->Settings->location}";
                 $instance = new PDO($dsn, $this->Settings->username, $this->Settings->password);
-            } catch (PDOException $e) {
-                throw new Exception($e->getMessage(), 500);
+            } catch (PDOError $e) {
+                throw new Error($e->getMessage(), 500);
             }
         }
         return $instance;

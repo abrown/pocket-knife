@@ -7,7 +7,7 @@
 
 /**
  * Stores JSON records in a JSON file on the local server; uses indexes
- * @uses StorageInterface, ExceptionSettings, ExceptionStorage
+ * @uses StorageInterface, Error, Error
  */
 class StorageJson implements StorageInterface{
     

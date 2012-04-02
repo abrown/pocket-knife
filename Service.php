@@ -15,7 +15,7 @@
  * ));
  * $service = new Service($settings);
  * $service->execute();
- * @uses Settings, WebHttp, WebTemplate, ExceptionFile, ExceptionSettings
+ * @uses Settings, WebHttp, WebTemplate, Error, Error
  */
 class Service {
 
@@ -181,7 +181,7 @@ class Service {
             // get representation and send data
             $output_representation = $this->object->toRepresentation($this->content_type, $result);
             $output_representation->send();
-        } catch (Exception $e) {
+        } catch (Error $e) {
             // get representation and send data
             WebHttp::setCode($e->getCode());
             $output_representation = $e->toRepresentation($this->content_type, null);
@@ -292,7 +292,7 @@ class Service {
 //                    return true;
 //                }
 //            } else {
-//                throw new ExceptionSettings('Poorly worded ACL rule: ' . $rule, 500);
+//                throw new Error('Poorly worded ACL rule: ' . $rule, 500);
 //            }
 //        } while (prev($list) !== false);
 //        // return
@@ -309,12 +309,12 @@ class Service {
 //            $settings = $this->storage;
 //            // check Settings
 //            if (!isset($settings->type))
-//                throw new ExceptionSettings('Storage type is not defined', 500);
+//                throw new Error('Storage type is not defined', 500);
 //            // get class
 //            $class = 'Storage' . ucfirst($settings->type);
 //            // check parents
 //            if (!in_array('StorageInterface', class_implements($class)))
-//                throw new ExceptionSettings($class . ' must implement StorageInterface.', 500);
+//                throw new Error($class . ' must implement StorageInterface.', 500);
 //            // create object
 //            $object = new $class($settings);
 //        }
@@ -334,7 +334,7 @@ class Service {
 //            $class = $this->getContentClass($content_type);
 //            // check parents
 //            if (!in_array('ServiceFormatInterface', class_implements($class)))
-//                throw new ExceptionSettings($class . ' must implement ServiceFormatInterface.', 500);
+//                throw new Error($class . ' must implement ServiceFormatInterface.', 500);
 //            // create object
 //            $object = new $class();
 //        }
@@ -355,7 +355,7 @@ class Service {
 //            $class = $this->getContentClass($content_type);
 //            // check parents
 //            if (!in_array('ServiceFormatInterface', class_implements($class)))
-//                throw new ExceptionSettings($class . ' must implement ServiceFormatInterface.', 500);
+//                throw new Error($class . ' must implement ServiceFormatInterface.', 500);
 //            // create object
 //            $object = new $class();
 //        }

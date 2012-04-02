@@ -124,7 +124,7 @@ class SiteAdministration{
 		try{
 			$absolute_file = $this->site->find($file);
 		}
-		catch(Exception $e){
+		catch(Error $e){
 			$absolute_file = $this->site->location.DS.$file;
 			file_put_contents($absolute_file, 'Enter content here...');
 			$created = true;

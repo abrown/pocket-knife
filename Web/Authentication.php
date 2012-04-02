@@ -146,7 +146,7 @@ class AuthenticationMethodDigest extends Authentication implements Authenticatio
     public function isAllowed(){
         // check if ACL type is valid
         if( !method_exists($this->getAcl(), 'getPassword') )
-            throw new Exception('Cannot use Digest Authentication with this ACL type.');
+            throw new Error('Cannot use Digest Authentication with this ACL type.');
         // setup request data
         $auth = $this->getRequest();
         if( !$auth ) return false;

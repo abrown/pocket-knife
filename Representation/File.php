@@ -7,7 +7,7 @@
 
 /**
  * File representation of a RESTful resource.
- * @uses Representation, ExceptionSettings, ExceptionWeb
+ * @uses Representation, Error, Error
  */
 class RepresentationFile extends Representation {
 

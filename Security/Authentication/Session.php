@@ -107,7 +107,7 @@ class SecurityAuthenticationSession extends SecurityAuthentication {
                 $out->password = $_POST['password'];
                 break;
             default:
-                throw new ExceptionForbidden('Unknown content type', 400);
+                throw new Error('Unknown content type', 400);
                 break;
         }
         // save username
@@ -150,7 +150,7 @@ class SecurityAuthenticationSession extends SecurityAuthentication {
                 $data .= '</form>';
                 break;
             default:
-                throw new ExceptionForbidden('Unknown content type', 400);
+                throw new Error('Unknown content type', 400);
                 break;
         }
         // return

@@ -11,7 +11,7 @@ class StartTest extends PHPUnit_Extensions_OutputTestCase {
         $path = dirname(dirname(__FILE__));
         require $path . '/start.php';
         // load classes
-        autoload('ExceptionFile');
+        autoload('Error');
     }
 
     public function testGetBaseDir() {

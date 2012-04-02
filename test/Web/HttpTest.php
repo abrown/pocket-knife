@@ -52,7 +52,7 @@ class WebHttpTest extends PHPUnit_Framework_TestCase{
     
     /**
      * Sets the HTTP code
-     * @expectedException ExceptionWeb
+     * @expectedError Error
      */
     public function testSetCode(){
         WebHttp::setCode(404);
@@ -63,7 +63,7 @@ class WebHttpTest extends PHPUnit_Framework_TestCase{
     
     /**
      * Set the HTTP content type
-     * @expectedException ExceptionWeb
+     * @expectedError Error
      */
     public function testSetContentType(){
         WebHttp::setContentType('application/json');
@@ -74,7 +74,7 @@ class WebHttpTest extends PHPUnit_Framework_TestCase{
     
     /**
      * Redirects the user to a new location
-     * @expectedException ExceptionWeb
+     * @expectedError Error
      */
     public function testRedirect(){
         WebHttp::redirect('http://www.google.com');

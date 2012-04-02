@@ -9,7 +9,7 @@
  * Provides static methods to handle common URL-related tasks. 
  * These include all types of URL parsing, building, and 
  * normalizing.
- * @uses ExceptionWeb
+ * @uses Error
  */
 class WebUrl {
 

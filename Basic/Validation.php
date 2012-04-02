@@ -6,7 +6,7 @@
  */
 /**
  * Provides methods for validating any given input
- * @uses ExceptionForbidden, WebUrl
+ * @uses Error, WebUrl
  * @example
  * $a = 'google.com';
  * $errors = BasicValidation::validate($a, BasicValidation::NOT_EMPTY|BasicValidation::STRING|BasicValidation::URL);
@@ -23,8 +23,8 @@
  * (see http://en.wikipedia.org/wiki/List_of_HTTP_status_codes)
  * @example
  * BasicValidation::with(42)->isInteger(); // returns BasicValidation object
- * BasicValidation::with(42)->isString()->isEmail(); // throws ExceptionValidation
- * @uses ExceptionForbidden
+ * BasicValidation::with(42)->isString()->isEmail(); // throws Error
+ * @uses Error
  */
 class BasicValidation {
 
@@ -537,7 +537,7 @@ class BasicValidation {
             return $this;
         }
         // test
-        throw new ExceptionForbidden('Not yet implemented.', 500);
+        throw new Error('Not yet implemented.', 500);
         // return
         return $this;
     }

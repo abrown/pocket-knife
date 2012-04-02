@@ -8,7 +8,7 @@
 /**
  * StorageCouch
  * Stores JSON records in a CouchDB
- * @uses StorageInterface, WebHttp, Settings, ExceptionStorage
+ * @uses StorageInterface, WebHttp, Settings, Error
  */
 class StorageCouch implements StorageInterface{
     
@@ -61,7 +61,7 @@ class StorageCouch implements StorageInterface{
         // test
         $json = WebHttp::request($this->url);
         $info = json_decode($json);
-        //if( !$info->doc_count ) throw new ExceptionStorage('Could not connect to database', 400);
+        //if( !$info->doc_count ) throw new Error('Could not connect to database', 400);
     }
     
     /**

@@ -82,9 +82,9 @@ class SettingsTest extends PHPUnit_Framework_TestCase{
     
     /**
      * Demonstrates what exception is thrown when validation fails
-     * @expectedException ExceptionSettings
+     * @expectedError Error
      */
-    public function testValidateException(){
+    public function testValidateError(){
         $template = array(
             'list2' => Settings::OPTIONAL | Settings::SINGLE,
         );

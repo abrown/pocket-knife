@@ -31,7 +31,7 @@ class BasicXml {
         } elseif (is_array($thing)) {
             $name = 'array';
         } else {
-            throw new ExceptionForbidden("Cannot encode an object of type " . gettype($object));
+            throw new Error("Cannot encode an object of type " . gettype($object));
         }
         // encode recursively
         BasicXml::_xml_encode($thing, $name, $w);
@@ -45,7 +45,7 @@ class BasicXml {
      * @param mixed $thing
      * @param string $name
      * @param XMLWriter $writer
-     * @throws ExceptionSettings
+     * @throws Error
      */
     private static function _xml_encode($thing, $name, $writer) {
         if (is_scalar($thing)) {
@@ -85,7 +85,7 @@ class BasicXml {
             $writer->endElement();
         }
         else {
-            throw new ExceptionForbidden("Cannot encode an object of type " . gettype($thing));
+            throw new Error("Cannot encode an object of type " . gettype($thing));
         }
     }
 

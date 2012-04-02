@@ -23,7 +23,7 @@
  * // the 'site' variable references the Site service (the actual
  * // object created with this class)
  * echo $site->search('...'); 
- * @uses Settings, WebTemplate, ExceptionFile, ExceptionAccess
+ * @uses Settings, WebTemplate, Error, Error
  */
 class Site{
     

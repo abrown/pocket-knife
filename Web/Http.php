@@ -9,7 +9,7 @@
  * Provides static methods to handle common HTTP-related tasks. These include
  * making both analyzing and sending HTTP requests. URL-related tasks are found
  * in WebUrl.
- * @uses ExceptionWeb
+ * @uses Error
  */
 class WebHttp {
 

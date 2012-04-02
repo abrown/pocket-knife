@@ -18,7 +18,7 @@ class StorageMongoTest extends PHPUnit_Framework_TestCase{
         autoload('StorageMongo');
         autoload('WebHttp');
         autoload('Settings');
-        autoload('ExceptionStorage');
+        autoload('Error');
     }
     
     public function setUp(){
@@ -80,7 +80,7 @@ class StorageMongoTest extends PHPUnit_Framework_TestCase{
     }
     
     /**
-     * @expectedException ExceptionStorage
+     * @expectedError Error
      */
     public function testDelete(){
         $updated_object = $this->db->delete(self::$id);

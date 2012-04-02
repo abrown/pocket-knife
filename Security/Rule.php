@@ -80,7 +80,7 @@ class SecurityRule extends ResourceItem {
      * @return int 
      */
     public function compare($a, $b){
-        if( !is_a($a, 'SecurityRule') || !is_a($b, 'SecurityRule') ) throw new ExceptionForbidden('Only security rules may be compared', 500);
+        if( !is_a($a, 'SecurityRule') || !is_a($b, 'SecurityRule') ) throw new Error('Only security rules may be compared', 500);
         $result = 0;
         $properties = array('action', 'resource', 'id');
         foreach($properties as $property){

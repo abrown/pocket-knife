@@ -24,8 +24,8 @@ class StoragePdoTest extends PHPUnit_Framework_TestCase{
             $instance->query("CREATE TABLE `{$config->table}` ( `{$config->primary}` int(11) NOT NULL AUTO_INCREMENT, PRIMARY KEY (`{$config->primary}`) ) ENGINE=InnoDB");
             $instance->query("ALTER TABLE {$config->table} ADD COLUMN a DATETIME DEFAULT NULL");
             $instance->query("ALTER TABLE {$config->table} ADD COLUMN b TEXT");
-        } catch (PDOException $e) {
-            throw new Exception($e->getMessage(), 500);
+        } catch (PDOError $e) {
+            throw new Error($e->getMessage(), 500);
         }
     }
     
@@ -41,8 +41,8 @@ class StoragePdoTest extends PHPUnit_Framework_TestCase{
             $instance->query("CREATE TABLE `{$config->table}` ( `{$config->primary}` int(11) NOT NULL AUTO_INCREMENT, PRIMARY KEY (`{$config->primary}`) ) ENGINE=InnoDB");
             $instance->query("ALTER TABLE {$config->table} ADD COLUMN a DATETIME DEFAULT NULL");
             $instance->query("ALTER TABLE {$config->table} ADD COLUMN b TEXT");
-        } catch (PDOException $e) {
-            throw new Exception($e->getMessage(), 500);
+        } catch (PDOError $e) {
+            throw new Error($e->getMessage(), 500);
         }
     }    
     
@@ -107,7 +107,7 @@ class StoragePdoTest extends PHPUnit_Framework_TestCase{
     }
     
     /**
-     * @expectedException ExceptionStorage
+     * @expectedError Error
      */
     public function testDelete(){
         $updated_object = $this->db->delete(1);

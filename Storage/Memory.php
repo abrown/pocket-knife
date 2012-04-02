@@ -7,7 +7,7 @@
 
 /**
  * Stores records in memory within this class; best used for testing
- * @uses StorageInterface, ExceptionStorage
+ * @uses StorageInterface, Error
  */
 class StorageMemory implements StorageInterface{
     

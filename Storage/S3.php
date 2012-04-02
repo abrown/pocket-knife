@@ -34,9 +34,9 @@ class StorageS3{
 // EXCEPTIONS
 
 /**
- * Default S3 Exception.
+ * Default S3 Error.
  */
-class S3_Exception extends Exception {}
+class S3_Error extends Error {}
 
 
 /*%******************************************************************************************%*/
@@ -286,14 +286,14 @@ class AmazonS3 extends CFRuntime
 		if (!$key && !defined('AWS_KEY'))
 		{
 			// @codeCoverageIgnoreStart
-			throw new S3_Exception('No account key was passed into the constructor, nor was it set in the AWS_KEY constant.');
+			throw new S3_Error('No account key was passed into the constructor, nor was it set in the AWS_KEY constant.');
 			// @codeCoverageIgnoreEnd
 		}
 
 		if (!$secret_key && !defined('AWS_SECRET_KEY'))
 		{
 			// @codeCoverageIgnoreStart
-			throw new S3_Exception('No account secret was passed into the constructor, nor was it set in the AWS_SECRET_KEY constant.');
+			throw new S3_Error('No account secret was passed into the constructor, nor was it set in the AWS_SECRET_KEY constant.');
 			// @codeCoverageIgnoreEnd
 		}
 
@@ -360,7 +360,7 @@ class AmazonS3 extends CFRuntime
 		if (!$this->validate_bucketname_support($bucket))
 		{
 			// @codeCoverageIgnoreStart
-			throw new S3_Exception('S3 does not support "' . $bucket . '" as a valid bucket name. Review "Bucket Restrictions and Limitations" in the S3 Developer Guide for more information.');
+			throw new S3_Error('S3 does not support "' . $bucket . '" as a valid bucket name. Review "Bucket Restrictions and Limitations" in the S3 Developer Guide for more information.');
 			// @codeCoverageIgnoreEnd
 		}
 
@@ -956,7 +956,7 @@ class AmazonS3 extends CFRuntime
 		if (!$this->validate_bucketname_create($bucket))
 		{
 			// @codeCoverageIgnoreStart
-			throw new S3_Exception('"' . $bucket . '" is not DNS-valid (i.e., <bucketname>.s3.amazonaws.com), and cannot be used as an S3 bucket name. Review "Bucket Restrictions and Limitations" in the S3 Developer Guide for more information.');
+			throw new S3_Error('"' . $bucket . '" is not DNS-valid (i.e., <bucketname>.s3.amazonaws.com), and cannot be used as an S3 bucket name. Review "Bucket Restrictions and Limitations" in the S3 Developer Guide for more information.');
 			// @codeCoverageIgnoreEnd
 		}
 
@@ -1872,7 +1872,7 @@ class AmazonS3 extends CFRuntime
 	{
 		if ($this->use_batch_flow)
 		{
-			throw new S3_Exception(__FUNCTION__ . '() cannot be batch requested');
+			throw new S3_Error(__FUNCTION__ . '() cannot be batch requested');
 		}
 
 		$header = $this->get_bucket_headers($bucket);
@@ -1890,7 +1890,7 @@ class AmazonS3 extends CFRuntime
 	{
 		if ($this->use_batch_flow)
 		{
-			throw new S3_Exception(__FUNCTION__ . '() cannot be batch requested');
+			throw new S3_Error(__FUNCTION__ . '() cannot be batch requested');
 		}
 
 		$header = $this->get_object_headers($bucket, $filename);
@@ -1914,7 +1914,7 @@ class AmazonS3 extends CFRuntime
 		if ($this->use_batch_flow)
 		{
 			// @codeCoverageIgnoreStart
-			throw new S3_Exception(__FUNCTION__ . '() cannot be batch requested');
+			throw new S3_Error(__FUNCTION__ . '() cannot be batch requested');
 			// @codeCoverageIgnoreEnd
 		}
 
@@ -1939,7 +1939,7 @@ class AmazonS3 extends CFRuntime
 		if ($this->use_batch_flow)
 		{
 			// @codeCoverageIgnoreStart
-			throw new S3_Exception(__FUNCTION__ . '() cannot be batch requested');
+			throw new S3_Error(__FUNCTION__ . '() cannot be batch requested');
 			// @codeCoverageIgnoreEnd
 		}
 
@@ -1957,7 +1957,7 @@ class AmazonS3 extends CFRuntime
 	{
 		if ($this->use_batch_flow)
 		{
-			throw new S3_Exception(__FUNCTION__ . '() cannot be batch requested');
+			throw new S3_Error(__FUNCTION__ . '() cannot be batch requested');
 		}
 
 		$filesize = 0;
@@ -2001,7 +2001,7 @@ class AmazonS3 extends CFRuntime
 	{
 		if ($this->use_batch_flow)
 		{
-			throw new S3_Exception(__FUNCTION__ . '() cannot be batch requested');
+			throw new S3_Error(__FUNCTION__ . '() cannot be batch requested');
 		}
 
 		$object = $this->get_object_headers($bucket, $filename);
@@ -2106,7 +2106,7 @@ class AmazonS3 extends CFRuntime
 	{
 		if ($this->use_batch_flow)
 		{
-			throw new S3_Exception(__FUNCTION__ . '() cannot be batch requested');
+			throw new S3_Error(__FUNCTION__ . '() cannot be batch requested');
 		}
 
 		// Get a list of buckets.
@@ -2141,7 +2141,7 @@ class AmazonS3 extends CFRuntime
 	{
 		if ($this->use_batch_flow)
 		{
-			throw new S3_Exception(__FUNCTION__ . '() cannot be batch requested');
+			throw new S3_Error(__FUNCTION__ . '() cannot be batch requested');
 		}
 
 		if (!$opt) $opt = array();
@@ -2218,7 +2218,7 @@ class AmazonS3 extends CFRuntime
 	{
 		if ($this->use_batch_flow)
 		{
-			throw new S3_Exception(__FUNCTION__ . '() cannot be batch requested');
+			throw new S3_Error(__FUNCTION__ . '() cannot be batch requested');
 		}
 
 		// Collect all matches
@@ -2256,7 +2256,7 @@ class AmazonS3 extends CFRuntime
 		if ($this->use_batch_flow)
 		{
 			// @codeCoverageIgnoreStart
-			throw new S3_Exception(__FUNCTION__ . '() cannot be batch requested');
+			throw new S3_Error(__FUNCTION__ . '() cannot be batch requested');
 			// @codeCoverageIgnoreEnd
 		}
 
@@ -2935,7 +2935,7 @@ class AmazonS3 extends CFRuntime
 
 		if (!isset($opt['fileUpload']) || !isset($opt['partNumber']))
 		{
-			throw new S3_Exception('The `fileUpload` and `partNumber` options are both required in ' . __FUNCTION__ . '().');
+			throw new S3_Error('The `fileUpload` and `partNumber` options are both required in ' . __FUNCTION__ . '().');
 		}
 
 		// Handle expectation. Can also be passed as an HTTP header.
@@ -3251,7 +3251,7 @@ class AmazonS3 extends CFRuntime
 	{
 		if ($this->use_batch_flow)
 		{
-			throw new S3_Exception(__FUNCTION__ . '() cannot be batch requested');
+			throw new S3_Error(__FUNCTION__ . '() cannot be batch requested');
 		}
 
 		if (!$opt) $opt = array();
@@ -3265,7 +3265,7 @@ class AmazonS3 extends CFRuntime
 
 		if (!isset($opt['fileUpload']))
 		{
-			throw new S3_Exception('The `fileUpload` option is required in ' . __FUNCTION__ . '().');
+			throw new S3_Error('The `fileUpload` option is required in ' . __FUNCTION__ . '().');
 		}
 		elseif (is_resource($opt['fileUpload']))
 		{
@@ -3304,7 +3304,7 @@ class AmazonS3 extends CFRuntime
 
 		if ($upload_position === false || !isset($upload_filesize) || $upload_filesize === false || $upload_filesize < 0)
 		{
-			throw new S3_Exception('The size of `fileUpload` cannot be determined in ' . __FUNCTION__ . '().');
+			throw new S3_Error('The size of `fileUpload` cannot be determined in ' . __FUNCTION__ . '().');
 		}
 
 		// Handle part size
@@ -3404,7 +3404,7 @@ class AmazonS3 extends CFRuntime
 		if ($this->use_batch_flow)
 		{
 			// @codeCoverageIgnoreStart
-			throw new S3_Exception(__FUNCTION__ . '() cannot be batch requested');
+			throw new S3_Error(__FUNCTION__ . '() cannot be batch requested');
 			// @codeCoverageIgnoreEnd
 		}
 
@@ -3551,7 +3551,7 @@ class AmazonS3 extends CFRuntime
 	{
 		if ($this->use_batch_flow)
 		{
-			throw new S3_Exception(__FUNCTION__ . '() cannot be batch requested');
+			throw new S3_Error(__FUNCTION__ . '() cannot be batch requested');
 		}
 
 		$id = $this->list_buckets();

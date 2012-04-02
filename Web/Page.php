@@ -7,7 +7,7 @@
 
 /**
  * Page
- * @uses Settings, WebRouting, WebHttp, WebTemplate, ExceptionFile, ExceptionSettings 
+ * @uses Settings, WebRouting, WebHttp, WebTemplate, Error, Error 
  */
 class Page{
 

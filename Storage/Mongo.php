@@ -54,7 +54,7 @@ class StorageMongo implements StorageInterface{
             $this->server = new Mongo($url);
             $this->collection = $this->server->selectCollection($settings->database, $settings->collection);
         }
-        catch(Exception $e){
+        catch(Error $e){
             throw new Error($e->getMessage(), 400);
         }
         
@@ -97,13 +97,13 @@ class StorageMongo implements StorageInterface{
      * @param mixed $id 
      */
     public function create($record, $id = null){
-        if( !is_null($id) ) throw ExceptionStorage('MongoDB create() cannot specify an arbitrary ID', 400);
+        if( !is_null($id) ) throw Error('MongoDB create() cannot specify an arbitrary ID', 400);
         // create
         $_record = (array) $record;
         try{
             $success = $this->collection->insert($_record);
         }
-        catch(Exception $e){
+        catch(Error $e){
             throw new Error($e->message, 400);
         }
         if( !$success ) throw new Error('CREATE action failed: no reason given', 400);
@@ -122,7 +122,7 @@ class StorageMongo implements StorageInterface{
         try{
             $item = $this->collection->findOne( array('_id' => new MongoId($id)));
         }
-        catch(Exception $e){
+        catch(Error $e){
             throw new Error($e->message, 400);
         }
         // check result
@@ -149,7 +149,7 @@ class StorageMongo implements StorageInterface{
         try{
             $success = $this->collection->update( array('_id' => new MongoId($id)), $record );
         }
-        catch(Exception $e){
+        catch(Error $e){
             throw new Error($e->message, 400);
         }
         if( !$success ) throw new Error('UPDATE action failed: unknown reason', 400); 
@@ -167,7 +167,7 @@ class StorageMongo implements StorageInterface{
         try{
             $success = $this->collection->remove( array('_id' => new MongoId($id)) );
         }
-        catch(Exception $e){
+        catch(Error $e){
             throw new Error($e->message, 400);
         }
         if( !$success ) throw new Error('DELETE action failed: unknown reason', 400); 
@@ -184,7 +184,7 @@ class StorageMongo implements StorageInterface{
         try{
             $success = $this->collection->remove( array() );
         }
-        catch(Exception $e){
+        catch(Error $e){
             throw new Error($e->message, 400);
         }
         if( !$success ) throw new Error('DELETE action failed: unknown reason', 400); 

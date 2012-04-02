@@ -13,7 +13,7 @@
  * template by passing a path or template text to the constructor; the
  * tokens are replaced with WebTemplate::replace() and PHP variables are
  * set with WebTemplate::setVariable().
- * @uses ExceptionSettings, ExceptionFile
+ * @uses Error, Error
  * @example
  * // build the instance
  * $template = new Template('file.php', Template::PHP_FILE);
@@ -297,7 +297,7 @@ class WebTemplate {
                 break;
             case self::PHP_FILE: $text = $this->getPHPFile($this->input, $this->variables);
                 break;
-            default: throw new SettingsException('Unknown template type: ' . $this->type, 500);
+            default: throw new SettingsError('Unknown template type: ' . $this->type, 500);
                 break;
         }
         // turn insert_comment back to its original state

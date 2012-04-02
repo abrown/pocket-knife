@@ -7,7 +7,7 @@
 
 /**
  * Provides methods for validating any given input
- * @uses ExceptionForbidden, WebUrl
+ * @uses Error, WebUrl
  * @example
  * $a = 'google.com';
  * $errors = BasicValidation::validate($a, BasicValidation::NOT_EMPTY|BasicValidation::STRING|BasicValidation::URL);
@@ -356,7 +356,7 @@ class BasicValidation {
             return $out;
         }
         else{
-            throw new ExceptionForbidden("Unknown type to sanitize", 500);
+            throw new Error("Unknown type to sanitize", 500);
         }
     }
 }

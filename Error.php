@@ -22,11 +22,10 @@ class Error extends Exception {
     /**
      * Returns the exception as the given a content type.
      * @param string $content_type
-     * @throws ExceptionSettings
      * @return Representation
      */
     public function fromRepresentation($content_type) {
-        trigger_error('Exception resource cannot receive data.', E_USER_ERROR);
+        trigger_error('Error resource cannot receive data.', E_USER_ERROR);
         return null;
     }
 
@@ -36,12 +35,11 @@ class Error extends Exception {
      * accommodate content type differences and possible 
      * resource-to-data binding
      * @param string $content_type
-     * @throws ExceptionSettings
      * @return Representation
      */
     public function toRepresentation($content_type, $data) {
         if (!array_key_exists($content_type, Representation::$MAP))
-            trigger_error('415 Unsupported media type in Exception code: ' . $content_type, E_USER_ERROR);
+            trigger_error('415 Unsupported media type in Error code: ' . $content_type, E_USER_ERROR);
         // set variables
         $this->http_code = $this->getCode();
         $this->http_message = $this->getHttpMessage($this->http_code);
@@ -193,7 +191,6 @@ class Error extends Exception {
         <!-- TITLE -->
         <h1><?php echo $data->http_code; ?> <?php echo $data->http_message; ?></h1>
         <hr class="title"/>
-        <p><span class="property">Exception</span>: <?php echo get_class($data); ?></p>
         <p><span class="property">Message</span>: <?php echo $data->message; ?></p>
         <p><span class="property">Thrown at</span>: <?php echo $data->file; ?>(<?php echo $data->line; ?>)</p>
         <pre>Thrown at <?php echo $data->file; ?>(<?php echo $data->line; ?>)

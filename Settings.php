@@ -7,7 +7,7 @@
 
 /**
  * Provides a framework for storing, editing, and using configurations.
- * @uses ExceptionFile, ExceptionSettings
+ * @uses Error, Error
  * @example
  * Should work like:
  *  add "Settings::setPath('path/to/Settings.php');"
@@ -342,7 +342,7 @@ class Settings {
     static private function writePhpKey($key, $value, $_indent = 0) {
         $indent = str_repeat("\t", $_indent);
         if (is_object($value))
-            throw new Exception('Cannot save objects to Settings file', 500);
+            throw new Error('Cannot save objects to Settings file', 500);
         elseif (is_int($value))
             $format = '%s$%s = %d;';
         elseif (is_float($value))

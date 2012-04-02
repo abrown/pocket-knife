@@ -81,7 +81,7 @@ class SecurityAuthenticationHeader extends SecurityAuthentication{
                 $data .= $this->password_header.': XXX'."<br/>\n";
                 break;
             default:
-                throw new ExceptionForbidden('Unknown content type', 400);
+                throw new Error('Unknown content type', 400);
                 break;
         }
         // return

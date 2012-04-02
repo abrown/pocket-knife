@@ -112,7 +112,7 @@ class StorageCache{
      */
     function clear(){
         $handle = opendir(self::path());
-        if( !is_resource($handle) ) throw new Exception('Could not find cache path.', 404);
+        if( !is_resource($handle) ) throw new Error('Could not find cache path.', 404);
         // loop through dir
         while (false !== ($file = readdir($handle)) ){
             if( $file == '.htaccess' ) continue;
