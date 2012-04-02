@@ -87,7 +87,7 @@ class WebHttp {
      * Sends HTTP code to client
      */
     static function setCode($code) {
-        if( headers_sent() ) throw new ExceptionWeb('HTTP headers already sent', 400);
+        if( headers_sent() ) throw new Error('HTTP headers already sent', 400);
         header('HTTP/1.1 ' . intval($code));
     }
     
@@ -96,7 +96,7 @@ class WebHttp {
      * @param string $type 
      */
     static function setContentType($type){
-        if( headers_sent() ) throw new ExceptionWeb('HTTP headers already sent', 400);
+        if( headers_sent() ) throw new Error('HTTP headers already sent', 400);
         header('Content-Type: '.$type);
     }
 
@@ -105,7 +105,7 @@ class WebHttp {
      * @param string $url
      */
     static function redirect($url) {
-        if( headers_sent() ) throw new ExceptionWeb('HTTP headers already sent', 400);
+        if( headers_sent() ) throw new Error('HTTP headers already sent', 400);
         header('Location: ' . $url);
         exit();
     }
@@ -134,11 +134,11 @@ class WebHttp {
         $response = file_get_contents($url, false, $context);
         // check errors
         if( $response === false ){
-            throw new ExceptionWeb('Could not open url: '.$url, 404);
+            throw new Error('Could not open url: '.$url, 404);
         }
         // save response code
         if( !isset($http_response_header) ){
-            throw new ExceptionWeb('No HTTP request was made', 400);
+            throw new Error('No HTTP request was made', 400);
         }
         $lines = preg_grep('#HTTP/#i', $http_response_header);
         self::$response_code = 0;

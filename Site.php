@@ -86,7 +86,7 @@ class Site{
         );
         // accepts settings
         if (!$settings || !is_a($settings, 'Settings'))
-            throw new ExceptionSettings('Incorrect settings given.', 500);
+            throw new Error('Incorrect settings given.', 500);
         $settings->validate($settings_template);
         // copy settings into this object
         foreach ($this as $key => $value) {
@@ -121,7 +121,7 @@ class Site{
         // routing
         switch($name){
         	case 'admin':
-        		if( !$this->admin ) throw new ExceptionWeb('Site administration is disabled.', 404);
+        		if( !$this->admin ) throw new Error('Site administration is disabled.', 404);
         		// create
         		$admin = new SiteAdministration($this, $this->admin);
         		$content = $admin->execute();
@@ -174,7 +174,7 @@ class Site{
     public function find( $filename ){
         $path = $this->location . DS. $filename;
         // readability check
-        if( !is_readable($path) ) throw new ExceptionFile("File {$path} is not readable.", 404);
+        if( !is_readable($path) ) throw new Error("File {$path} is not readable.", 404);
         // access check, TODO
         
         // return
@@ -259,12 +259,12 @@ class Site{
             $settings = new Settings($this->storage);
             // check Settings
             if ( !isset($settings->type) )
-                throw new ExceptionSettings('Storage type is not defined', 500);
+                throw new Error('Storage type is not defined', 500);
             // get class
             $class = 'Storage'.ucfirst($settings->type);
             // check parents
             if (!in_array('StorageInterface', class_implements($class)))
-                throw new ExceptionSettings($class.' must implement StorageInterface.', 500);
+                throw new Error($class.' must implement StorageInterface.', 500);
             // create object
             $object = new $class($settings);
         }

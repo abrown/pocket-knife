@@ -35,7 +35,7 @@ class StorageCouch implements StorageInterface{
      * @param type $settings 
      */
     public function __construct($settings){
-        if( !$settings|| !is_a($settings, 'Settings') ) throw new ExceptionSettings('StoragePdo requires a Settings', 500);
+        if( !$settings|| !is_a($settings, 'Settings') ) throw new Error('StoragePdo requires a Settings', 500);
         // determines what Settings must be passed
         $settings_template = array(
             'location' => Settings::MANDATORY,
@@ -104,7 +104,7 @@ class StorageCouch implements StorageInterface{
         $response = WebHttp::request($url, $method, json_encode($record), 'application/json');
         // check response
         $_response = json_decode($response);
-        if( @$_response->error ) throw new ExceptionStorage($_response->reason, 400);
+        if( @$_response->error ) throw new Error($_response->reason, 400);
         $this->isChanged = true;
         // return
         return $_response->_id;
@@ -122,7 +122,7 @@ class StorageCouch implements StorageInterface{
         $response = WebHttp::request($this->url.'/_bulk_docs', 'POST', json_encode($list), 'application/json');
         // check response
         $_response = json_decode($response);
-        if( @$_response->error ) throw new ExceptionStorage($_response->reason, 400);
+        if( @$_response->error ) throw new Error($_response->reason, 400);
         $this->isChanged = true;
         // return
         return $_response;
@@ -134,15 +134,15 @@ class StorageCouch implements StorageInterface{
      * @return mixed 
      */
     public function read($id){
-        if( is_null($id) ) throw new ExceptionStorage('READ action requires an ID', 400);
+        if( is_null($id) ) throw new Error('READ action requires an ID', 400);
         $response = WebHttp::request($this->url.'/'.$id, 'GET', '', 'application/json');
         // check response
         if( !$response ){
             $error = error_get_last();
-            throw new ExceptionStorage($error['message'], 404);
+            throw new Error($error['message'], 404);
         }
         $_response = json_decode($response);
-        if( @$_response->error ) throw new ExceptionStorage($_response->reason, 400);
+        if( @$_response->error ) throw new Error($_response->reason, 400);
         // return
         return $_response;
     }
@@ -153,7 +153,7 @@ class StorageCouch implements StorageInterface{
      * @param mixed $id 
      */
     public function update($changes, $id){
-        if( is_null($id) ) throw new ExceptionStorage('UPDATE action requires an ID', 400);
+        if( is_null($id) ) throw new Error('UPDATE action requires an ID', 400);
         // get record
         $record = $this->read($id);
         // change each field
@@ -166,10 +166,10 @@ class StorageCouch implements StorageInterface{
         // check response
         if( !$response ){
             $error = error_get_last();
-            throw new ExceptionStorage($error['message'], 404);
+            throw new Error($error['message'], 404);
         }
         $_response = json_decode($response);
-        if( @$_response->error ) throw new ExceptionStorage($_response->reason, 400);
+        if( @$_response->error ) throw new Error($_response->reason, 400);
         $this->isChanged = true;
         // update revision
         $record->_rev = $_response->_rev;
@@ -182,7 +182,7 @@ class StorageCouch implements StorageInterface{
      * @param mixed $id 
      */
     public function delete($id){
-        if( is_null($id) ) throw new ExceptionStorage('DELETE action requires an ID', 400);
+        if( is_null($id) ) throw new Error('DELETE action requires an ID', 400);
         // get record
         $record = $this->read($id);
         // delete request
@@ -190,10 +190,10 @@ class StorageCouch implements StorageInterface{
         // check response
         if( !$response ){
             $error = error_get_last();
-            throw new ExceptionStorage($error['message'], 404);
+            throw new Error($error['message'], 404);
         }
         $_response = json_decode($response);
-        if( @$_response->error ) throw new ExceptionStorage($_response->reason, 400);
+        if( @$_response->error ) throw new Error($_response->reason, 400);
         $this->isChanged = true;
         // return
         return $record;
@@ -209,20 +209,20 @@ class StorageCouch implements StorageInterface{
         // check response
         if( !$response ){
             $error = error_get_last();
-            throw new ExceptionStorage($error['message'], 404);
+            throw new Error($error['message'], 404);
         }
         $_response = json_decode($response);
-        if( @$_response->error ) throw new ExceptionStorage($_response->reason, 400);
+        if( @$_response->error ) throw new Error($_response->reason, 400);
         $this->isChanged = true;
         // recreate database
         $response = WebHttp::request($this->url, 'PUT', '', 'application/json');
         // check response
         if( !$response ){
             $error = error_get_last();
-            throw new ExceptionStorage($error['message'], 404);
+            throw new Error($error['message'], 404);
         }
         $_response = json_decode($response);
-        if( @$_response->error ) throw new ExceptionStorage($_response->reason, 400);
+        if( @$_response->error ) throw new Error($_response->reason, 400);
         // return
         return true;
     }
@@ -236,7 +236,7 @@ class StorageCouch implements StorageInterface{
         $response = WebHttp::request($this->url.'/_all_docs?include_docs=true', 'POST', '{}', 'application/json');
         // check response
         $_response = json_decode($response);
-        if( @$_response->error ) throw new ExceptionStorage($_response->reason, 400);
+        if( @$_response->error ) throw new Error($_response->reason, 400);
         // add IDs
         $records = array();
         foreach($_response->rows as $row){
@@ -259,7 +259,7 @@ class StorageCouch implements StorageInterface{
         $response = WebHttp::request($this->url.'/_all_docs?include_docs=true', 'POST', json_encode($search), 'application/json');
         // check response
         $_response = json_decode($response);
-        if( @$_response->error ) throw new ExceptionStorage($_response->reason, 400);
+        if( @$_response->error ) throw new Error($_response->reason, 400);
         // add IDs
         $records = array();
         foreach($_response->rows as $row){

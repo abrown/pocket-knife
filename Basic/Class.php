@@ -70,7 +70,7 @@ class BasicClass{
         $replaced = preg_replace('/([a-z])([A-Z])/', '$1/$2', $class);
         $replaced = str_replace('/', DS, $replaced);
         $path = get_base_dir() . DS . $replaced . '.php';
-        if (!is_file($path)) throw new ExceptionFile('Class '.$class.' not found at: '.$path, 500);
+        if (!is_file($path)) throw new Error('Class '.$class.' not found at: '.$path, 500);
         return $path;
     }
     

@@ -60,12 +60,12 @@ abstract class Resource {
      * accommodate content type differences and possible 
      * resource-to-data binding
      * @param string $content_type
-     * @throws ExceptionSettings
+     * @throws Error
      * @return stdClass
      */
     public function fromRepresentation($content_type) {
         if (!array_key_exists($content_type, Representation::$MAP))
-            throw new ExceptionSettings('Unknown request content-type.', 500);
+            throw new Error('Unknown request content-type.', 500);
         $class = Representation::$MAP[$content_type];
         $representation = new $class;
         $representation->receive();
@@ -78,12 +78,12 @@ abstract class Resource {
      * accommodate content type differences and possible 
      * resource-to-data binding
      * @param string $content_type
-     * @throws ExceptionSettings
+     * @throws Error
      * @return Representation
      */
     public function toRepresentation($content_type, $data) {
         if (!array_key_exists($content_type, Representation::$MAP))
-            throw new ExceptionSettings('Unknown request content-type.', 500);
+            throw new Error('Unknown request content-type.', 500);
         $class = Representation::$MAP[$content_type];
         $representation = new $class;
         // templating

@@ -57,7 +57,7 @@ class StoragePdo implements StorageInterface{
      * @param Settings
      */
     public function __construct( $settings ){
-        if( !$settings || !is_a($settings, 'Settings') ) throw new ExceptionSettings('StoragePdo requires a Settings', 500);
+        if( !$settings || !is_a($settings, 'Settings') ) throw new Error('StoragePdo requires a Settings', 500);
         // determines what Settings must be passed
         $settings_template = array(
             'location' => Settings::MANDATORY,
@@ -148,7 +148,7 @@ class StoragePdo implements StorageInterface{
      * @return StdClass 
      */
     public function read($id){
-        if( is_null($id) ) throw new ExceptionStorage('READ action requires an ID', 400);
+        if( is_null($id) ) throw new Error('READ action requires an ID', 400);
         // TODO: caching
         /*
         $key = $this->getCacheKey($id);
@@ -171,7 +171,7 @@ class StoragePdo implements StorageInterface{
         // get result
         $result = $sql->fetch(PDO::FETCH_OBJ);
         // check result
-        if( $result === false ){ throw new ExceptionStorage('Could not find record to read', 404); }
+        if( $result === false ){ throw new Error('Could not find record to read', 404); }
         // return
         return $result;
     }
@@ -183,7 +183,7 @@ class StoragePdo implements StorageInterface{
      * @return stdClass 
      */
     public function update($record, $id){
-        if( is_null($id) ) throw new ExceptionStorage('UPDATE action requires an ID', 400);
+        if( is_null($id) ) throw new Error('UPDATE action requires an ID', 400);
         // check if exists
         // if( !$this->exists() ){ throw new Exception('Could not find record to update', 404); }
         // TODO: delete cache
@@ -374,7 +374,7 @@ class StoragePdo implements StorageInterface{
         // get result
         $result = $sql->fetch(PDO::FETCH_OBJ);
         // check result
-        if( $result === false ){ throw new ExceptionStorage('Could not find record to read', 404); }
+        if( $result === false ){ throw new Error('Could not find record to read', 404); }
         // return
         return $result;
     }
@@ -395,7 +395,7 @@ class StoragePdo implements StorageInterface{
         // get result
         $result = $sql->fetch(PDO::FETCH_OBJ);
         // check result
-        if( $result === false ){ throw new ExceptionStorage('Could not find record to read', 404); }
+        if( $result === false ){ throw new Error('Could not find record to read', 404); }
         // return
         return $result;
     }

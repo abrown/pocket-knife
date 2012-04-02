@@ -49,12 +49,12 @@ class ResourceList extends Resource {
             $settings = new Settings($this->storage);
             // check Settings
             if (!isset($settings->type))
-                throw new ExceptionSettings('Storage type is not defined', 500);
+                throw new Error('Storage type is not defined', 500);
             // get class
             $class = 'Storage' . ucfirst($settings->type);
             // check parents
             if (!in_array('StorageInterface', class_implements($class)))
-                throw new ExceptionSettings($class . ' must implement StorageInterface.', 500);
+                throw new Error($class . ' must implement StorageInterface.', 500);
             // create object
             $storage = new $class($settings);
         }
@@ -93,10 +93,10 @@ class ResourceList extends Resource {
      */
     public function POST($list) {
         if (!isset($list->items)) {
-            throw new ExceptionService('POST "items" field must be set', 400);
+            throw new Error('POST "items" field must be set', 400);
         }
         if (!is_array($list->items)) {
-            throw new ExceptionService('POST requires list items', 400);
+            throw new Error('POST requires list items', 400);
         }
         // create
         $this->getStorage()->begin();
@@ -118,10 +118,10 @@ class ResourceList extends Resource {
      */
     public function PUT($list = null) {
         if (!isset($list->items)) {
-            throw new ExceptionService('PUT "items" field must be set', 400);
+            throw new Error('PUT "items" field must be set', 400);
         }
         if (!is_array($list->items)) {
-            throw new ExceptionService('PUT requires list items', 400);
+            throw new Error('PUT requires list items', 400);
         }
         // update
         $this->getStorage()->begin();

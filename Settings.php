@@ -81,7 +81,7 @@ class Settings {
             // check if property exists
             if( !property_exists($object, $key) ){
                 $class = get_class($object);
-                throw new ExceptionSettings("Object '$class' does not have the property '$key'");
+                throw new Error("Object '$class' does not have the property '$key'");
             }
             // add to object
             $object->$key = $value;
@@ -166,10 +166,10 @@ class Settings {
      */
     public function validate($template) {
         if (!is_array($template))
-            throw new ExceptionSettings('Invalid Settings template.', 500);
+            throw new Error('Invalid Settings template.', 500);
         foreach ($template as $key => $rule) {
             if (!is_numeric($rule))
-                throw new ExceptionSettings("Invalid Settings template rule: '$key' => '$rule'", 500);
+                throw new Error("Invalid Settings template rule: '$key' => '$rule'", 500);
             // rules
             $value = $this->get($key);
             $optional = $rule & self::OPTIONAL;
@@ -178,27 +178,27 @@ class Settings {
                 $testable = false;
             if ($rule & self::MANDATORY) {
                 if (is_null($value))
-                    throw new ExceptionSettings("Invalid Settings: must have '$key' key", 500);
+                    throw new Error("Invalid Settings: must have '$key' key", 500);
             }
             if ($rule & self::SINGLE && $testable) {
                 if (is_array($value) || is_object($value))
-                    throw new ExceptionSettings("Invalid Settings: key '$key' must not contain multiple items", 500);
+                    throw new Error("Invalid Settings: key '$key' must not contain multiple items", 500);
             }
             if ($rule & self::MULTIPLE && $testable) {
                 if (!is_array($value) && !is_object($value))
-                    throw new ExceptionSettings("Invalid Settings: key '$key' must contain multiple items", 500);
+                    throw new Error("Invalid Settings: key '$key' must contain multiple items", 500);
             }
             if ($rule & self::STRING && $testable) {
                 if (!is_string($value))
-                    throw new ExceptionSettings("Invalid Settings: key '$key' must be a string", 500);
+                    throw new Error("Invalid Settings: key '$key' must be a string", 500);
             }
             if ($rule & self::NUMERIC && $testable) {
                 if (!is_numeric($value))
-                    throw new ExceptionSettings("Invalid Settings: '$key' must be a number", 500);
+                    throw new Error("Invalid Settings: '$key' must be a number", 500);
             }
             if ($rule & self::PATH && $testable) {
                 if (!is_file($value) && !is_dir($value) && !is_link($value))
-                    throw new ExceptionSettings("Invalid Settings: '$key' must be a valid path", 500);
+                    throw new Error("Invalid Settings: '$key' must be a valid path", 500);
             }
         }
         return true;
@@ -211,7 +211,7 @@ class Settings {
      */
     public function setPath($path) {
         if (!is_file($path))
-            throw new ExceptionSettings('Could not find Settings file given: ' . $path, 500);
+            throw new Error('Could not find Settings file given: ' . $path, 500);
         $this->$path = $path;
         return true;
     }
@@ -231,7 +231,7 @@ class Settings {
      */
     public function load($path) {
         if (!$path || !is_file($path))
-            throw new ExceptionSettings('Could not find Settings file: ' . $path, 500);
+            throw new Error('Could not find Settings file: ' . $path, 500);
         // save path
         $this->path = $path;        
         // get configuration from file type
@@ -297,7 +297,7 @@ class Settings {
      */
     public function store() {
         if (!is_file($this->path))
-            throw new ExceptionFile('Could not find Settings file: ' . $config->path, 500);
+            throw new Error('Could not find Settings file: ' . $config->path, 500);
         $output = "<?php\n";
         foreach ($config as $key => $value) {
             $output .= self::write_key($key, $value) . "\n";

@@ -129,13 +129,13 @@ class Service {
 
         // authorize request
         if( $this->acl === false ){
-            throw new ExceptionAccess("No users can perform the action '{$this->action}' on the resource '$resource.$id'", 403);
+            throw new Error("No users can perform the action '{$this->action}' on the resource '$resource.$id'", 403);
         }
         elseif ($this->acl !== true) {
             $user = $this->getAuthentication()->getCurrentUser();
             $roles = $this->getAuthentication()->getCurrentRoles();
             if (!$this->getAcl()->isAllowed($user, $roles, $this->action, $this->resource, $this->id)) {
-                throw new ExceptionAccess("'$user' cannot perform the action '{$this->action}' on the resource '$resource.$id'", 403);
+                throw new Error("'$user' cannot perform the action '{$this->action}' on the resource '$resource.$id'", 403);
             }
         }
 
@@ -158,7 +158,7 @@ class Service {
             // create object instance if necessary
             if (!$this->object) {
                 if (!class_exists($this->resource))
-                    throw new ExceptionFile('Could not find Resource class: ' . $this->resource, 404);
+                    throw new Error('Could not find Resource class: ' . $this->resource, 404);
                 $this->object = new $this->resource();
             }
 
@@ -172,7 +172,7 @@ class Service {
             }
             // call method
             if (!method_exists($this->object, $this->action)){
-                throw new ExceptionSettings("Action '{$this->action}' does not exist", 404);
+                throw new Error("Action '{$this->action}' does not exist", 404);
             }
             $callback = array($this->object, $this->action);
             $data = $input_representation->getData();
@@ -183,8 +183,8 @@ class Service {
             $output_representation->send();
         } catch (Exception $e) {
             // get representation and send data
-            pr($e);
-            $output_representation = $e->toRepresentation($this->content_type, $result);
+            WebHttp::setCode($e->getCode());
+            $output_representation = $e->toRepresentation($this->content_type, null);
             $output_representation->send();
         }
     }
@@ -392,7 +392,7 @@ class Service {
         if (array_key_exists($content_type, $map))
             return $map[$content_type];
         else
-            throw new ExceptionSettings('Attempting to use unknown content type: ' . $content_type, 500);
+            throw new Error('Attempting to use unknown content type: ' . $content_type, 500);
     }
 
 }

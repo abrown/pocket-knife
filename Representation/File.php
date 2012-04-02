@@ -15,12 +15,12 @@ class RepresentationFile extends Representation {
 
     /**
      * Returns the file name
-     * @throws ExceptionSettings
+     * @throws Error
      * @return string
      */
     public function getName() {
         if ($this->name === null)
-            throw new ExceptionSettings("RepresentationFile name is not yet set", 500);
+            throw new Error("RepresentationFile name is not yet set", 500);
         return $this->name;
     }
 

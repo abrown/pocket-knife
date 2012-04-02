@@ -18,9 +18,9 @@ class RepresentationUpload extends RepresentationFile {
         // grab first POST uploaded file
         $upload = reset($_FILES);
         if (!$upload)
-            throw new ExceptionWeb("No uploaded file could be found", 404);
+            throw new Error("No uploaded file could be found", 404);
         if ($upload['error'])
-            throw new ExceptionWeb("Upload failed: " . $upload['error'], 400);
+            throw new Error("Upload failed: " . $upload['error'], 400);
         // get name
         $this->setName($upload['name']);
         // get data

@@ -72,7 +72,7 @@ class StorageMemory implements StorageInterface{
      */
     public function create($record, $id = null){
         if( !is_null($id) ){
-            throw new ExceptionStorage('CREATE ID must be null.', 400);
+            throw new Error('CREATE ID must be null.', 400);
         }
         else{
             $id = $this->lastID() + 1;
@@ -88,9 +88,9 @@ class StorageMemory implements StorageInterface{
      * @return mixed 
      */
     public function read($id){
-        if( is_null($id) ) throw new ExceptionStorage('READ action requires an ID', 400);
+        if( is_null($id) ) throw new Error('READ action requires an ID', 400);
         if( $this->exists($id) ) return $this->data[$id];
-        else throw new ExceptionStorage("READ action could not find ID '$id'", 404);
+        else throw new Error("READ action could not find ID '$id'", 404);
     }
     
     /**
@@ -99,8 +99,8 @@ class StorageMemory implements StorageInterface{
      * @param mixed $id 
      */
     public function update($record, $id){
-        if( is_null($id) ) throw new ExceptionStorage('UPDATE action requires an ID', 400);
-        if( !$this->exists($id) ) throw new ExceptionStorage("UPDATE action could not find ID '$id'", 400);
+        if( is_null($id) ) throw new Error('UPDATE action requires an ID', 400);
+        if( !$this->exists($id) ) throw new Error("UPDATE action could not find ID '$id'", 400);
         // change each field
         foreach($record as $key => $value){
             $this->data[$id]->$key = $value;
@@ -114,8 +114,8 @@ class StorageMemory implements StorageInterface{
      * @param mixed $id 
      */
     public function delete($id){
-        if( is_null($id) ) throw new ExceptionStorage('DELETE action requires an ID', 400);
-        if( !$this->exists($id) ) throw new ExceptionStorage("DELETE action could not find ID '$id'", 400);
+        if( is_null($id) ) throw new Error('DELETE action requires an ID', 400);
+        if( !$this->exists($id) ) throw new Error("DELETE action could not find ID '$id'", 400);
         $record = $this->data[$id];
         unset($this->data[$id]);
         $this->isChanged = true;

@@ -34,7 +34,7 @@ class StorageMongo implements StorageInterface{
      * @param type $settings 
      */
     public function __construct($settings = null){
-        if( !$settings || !is_a($settings, 'Settings') ) throw new ExceptionSettings('StoragePdo requires a Settings', 500);
+        if( !$settings || !is_a($settings, 'Settings') ) throw new Error('StoragePdo requires a Settings', 500);
         // determines what Settings must be passed
         $settings_template = array(
             'location' => Settings::MANDATORY,
@@ -55,7 +55,7 @@ class StorageMongo implements StorageInterface{
             $this->collection = $this->server->selectCollection($settings->database, $settings->collection);
         }
         catch(Exception $e){
-            throw new ExceptionStorage($e->getMessage(), 400);
+            throw new Error($e->getMessage(), 400);
         }
         
     }
@@ -104,9 +104,9 @@ class StorageMongo implements StorageInterface{
             $success = $this->collection->insert($_record);
         }
         catch(Exception $e){
-            throw new ExceptionStorage($e->message, 400);
+            throw new Error($e->message, 400);
         }
-        if( !$success ) throw new ExceptionStorage('CREATE action failed: no reason given', 400);
+        if( !$success ) throw new Error('CREATE action failed: no reason given', 400);
         // return
         return $_record['_id']->{'$id'};
     }
@@ -117,16 +117,16 @@ class StorageMongo implements StorageInterface{
      * @return mixed 
      */
     public function read($id){
-        if( is_null($id) ) throw new ExceptionStorage('READ action requires an ID', 400);
+        if( is_null($id) ) throw new Error('READ action requires an ID', 400);
         // get record
         try{
             $item = $this->collection->findOne( array('_id' => new MongoId($id)));
         }
         catch(Exception $e){
-            throw new ExceptionStorage($e->message, 400);
+            throw new Error($e->message, 400);
         }
         // check result
-        if( is_null($item) ) throw new ExceptionStorage('Could not find ID', 404);
+        if( is_null($item) ) throw new Error('Could not find ID', 404);
         // return
         return to_object($item);
     }
@@ -137,7 +137,7 @@ class StorageMongo implements StorageInterface{
      * @param mixed $id 
      */
     public function update($changes, $id){
-        if( is_null($id) ) throw new ExceptionStorage('UPDATE action requires an ID', 400);
+        if( is_null($id) ) throw new Error('UPDATE action requires an ID', 400);
         // read
         $record = $this->read($id);
         // change each field
@@ -150,9 +150,9 @@ class StorageMongo implements StorageInterface{
             $success = $this->collection->update( array('_id' => new MongoId($id)), $record );
         }
         catch(Exception $e){
-            throw new ExceptionStorage($e->message, 400);
+            throw new Error($e->message, 400);
         }
-        if( !$success ) throw new ExceptionStorage('UPDATE action failed: unknown reason', 400); 
+        if( !$success ) throw new Error('UPDATE action failed: unknown reason', 400); 
         // return
         return $record;
     }
@@ -168,9 +168,9 @@ class StorageMongo implements StorageInterface{
             $success = $this->collection->remove( array('_id' => new MongoId($id)) );
         }
         catch(Exception $e){
-            throw new ExceptionStorage($e->message, 400);
+            throw new Error($e->message, 400);
         }
-        if( !$success ) throw new ExceptionStorage('DELETE action failed: unknown reason', 400); 
+        if( !$success ) throw new Error('DELETE action failed: unknown reason', 400); 
         // return
         return $record;
     }
@@ -185,9 +185,9 @@ class StorageMongo implements StorageInterface{
             $success = $this->collection->remove( array() );
         }
         catch(Exception $e){
-            throw new ExceptionStorage($e->message, 400);
+            throw new Error($e->message, 400);
         }
-        if( !$success ) throw new ExceptionStorage('DELETE action failed: unknown reason', 400); 
+        if( !$success ) throw new Error('DELETE action failed: unknown reason', 400); 
         // return
         return true;
     }

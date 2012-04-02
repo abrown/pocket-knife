@@ -104,9 +104,9 @@ class WebTemplate {
      */
     public function __construct($input, $type = self::FILE) {
         if (!is_string($input))
-            throw new ExceptionSettings('Template input must be a string', 500);
+            throw new Error('Template input must be a string', 500);
         if (!is_integer($type))
-            throw new ExceptionSettings('Template input type must be an integer (see class constants)', 500);
+            throw new Error('Template input type must be an integer (see class constants)', 500);
         $this->input = $input;
         $this->type = $type;
         $this->setVariable('template', $this);
@@ -161,7 +161,7 @@ class WebTemplate {
     public function getFile($file) {
         // check file
         if (!is_file($file)) {
-            throw new ExceptionFile('Could not find ' . $file, 404);
+            throw new Error('Could not find ' . $file, 404);
         }
         // return
         return file_get_contents($file);
@@ -227,7 +227,7 @@ class WebTemplate {
     public function getPHPFile($file__hide__, $variables__hide__ = array()) {
         // check file
         if (!is_file($file__hide__)) {
-            throw new ExceptionFile('Could not find ' . $file__hide__, 404);
+            throw new Error('Could not find ' . $file__hide__, 404);
         }
         // get output
         if (is_array($variables__hide__))

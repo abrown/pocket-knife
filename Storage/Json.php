@@ -41,7 +41,7 @@ class StorageJson implements StorageInterface{
      */
     public function __construct($settings){        
         // check settings
-        if( !$settings || !is_a($settings, 'Settings') ) throw new ExceptionSettings('StorageJson requires a Settings object', 500);
+        if( !$settings || !is_a($settings, 'Settings') ) throw new Error('StorageJson requires a Settings object', 500);
         // determines what settings must be passed
         $settings_template = array(
             'location' => Settings::MANDATORY | Settings::STRING,
@@ -61,7 +61,7 @@ class StorageJson implements StorageInterface{
         }
         // ensure location is accessible
         elseif( !is_writable($this->location) ){
-        	throw new ExceptionStorage("The file '$this->location' is not writable", 500);
+        	throw new Error("The file '$this->location' is not writable", 500);
         }
         // read database
         else{
@@ -128,10 +128,10 @@ class StorageJson implements StorageInterface{
      * @return mixed 
      */
     public function read($id){
-        if( is_null($id) ) throw new ExceptionStorage('READ action requires an ID', 400);
+        if( is_null($id) ) throw new Error('READ action requires an ID', 400);
         if( property_exists($this->data, $id) ) return $this->data->$id;
         //elseif( array_key_exists($id, $this->data) ) return $this->data[$id];
-        else throw new ExceptionStorage("READ action could not find ID '$id'", 404);
+        else throw new Error("READ action could not find ID '$id'", 404);
     }
     
     /**
@@ -140,8 +140,8 @@ class StorageJson implements StorageInterface{
      * @param mixed $id 
      */
     public function update($record, $id){
-        if( is_null($id) ) throw new ExceptionStorage('UPDATE action requires an ID', 400);
-        if( !property_exists($this->data, $id) ) throw new ExceptionStorage("UPDATE action could not find ID '$id'", 400);
+        if( is_null($id) ) throw new Error('UPDATE action requires an ID', 400);
+        if( !property_exists($this->data, $id) ) throw new Error("UPDATE action could not find ID '$id'", 400);
         // change each field
         foreach($record as $key => $value){
             $this->data->$id->$key = $value;
@@ -155,8 +155,8 @@ class StorageJson implements StorageInterface{
      * @param mixed $id 
      */
     public function delete($id){
-        if( is_null($id) ) throw new ExceptionStorage('DELETE action requires an ID', 400);
-        if( !property_exists($this->data, $id) ) throw new ExceptionStorage("DELETE action could not find ID '$id'", 400);
+        if( is_null($id) ) throw new Error('DELETE action requires an ID', 400);
+        if( !property_exists($this->data, $id) ) throw new Error("DELETE action could not find ID '$id'", 400);
         $record = $this->data->$id;
         unset($this->data->$id);
         $this->isChanged = true;

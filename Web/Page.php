@@ -49,7 +49,7 @@ class Page{
             'ajax' => Settings::OPTIONAL | Settings::MULTIPLE
         );
         // accepts Settings
-        if( !$settings || !is_a($settings, 'Settings') ) throw new ExceptionSettings('Incorrect Settings given.', 500);
+        if( !$settings || !is_a($settings, 'Settings') ) throw new Error('Incorrect Settings given.', 500);
         $settings->validate($settings_template);
         // copy Settings into this
         foreach($this as $key=>$value){
@@ -63,7 +63,7 @@ class Page{
      * @return string 
      */
     public function getHtml($file){
-        if( !is_file($file) ) throw new ExceptionFile('File not found: '.$file, 404);
+        if( !is_file($file) ) throw new Error('File not found: '.$file, 404);
         return file_get_contents($file);
     }
     
@@ -88,7 +88,7 @@ class Page{
      */
     public function getAjaxHtml($snippet){
         $file = $this->ajax->$snippet;
-        if( !is_file($file) ) throw new ExceptionFile('File not found: ', $file, 404);
+        if( !is_file($file) ) throw new Error('File not found: ', $file, 404);
         ob_start();
         include $file;
         return ob_get_clean();

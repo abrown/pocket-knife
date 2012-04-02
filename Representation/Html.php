@@ -23,7 +23,7 @@ class RepresentationHtml extends Representation {
      */
     public function getTemplate() {
         if (!$this->template)
-            throw new ExceptionSettings("RepresentationHtml requires a WebTemplate to complete the request", 500);
+            throw new Error("RepresentationHtml requires a WebTemplate to complete the request", 500);
         return $this->template;
     }
 
@@ -32,7 +32,7 @@ class RepresentationHtml extends Representation {
      */
     public function setTemplate(WebTemplate $template) {
         if (!is_a($template, 'WebTemplate'))
-            throw new ExceptionSettings("RepresentationHtml requires a WebTemplate", 500);
+            throw new Error("RepresentationHtml requires a WebTemplate", 500);
         $this->template = $template;
     }
 

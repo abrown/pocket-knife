@@ -50,12 +50,12 @@ class ResourceItem extends Resource {
             $settings = new Settings($this->storage);
             // check Settings
             if (!isset($settings->type))
-                throw new ExceptionSettings('Storage type is not defined', 500);
+                throw new Error('Storage type is not defined', 500);
             // get class
             $class = 'Storage' . ucfirst($settings->type);
             // check parents
             if (!in_array('StorageInterface', class_implements($class)))
-                throw new ExceptionSettings($class . ' must implement StorageInterface.', 500);
+                throw new Error($class . ' must implement StorageInterface.', 500);
             // create object
             $storage = new $class($settings);
         }
@@ -106,7 +106,7 @@ class ResourceItem extends Resource {
      */
     public function POST($entity) {
         if ($entity === null)
-            throw new ExceptionService('No item given to create', 400);
+            throw new Error('No item given to create', 400);
         // bind
         $this->bind($entity);
         // create
@@ -124,7 +124,7 @@ class ResourceItem extends Resource {
      */
     public function PUT($entity = null) {
         if ($entity === null)
-            throw new ExceptionService('No item given to create', 400);
+            throw new Error('No item given to create', 400);
         // get properties
         $public_properties = array();
         foreach (get_public_properties($this) as $property => $value) {
@@ -165,7 +165,7 @@ class ResourceItem extends Resource {
     public function HEAD() {
         $this->getStorage()->begin();
         if (!$this->getStorage()->exists($this->getID())) {
-            throw new ExceptionService($this->getUri() . " does not exist.", 404);
+            throw new Error($this->getUri() . " does not exist.", 404);
         }
         $this->getStorage()->commit();
     }

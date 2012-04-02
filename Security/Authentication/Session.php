@@ -72,37 +72,37 @@ class SecurityAuthenticationSession extends SecurityAuthentication {
                 $in = get_http_body();
                 $out = json_decode($in);
                 if (!property_exists($out, 'username'))
-                    throw new ExceptionAccess('No username sent.', 404);
+                    throw new Error('No username sent.', 404);
                 if (!property_exists($out, 'password'))
-                    throw new ExceptionAccess('No password sent.', 404);
+                    throw new Error('No password sent.', 404);
                 if (!property_exists($out, 'one_time_key'))
-                    throw new ExceptionAccess('No one time key sent.', 404);
+                    throw new Error('No one time key sent.', 404);
                 if ($out->one_time_key !== WebSession::get('one_time_key'))
-                    throw new ExceptionAccess('One time key does not match.', 404);
+                    throw new Error('One time key does not match.', 404);
                 break;
             case 'application/xml':
                 $in = get_http_body();
                 $out = BasicXml::xml_decode($in);
                 if (!property_exists($out, 'username'))
-                    throw new ExceptionAccess('No username sent.', 404);
+                    throw new Error('No username sent.', 404);
                 if (!property_exists($out, 'password'))
-                    throw new ExceptionAccess('No password sent.', 404);
+                    throw new Error('No password sent.', 404);
                 if (!property_exists($out, 'one_time_key'))
-                    throw new ExceptionAccess('No one time key sent.', 404);
+                    throw new Error('No one time key sent.', 404);
                 if ($out->one_time_key !== WebSession::get('one_time_key'))
-                    throw new ExceptionAccess('One time key does not match.', 404);
+                    throw new Error('One time key does not match.', 404);
                 break;
             case 'application/x-www-form-urlencoded':
             case 'multipart/form-data':
             case 'text/html':
                 if (!array_key_exists('username', $_POST))
-                    throw new ExceptionAccess('No username sent.', 404);
+                    throw new Error('No username sent.', 404);
                 if (!array_key_exists('password', $_POST))
-                    throw new ExceptionAccess('No password sent.', 404);
+                    throw new Error('No password sent.', 404);
                 if (!array_key_exists('one_time_key', $_POST))
-                    throw new ExceptionAccess('No one time key sent.', 404);
+                    throw new Error('No one time key sent.', 404);
                 if ($_POST['one_time_key'] !== WebSession::get('one_time_key'))
-                    throw new ExceptionAccess('One time key does not match.', 404);
+                    throw new Error('One time key does not match.', 404);
                 $out->username = $_POST['username'];
                 $out->password = $_POST['password'];
                 break;

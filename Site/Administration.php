@@ -23,12 +23,12 @@ class SiteAdministration{
 	 * Builds a SiteAdministration object when passed a working
 	 * Site object.
 	 * @param Site $site
-	 * @throws ExceptionSettings
+	 * @throws Error
 	 */
 	public function __construct($site, $template){
-		if( !is_a($site, 'Site') ) throw new ExceptionSettings('SiteAdministration must start with an active Site', 404);
+		if( !is_a($site, 'Site') ) throw new Error('SiteAdministration must start with an active Site', 404);
 		$this->site = &$site;
-		if( !$template ) throw new ExceptionSettings('SiteAdministration requires a template.', 404);
+		if( !$template ) throw new Error('SiteAdministration requires a template.', 404);
 		$this->template = $template;
 	}
 	
@@ -129,7 +129,7 @@ class SiteAdministration{
 			file_put_contents($absolute_file, 'Enter content here...');
 			$created = true;
 		}
-		if( !$created ) throw new ExceptionFile("The file '$file' already exists.", 404);
+		if( !$created ) throw new Error("The file '$file' already exists.", 404);
 		// redirect
 		$url = WebRouting::getLocationUrl().'/admin';
 		$url .= "?file=$file&action=edit";

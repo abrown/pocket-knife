@@ -89,7 +89,7 @@ class BasicValidation {
      */
     public function withOptionalProperty($property) {
         if (!is_object($this->value)) {
-            throw new ExceptionValidation("'{$this->name}' is not an object.", 416);
+            throw new Error("'{$this->name}' is not an object.", 416);
         }
         // case: unavailable
         if (!isset($this->value->$property)) {
@@ -125,9 +125,9 @@ class BasicValidation {
      */
     public function hasProperty($property) {
         if (!is_object($this->value))
-            throw new ExceptionValidation("'{$this->name}' is not an object.", 416);
+            throw new Error("'{$this->name}' is not an object.", 416);
         if (!isset($this->value->$property))
-            throw new ExceptionValidation("Property '$property' does not exist in '{$this->name}'.", 416);
+            throw new Error("Property '$property' does not exist in '{$this->name}'.", 416);
         return $this;
     }
 
@@ -153,7 +153,7 @@ class BasicValidation {
      */
     public function withOptionalKey($key) {
         if (!is_array($this->value)) {
-            throw new ExceptionValidation("'{$this->name}' is not an object.", 416);
+            throw new Error("'{$this->name}' is not an object.", 416);
         }
         // case: unavailable
         if (!isset($this->value[$key])) {
@@ -179,9 +179,9 @@ class BasicValidation {
      */
     public function hasKey($key) {
         if (!is_array($this->value))
-            throw new ExceptionValidation("'{$this->name}' is not an array.", 416);
+            throw new Error("'{$this->name}' is not an array.", 416);
         if (!isset($this->value[$key]))
-            throw new ExceptionValidation("Key '$key' does not exist in '{$this->name}'.", 416);
+            throw new Error("Key '$key' does not exist in '{$this->name}'.", 416);
         return $this;
     }
 
@@ -229,7 +229,7 @@ class BasicValidation {
                 return $this;
         }
         // else
-        throw new ExceptionValidation("'{$this->name}' is not one of [" . implode(', ', func_get_args()) . '].', 416);
+        throw new Error("'{$this->name}' is not one of [" . implode(', ', func_get_args()) . '].', 416);
     }
 
     /**
@@ -243,7 +243,7 @@ class BasicValidation {
         }
         // test
         if (!is_null($this->value)) {
-            throw new ExceptionValidation("'{$this->name}' is not null.", 416);
+            throw new Error("'{$this->name}' is not null.", 416);
         }
         // return
         return $this;
@@ -260,7 +260,7 @@ class BasicValidation {
         }
         // test
         if (!is_bool($this->value)) {
-            throw new ExceptionValidation("'{$this->name}' is not boolean.", 416);
+            throw new Error("'{$this->name}' is not boolean.", 416);
         }
         // return
         return $this;
@@ -277,7 +277,7 @@ class BasicValidation {
         }
         // test
         if (!is_int($this->value)) {
-            throw new ExceptionValidation("'{$this->name}' is not an integer.", 416);
+            throw new Error("'{$this->name}' is not an integer.", 416);
         }
         // return
         return $this;
@@ -294,7 +294,7 @@ class BasicValidation {
         }
         // test
         if (!is_float($this->value)) {
-            throw new ExceptionValidation("'{$this->name}' is not a float.", 416);
+            throw new Error("'{$this->name}' is not a float.", 416);
         }
         // return
         return $this;
@@ -311,7 +311,7 @@ class BasicValidation {
         }
         // test
         if (!is_numeric($this->value)) {
-            throw new ExceptionValidation("'{$this->name}' is not numeric.", 416);
+            throw new Error("'{$this->name}' is not numeric.", 416);
         }
         // return
         return $this;
@@ -328,7 +328,7 @@ class BasicValidation {
         }
         // test
         if (!is_string($this->value)) {
-            throw new ExceptionValidation("'{$this->name}' is not a string.", 416);
+            throw new Error("'{$this->name}' is not a string.", 416);
         }
         // return
         return $this;
@@ -345,7 +345,7 @@ class BasicValidation {
         }
         // test
         if (!is_array($this->value)) {
-            throw new ExceptionValidation("'{$this->name}' is not an array.", 416);
+            throw new Error("'{$this->name}' is not an array.", 416);
         }
         // return
         return $this;
@@ -362,7 +362,7 @@ class BasicValidation {
         }
         // test
         if (!is_object($this->value)) {
-            throw new ExceptionValidation("'{$this->name}' is not an object.", 416);
+            throw new Error("'{$this->name}' is not an object.", 416);
         }
         // return
         return $this;
@@ -379,7 +379,7 @@ class BasicValidation {
         }
         // test
         if (!is_scalar($this->value)) {
-            throw new ExceptionValidation("'{$this->name}' is not an object or array.", 416);
+            throw new Error("'{$this->name}' is not an object or array.", 416);
         }
         // return
         return $this;
@@ -396,7 +396,7 @@ class BasicValidation {
         }
         // test
         if (!is_empty($this->value)) {
-            throw new ExceptionValidation("'{$this->name}' is not empty according to PHP's empty() function.", 416);
+            throw new Error("'{$this->name}' is not empty according to PHP's empty() function.", 416);
         }
         // return
         return $this;
@@ -413,7 +413,7 @@ class BasicValidation {
         }
         // test
         if (is_empty($this->value)) {
-            throw new ExceptionValidation("'{$this->name}' is empty according to PHP's empty() function.", 416);
+            throw new Error("'{$this->name}' is empty according to PHP's empty() function.", 416);
         }
         // return
         return $this;
@@ -431,7 +431,7 @@ class BasicValidation {
         // test
         $regex = '~^[a-z0-9 _-]+$~i';
         if (!preg_match($regex, $this->value)) {
-            throw new ExceptionValidation("'{$this->name}' is not alpha-numeric.", 416);
+            throw new Error("'{$this->name}' is not alpha-numeric.", 416);
         }
         // return
         return $this;
@@ -449,7 +449,7 @@ class BasicValidation {
         // test
         $regex = '~^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$~i';
         if (!preg_match($regex, $this->value)) {
-            throw new ExceptionValidation("'{$this->name}' is not a valid e-mail address.", 416);
+            throw new Error("'{$this->name}' is not a valid e-mail address.", 416);
         }
         // return
         return $this;
@@ -468,7 +468,7 @@ class BasicValidation {
         // from: http://mathiasbynens.be/demo/url-regex
         $regex = '~(https?|ftp)://(-\.)?([^\s/?\.#-]+\.?)+(/[^\s]*)?$~iS';
         if (!preg_match($regex, $this->value)) {
-            throw new ExceptionValidation("'{$this->name}' is not a valid URL.", 416);
+            throw new Error("'{$this->name}' is not a valid URL.", 416);
         }
         // return
         return $this;
@@ -485,7 +485,7 @@ class BasicValidation {
         }
         // test
         if (!is_file($this->value)) {
-            throw new ExceptionValidation("'{$this->name}' is not a valid path.", 416);
+            throw new Error("'{$this->name}' is not a valid path.", 416);
         }
         // return
         return $this;
@@ -502,7 +502,7 @@ class BasicValidation {
         }
         // test
         if (strtotime($this->value) === false) {
-            throw new ExceptionValidation("'{$this->name}' is not a valid date.", 416);
+            throw new Error("'{$this->name}' is not a valid date.", 416);
         }
         // return
         return $this;
@@ -521,7 +521,7 @@ class BasicValidation {
         libxml_clear_errors();
         $xml = simplexml_load_string($this->value);
         if (count(libxml_get_errors()) > 0) {
-            throw new ExceptionValidation("'{$this->name}' is not valid HTML.", 416);
+            throw new Error("'{$this->name}' is not valid HTML.", 416);
         }
         // return
         return $this;

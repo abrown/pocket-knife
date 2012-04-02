@@ -67,7 +67,7 @@ class BasicDocumentation {
         }
         // check existence
         if (!class_exists($class))
-            throw new ExceptionFile('Cannot find class ' . $class, 404);
+            throw new Error('Cannot find class ' . $class, 404);
         // get filename
         $replaced = preg_replace('/([a-z])([A-Z])/', '$1/$2', $class);
         $replaced = str_replace('/', DS, $replaced);

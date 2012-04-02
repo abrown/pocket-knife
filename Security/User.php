@@ -54,7 +54,7 @@ class SecurityUser extends ResourceItem {
                 return $password == $this->decrypt($this->password, $key);
                 break;
             default:
-                throw new ExceptionSettings('Password encryption option not available: ' . $encryption);
+                throw new Error('Password encryption option not available: ' . $encryption);
                 break;
         }
     }
@@ -78,7 +78,7 @@ class SecurityUser extends ResourceItem {
                 $this->password = $this->encrypt($password, $key);
                 break;
             default:
-                throw new ExceptionSettings('Password encryption option not available: ' . $encryption);
+                throw new Error('Password encryption option not available: ' . $encryption);
                 break;
         }
     }
@@ -95,13 +95,13 @@ class SecurityUser extends ResourceItem {
                 return $this->password;
                 break;
             case 'hashed':
-                throw new ExceptionSettings('Cannot get password from hash.');
+                throw new Error('Cannot get password from hash.');
                 break;
             case 'encrypted':
                 return $this->decrypt($this->password, $key);
                 break;
             default:
-                throw new ExceptionSettings('Password encryption option not available: ' . $encryption);
+                throw new Error('Password encryption option not available: ' . $encryption);
                 break;
         }
     }

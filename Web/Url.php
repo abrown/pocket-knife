@@ -119,7 +119,7 @@ class WebUrl {
         static $location_url = null;
         if ($location_url === null) {
             if (!self::getAnchor())
-                throw new ExceptionWeb('No anchor set', 500);
+                throw new Error('No anchor set', 500);
             $url = self::getUrl();
             $anchor = self::getAnchor();
             $start = 0;
@@ -155,10 +155,10 @@ class WebUrl {
         static $anchored_url = null;
         if ($anchored_url === null) {
             if (!self::getAnchor())
-                throw new ExceptionWeb('No anchor set', 500);
+                throw new Error('No anchor set', 500);
             $anchored = strpos(self::getUrl(), self::getAnchor());
             if ($anchored === false)
-                throw new ExceptionWeb('Anchor not found in URL', 400);
+                throw new Error('Anchor not found in URL', 400);
             $start = $anchored + strlen(self::getAnchor()) + 1;
             $end = @strpos(self::getUrl(), '?', $start);
             if ($end === false)
@@ -202,7 +202,7 @@ class WebUrl {
                     unset($tokens[$index]);
             }
             if (!$tokens)
-                throw new ExceptionWeb('No URL tokens', 400);
+                throw new Error('No URL tokens', 400);
         }
         return $tokens;
     }
