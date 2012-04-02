@@ -95,6 +95,7 @@ class BasicXml {
      * @return stdClass
      */
     public static function xml_decode($string) {
+        if( empty($string) ) return null;
         $reader = XMLReader::XML($string);
         $reader->read();
         $variable = BasicXml::_xml_decode($reader);
