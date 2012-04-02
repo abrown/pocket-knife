@@ -37,7 +37,7 @@ class BasicClass{
     /**
      * Performs breadth-first search of dependencies
      * @param string $class
-     * @param boolean $debug
+     * @param array $dependencies
      * @return array 
      */
     public static function findDependencies( $class, $dependencies = array() ){
@@ -70,7 +70,11 @@ class BasicClass{
         $replaced = preg_replace('/([a-z])([A-Z])/', '$1/$2', $class);
         $replaced = str_replace('/', DS, $replaced);
         $path = get_base_dir() . DS . $replaced . '.php';
-        if (!is_file($path)) throw new Error('Class '.$class.' not found at: '.$path, 500);
+        if (!is_file($path)){
+            $message = 'Class '.$class.' not found at: '.$path;
+            if( class_exists('Error') ) throw new Error($message, 500);
+            else trigger_error($message, E_USER_ERROR);
+        }
         return $path;
     }
     
