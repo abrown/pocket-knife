@@ -14,8 +14,4 @@ class Book extends ResourceItem{
     protected $storage = array('type' => 'json', 'location' => 'books.json');
     protected $template = array('book-template.php', WebTemplate::PHP_FILE);
     
-    public function GET(){
-        $this->title = 'a';
-        return $this;
-    }
 }

@@ -14,7 +14,7 @@ class SiteAPI extends Site {
 
     /**
      * Returns a list of classes in the framework
-     * @throws ExceptionFile
+     * @throws Error
      */
     public function getClassList() {
         $classes = array();

@@ -1,6 +1,7 @@
 <!-- ASIDE -->
 <div class="aside">
     <a href="/pocket-knife/www/api.php">API</a> 
+    <a href="/pocket-knife/www/demo/index.php/library">Demo</a>
     <a href="#site-map">SiteMap</a> 
     <a href="http://www.github.com/andrewsbrown/pocket-knife/downloads">Download</a> 
     <br/>
@@ -48,7 +49,7 @@ class Calculator extends ResourceStatic{
 	public $b; 
 	public function sum(){ 
 		if(!is_numeric($this->a) || !is_numeric($this->b) ) 
-			throw new ExceptionService('Inputs must be numeric!', 400); 
+			throw new Error('Inputs must be numeric!', 400); 
 		return $this->a + $this->b; 
 	} 
 } 
