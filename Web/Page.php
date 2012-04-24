@@ -9,38 +9,38 @@
  * Page
  * @uses Settings, WebRouting, WebHttp, WebTemplate, Error, Error 
  */
-class Page{
+class WebPage {
 
-	/**
-	 * Path to the file to serve as a page
-	 * @var string
-	**/
-	public $file;
-	
-	/**
-	 * Content-type of the page 
-	 * @var string
-	**/
-	public $content_type = 'text/html';
-	
-	/**
-	 * Path to the file to use as a Template
-	 * @see WebTemplate
-	 * @var string
-	**/
-	public $template;
-	
-	/**
-	 * List of key/values mapping a snippet name (key) to a snippet PHP file (value)
-	 * var object
-	**/
-	public $ajax = array();
-    
+    /**
+     * Path to the file to serve as a page
+     * @var string
+     * */
+    public $file;
+
+    /**
+     * Content-type of the page 
+     * @var string
+     * */
+    public $content_type = 'text/html';
+
+    /**
+     * Path to the file to use as a Template
+     * @see WebTemplate
+     * @var string
+     * */
+    public $template;
+
+    /**
+     * List of key/values mapping a snippet name (key) to a snippet PHP file (value)
+     * var object
+     * */
+    public $ajax = array();
+
     /**
      * Constructor
      * @param Settings $settings 
      */
-    public function __construct($settings){
+    public function __construct($settings) {
         // determines what Settings must be passed
         $settings_template = array(
             'file' => Settings::MANDATORY,
@@ -49,68 +49,114 @@ class Page{
             'ajax' => Settings::OPTIONAL | Settings::MULTIPLE
         );
         // accepts Settings
-        if( !$settings || !is_a($settings, 'Settings') ) throw new Error('Incorrect Settings given.', 500);
+        if (!$settings || !is_a($settings, 'Settings'))
+            throw new Error('Incorrect Settings given.', 500);
         $settings->validate($settings_template);
         // copy Settings into this
-        foreach($this as $key=>$value){
-			if( isset($settings->$key) ) $this->$key = $settings->$key;
-		}
+        foreach ($this as $key => $value) {
+            if (isset($settings->$key))
+                $this->$key = $settings->$key;
+        }
     }
-    
+
+    /**
+     * Return HTML table representing a Resource
+     * @param Resource $resource
+     * @return string
+     */
+    public static function getResourceTable($resource) {
+        $uri = htmlentities($resource->getURI());
+        $html = array();
+        $html[] = "<table class='{$uri}'>";
+        foreach (get_public_vars($resource) as $property => $value) {
+            $property = htmlentities($property);
+            $value = htmlentities($value);
+            $html[] = "<tr>";
+            $html[] = "<td class='{$uri}#property'>{$property}</td>";
+            $html[] = "<td id='{$uri}#{$property}'>{$value}</td>";
+            $html[] = "</tr>";
+        }
+        $html[] = "</table>";
+        return implode("\n", $html);
+    }
+
+    /**
+     * Return HTML form representing a Resource
+     * @param Resource $resource
+     * @return string
+     */
+    public static function getResourceForm($resource) {
+        $uri = htmlentities($resource->getURI());
+        $html = array();
+        $html[] = "<table class='{$uri}'>";
+        foreach (get_public_vars($resource) as $property => $value) {
+            $property = htmlentities($property);
+            $value = htmlentities($value);
+            $html[] = "<tr>";
+            //$html[] = "<td class='{$uri}#property'>{$property}</td>";
+            //$html[] = "<td id='{$uri}#{$property}'>{$value}</td>";
+            $html[] = "</tr>";
+        }
+        $html[] = "</table>";
+        return implode("\n", $html);
+    }
+
     /**
      * Returns HTML from file
      * @param string $file
      * @return string 
      */
-    public function getHtml($file){
-        if( !is_file($file) ) throw new Error('File not found: '.$file, 404);
+    public function getHtml($file) {
+        if (!is_file($file))
+            throw new Error('File not found: ' . $file, 404);
         return file_get_contents($file);
     }
-    
+
     /**
      * Returns templated HTML from file
      * @param string $file
      * @param string $template_file
      * @return string 
      */
-    public function getTemplatedHtml($file, $template_file){
+    public function getTemplatedHtml($file, $template_file) {
         $template = new Template($template_file);
         $content = $this->getHtml($file);
         $template->replace('content', content);
         return $template->toString();
     }
-    
+
     /**
      * Returns AJAX snippet HTML; map snippet keys to PHP files in Settings.ajax
      * @example 'ajax' => array('main_content'=>'/dir/to/content.php', 'continuous_feed' => '/dir/to/feed.php');
      * @param string $snippet
      * @return string 
      */
-    public function getAjaxHtml($snippet){
+    public function getAjaxHtml($snippet) {
         $file = $this->ajax->$snippet;
-        if( !is_file($file) ) throw new Error('File not found: ', $file, 404);
+        if (!is_file($file))
+            throw new Error('File not found: ', $file, 404);
         ob_start();
         include $file;
         return ob_get_clean();
     }
-    
+
     /**
      * Executes Page, sending HTML data based on WebRouting string
      * @return boolean 
      */
-    public function execute(){
+    public function execute() {
         $file = WebRouting::getAnchoredFilename();
         // get AJAX
         $snippet = ( strpos($file, 'ajax:') === 0 ) ? substr($file, 5) : false;
-        if( $snippet ){
+        if ($snippet) {
             $response = $this->getAjaxHtml($snippet);
         }
         // get templated PAGE
-        else if( $this->template ){
+        else if ($this->template) {
             $response = $this->getTemplatedHtml($this->file, $this->template);
         }
         // get PAGE
-        else{
+        else {
             $response = $this->getHtml($this->file);
         }
         // send HTML
@@ -119,4 +165,5 @@ class Page{
         echo $response;
         return true;
     }
+
 }
