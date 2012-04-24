@@ -1,6 +1,6 @@
 <?php
 include 'start.php';
-WebHttp::redirect(WebUrl::getDirectoryUrl() . '/www/index.php');
+WebHttp::redirect(WebUrl::getDirectoryUrl() . 'www/index.php');
 ?>
 <!doctype html>
 <html>
