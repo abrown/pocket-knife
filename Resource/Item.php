@@ -127,7 +127,7 @@ class ResourceItem extends Resource {
             throw new Error('No item given to create', 400);
         // get properties
         $public_properties = array();
-        foreach (get_public_properties($this) as $property => $value) {
+        foreach (get_public_vars($this) as $property => $value) {
             $public_properties[] = $property;
         }
         // check properties
