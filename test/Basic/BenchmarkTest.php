@@ -1,18 +1,12 @@
 <?php
+
 /**
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-class BasicBenchmarkTest extends PHPUnit_Framework_TestCase {
+require '../Case.php';
 
-    public static function setUpBeforeClass() {
-        // start pocket knife
-        $path = dirname(dirname(dirname(__FILE__)));
-        require $path . '/start.php';
-        // get code
-        autoload('BasicClass');
-        BasicClass::autoloadAll('BasicBenchmark');
-    }
+class BasicBenchmarkTest extends TestCase {
 
     /**
      * Uses the timing functions available in BasicBenchmark
@@ -31,6 +25,6 @@ class BasicBenchmarkTest extends PHPUnit_Framework_TestCase {
      */
     public function testMemory(){
         $expected = BasicBenchmark::getMemory('kb');
-        print($expected);
+        $this->assertGreaterThan($expected, 0);
     }
 }
