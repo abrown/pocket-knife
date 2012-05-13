@@ -159,7 +159,8 @@ class Service {
             if (!$this->object) {
                 if (!class_exists($this->resource))
                     throw new Error('Could not find Resource class: ' . $this->resource, 404);
-                $this->object = new $this->resource();
+                $resource_class = $this->resource;
+                $this->object = new $resource_class();
             }
 
             // get representation and incoming data
