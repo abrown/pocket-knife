@@ -11,7 +11,7 @@
  * @uses RepresentationFile, RepresentationForm, RepresentationHtml, RepresentationJson, RepresentationText, RepresentationUpload, RepresentationXml
  * @author andrew
  */
-abstract class Representation {
+class Representation {
 
     /**
      * Maps content types to representation types
@@ -36,30 +36,118 @@ abstract class Representation {
     protected $data;
 
     /**
-     * Accesses data object
-     * @return stdClass
+     * The HTTP content-type
+     * @var string
      */
-    public abstract function getData();
+    protected $content_type = 'application/json';
 
     /**
-     * Modifies data object
+     * The HTTP code
+     * @var string 
      */
-    public abstract function setData($data);
+    protected $code = 200;
 
     /**
-     * Checks whether data has been initialized
+     * Constructor
+     * @param any $data 
      */
-    public function hasData() {
-        return ($this->data === null);
+    public function __construct($data, $content_type) {
+        $this->setData($data);
+        $this->setContentType($content_type);
     }
 
     /**
-     * Receives and decodes the data from the client
+     * Accesses data object
+     * @return any
      */
-    public abstract function receive();
- 
+    public function getData() {
+        return $this->data;
+    }
+
     /**
-     * Encodes and sends the data to the client
+     * Modifies data object
+     * @param any $data
      */
-    public abstract function send();
+    public function setData($data) {
+        $this->data = $data;
+    }
+
+    /**
+     * Return HTTP Content-Type
+     * @return string 
+     */
+    public function getContentType() {
+        return $this->content_type;
+    }
+
+    /**
+     * Modify HTTP Content-Type
+     * @param string $content_type
+     * @throws Error 
+     */
+    public function setContentType($content_type) {
+        if (!array_key_exists($content_type, self::$MAP)) {
+            throw new Error("Content-type '{$content_type} does not exist.", 415);
+        }
+        $this->content_type = $content_type;
+    }
+
+    /**
+     * Return HTTP code
+     * @return int 
+     */
+    public function getCode() {
+        return $this->code;
+    }
+
+    /**
+     * Set HTTP code
+     * @param int $code
+     */
+    public function setCode($code) {
+        $this->code = intval($code);
+    }
+
+    /**
+     * Return string form of this Representation
+     * @return string
+     */
+    public function __toString() {
+        switch ($this->content_type) {
+            case 'application/json':
+                return json_encode($this->getData());
+                break;
+            case 'application/octet-stream':
+                return file_get_contents($this->getData());
+                break;
+            case 'application/xml':
+                return BasicXml::xml_encode($this->getData());
+                break;
+            case 'application/x-www-form-urlencoded':
+                return http_build_query($this->getData());
+                break;
+            case 'text/html':
+            case 'text/plain':
+            default:
+                return $this->getData();
+        }
+    }
+
+    /**
+     * Send HTTP response to client 
+     */
+    public function send() {
+        WebHttp::setCode($this->getCode());
+        WebHttp::setContentType($this->getContentType());
+        // extra headers
+        if ($this->getContentType() == 'application/octet-stream') {
+            $filename = pathinfo($this->getData(), PATHINFO_FILENAME);
+            header('Content-Disposition: attachment; filename=' . $filename);
+            header('Content-Transfer-Encoding: binary');
+            header('Content-Length: ' . filesize($this->getData()));
+        }
+        // body
+        echo $this->__toString();
+    }
+
 }
