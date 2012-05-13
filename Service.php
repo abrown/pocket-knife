@@ -102,58 +102,52 @@ class Service {
      * Handles requests, creates instances, and returns result
      */
     public function execute($return_as_string = false) {
-
-        // find what we act upon
-        list($resource, $id, $action) = $this->getRouting();
-        if (!$this->resource)
-            $this->resource = $resource;
-        if (!$this->action)
-            $this->action = $action;
-        if (!$this->id)
-            $this->id = $id;
-        // content type
         if (!$this->content_type)
             $this->content_type = WebHttp::getContentType();
-
-        // authenticate user
-        if ($this->getAuthentication() && !$this->getAuthentication()->isLoggedIn()) {
-            // get credentials
-            $credentials = $this->getAuthentication()->fromRepresentation($this->content_type);
-            // challenge, if necessary
-            if (!$this->getAuthentication()->isValidCredential($credentials)) {
-                $output_representation = $this->getAuthentication()->toRepresentation($this->content_type);
-                $output_representation->send();
-                exit();
-            }
-        }
-
-        // authorize request
-        if( $this->acl === false ){
-            throw new Error("No users can perform the action '{$this->action}' on the resource '$resource.$id'", 403);
-        }
-        elseif ($this->acl !== true) {
-            $user = $this->getAuthentication()->getCurrentUser();
-            $roles = $this->getAuthentication()->getCurrentRoles();
-            if (!$this->getAcl()->isAllowed($user, $roles, $this->action, $this->resource, $this->id)) {
-                throw new Error("'$user' cannot perform the action '{$this->action}' on the resource '$resource.$id'", 403);
-            }
-        }
-
-        // special mappping
-        switch ($this->resource) {
-            case 'admin':
-                $this->resource = 'SiteAdministration';
-                break;
-            case 'config':
-                $this->resource = 'SiteConfiguration';
-                break;
-            case 'auth':
-                $this->resource = 'SecurityAuthentication';
-                break;
-        }
-
-        // serve a response
+        $representation = new Representation(null, WebHttp::getContentType());
+        
         try {
+            // find what we act upon
+            list($resource, $id, $action) = $this->getRouting();
+            if (!$this->resource)
+                $this->resource = $resource;
+            if (!$this->action)
+                $this->action = $action;
+            if (!$this->id)
+                $this->id = $id;
+
+            // authenticate user
+            if ($this->getAuthentication() && !$this->getAuthentication()->isLoggedIn()) {
+                // get credentials
+                $credentials = $this->getAuthentication()->fromRepresentation($this->content_type);
+                // challenge, if necessary
+                if (!$this->getAuthentication()->isValidCredential($credentials)) {
+                    $output_representation = $this->getAuthentication()->toRepresentation($this->content_type);
+                    $output_representation->send();
+                    exit();
+                }
+            }
+
+            // authorize request
+            if ($this->acl === false) {
+                throw new Error("No users can perform the action '{$this->action}' on the resource '$resource.$id'", 403);
+            } elseif ($this->acl !== true) {
+                $user = $this->getAuthentication()->getCurrentUser();
+                $roles = $this->getAuthentication()->getCurrentRoles();
+                if (!$this->getAcl()->isAllowed($user, $roles, $this->action, $this->resource, $this->id)) {
+                    throw new Error("'$user' cannot perform the action '{$this->action}' on the resource '$resource/$id'", 403);
+                }
+            }
+
+            // special mappping
+            switch ($this->resource) {
+                case 'admin':
+                    $this->resource = 'SiteAdministration';
+                    break;
+                case 'config':
+                    $this->resource = 'SiteConfiguration';
+                    break;
+            }
 
             // create object instance if necessary
             if (!$this->object) {
@@ -168,26 +162,30 @@ class Service {
             $input_representation->receive();
 
             // set ID
-            if( isset($this->id) && method_exists($this->object, 'setID') ){
+            if (isset($this->id) && method_exists($this->object, 'setID')) {
                 $this->object->setID($this->id);
             }
             // call method
-            if (!method_exists($this->object, $this->action)){
-                throw new Error("Action '{$this->action}' does not exist", 404);
+            if (!method_exists($this->object, $this->action)) {
+                throw new Error("Method '{$this->action}' does not exist; request OPTIONS for valid methods.", 405);
             }
             $callback = array($this->object, $this->action);
             $data = $input_representation->getData();
             $result = call_user_func_array($callback, array($data));
 
             // get representation and send data
-            $output_representation = $this->object->toRepresentation($this->content_type, $result);
-            $output_representation->send();
+            $representation = new Representation($result, $this->content_type);
         } catch (Error $e) {
             // get representation and send data
-            WebHttp::setCode($e->getCode());
-            $output_representation = $e->toRepresentation($this->content_type, null);
-            $output_representation->send();
+            $representation = new Representation($e, $this->content_type);
+            $representation->setCode($e->getCode());
         }
+        
+        // output
+        if ($return_as_string) {
+            return (string) $representation;
+        }
+        $representation->send();
     }
 
     /**

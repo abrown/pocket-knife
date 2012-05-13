@@ -13,5 +13,14 @@ class Book extends ResourceItem{
     
     protected $storage = array('type' => 'json', 'location' => 'books.json');
     protected $template = array('book-template.php', WebTemplate::PHP_FILE);
+        
+    public function OPTIONS_OUTPUT_TRIGGER(Representation $representation){
+        if($representation->getContentType() == 'text/html'){
+            $representation->setTemplate('default-template.php', WebTemplate::PHP_FILE);
+        }
+        else{
+            $representation->setTemplate('book-template.php', WebTemplate::PHP_FILE);
+        }
+    }
     
 }

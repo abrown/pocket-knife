@@ -34,7 +34,9 @@ class SecurityAcl extends ResourceList {
     }
 
     /**
-     * Determines whether a user has access to perform an action
+     * Determines whether a user has access to perform an action; will search
+     * more specific identifiers first (e.g. user name, then user role, then
+     * '*'), returning the first match it finds.
      * @param string $name
      * @param array $roles
      * @param string $action
