@@ -77,7 +77,7 @@ class BasicDocumentation {
     }
 
     /**
-     * Returns the ReflectionClass of current class
+     * Return the ReflectionClass of current class
      * @return ReflectionClass
      */
     public function getClass() {
@@ -85,7 +85,7 @@ class BasicDocumentation {
     }
 
     /**
-     * Returns HTML-formatted description of class
+     * Return HTML-formatted description of class
      * @return string
      */
     public function getHtml() {
@@ -100,13 +100,13 @@ class BasicDocumentation {
         $template->replace('properties', $this->getPropertiesHtml());
         $template->replace('methods', $this->getMethodsHtml());
         $template->replace('filename', $this->filename);
-        $template->replace('code', htmlentities(file_get_contents($this->filename)));
+        $template->replace('code', $this->getCodeHtml());
         // return
         return $template->toString();
     }
 
     /**
-     * Returns HTML-formatted description of class; alias of getHtml()
+     * Return HTML-formatted description of class; alias of getHtml()
      * @return string
      */
     public function __toString() {
@@ -114,7 +114,7 @@ class BasicDocumentation {
     }
 
     /**
-     * Returns an HTML-formatted list of links to classes this class uses
+     * Return an HTML-formatted list of links to classes this class uses
      * @return string
      */
     private function getDependenciesHtml() {
@@ -133,7 +133,7 @@ class BasicDocumentation {
     }
 
     /**
-     * Returns an HTML-formatted description of an object as described in PHPDoc
+     * Return an HTML-formatted description of an object as described in PHPDoc
      * @param ReflectionObject $reflection_object
      * @return string
      */
@@ -165,7 +165,7 @@ class BasicDocumentation {
                     @list($type, $description) = explode(' ', trim($a['text']), 2);
                     if (!$description)
                         break;
-                    $html[] = sprintf('<p>Returns %s</p>', $description);
+                    $html[] = sprintf('<p>Return %s</p>', $description);
                     break;
                 case '@param':
                     @list($type, $name, $description) = explode(' ', trim($a['text']), 3);
@@ -183,24 +183,22 @@ class BasicDocumentation {
     }
 
     /**
-     * Returns an HTML-formatted property list
+     * Return an HTML-formatted property list
      * @return string
      */
     public function getPropertiesHtml() {
+        $properties = $this->getClass()->getProperties(ReflectionProperty::IS_PUBLIC | ReflectionProperty::IS_STATIC);
+        if (count($properties) < 1) {
+            $template = new WebTemplate($this->template_item, WebTemplate::STRING);
+            $template->replace('title', 'No public properties found.');
+            return $template->toString();
+        }
         $html = array();
-        foreach ($this->getClass()->getProperties() as $property) {
-            // do not display private/protected items
-            if (!$property->isPublic() && !$property->isStatic())
-                continue;
+        foreach ($properties as $property) {
             // do templating
             $template = new WebTemplate($this->template_item, WebTemplate::STRING);
             // create title
-            $title = sprintf('%s%s <i>%s</i> <b>%s</b>', 
-                    $property->isPublic() ? 'public' : '', 
-                    $property->isStatic() ? ' static' : '', 
-                    $this->getPropertyType($property), 
-                    $property->getName()
-            );
+            $title = sprintf('%s%s <i>%s</i> <b>%s</b>', $property->isPublic() ? 'public' : '', $property->isStatic() ? ' static' : '', $this->getPropertyType($property), $property->getName());
             $template->replace('title', $title);
             // create description
             $template->replace('description', $this->getDescriptionHtml($property));
@@ -212,7 +210,7 @@ class BasicDocumentation {
     }
 
     /**
-     * Returns the property type as described by '@var' annotation
+     * Return the property type as described by '@var' annotation
      * @param ReflectionProperty $property
      * @return string
      */
@@ -227,7 +225,7 @@ class BasicDocumentation {
     }
 
     /**
-     * Returns an HTML-formatted method list
+     * Return an HTML-formatted method list
      * @return string
      */
     public function getMethodsHtml() {
@@ -239,12 +237,7 @@ class BasicDocumentation {
             // do templating
             $template = new WebTemplate($this->template_item, WebTemplate::STRING);
             // create title
-            $title = sprintf('%s%s <i>%s</i> <b>%s</b>(%s)', 
-                    $method->isPublic() ? 'public' : '', 
-                    $method->isStatic() ? ' static' : '', 
-                    $this->getMethodReturnType($method), 
-                    $this->getMethodName($method),
-                    $this->getMethodParameterTypes($method)
+            $title = sprintf('%s%s <i>%s</i> <b>%s</b>(%s)', $method->isPublic() ? 'public' : '', $method->isStatic() ? ' static' : '', $this->getMethodReturnType($method), $this->getMethodName($method), $this->getMethodParameterTypes($method)
             );
             $template->replace('title', $title);
             // create description
@@ -257,23 +250,23 @@ class BasicDocumentation {
     }
 
     /**
-     * Returns an HTML-formatted method name; strikes through deprecated methods
+     * Return an HTML-formatted method name; strikes through deprecated methods
      * @param type $method
      * @return type 
      */
-    private function getMethodName($method){
+    private function getMethodName($method) {
         $annotations = $this->parseDocString($method->getDocComment());
         foreach ($annotations as $a) {
             if ($a['annotation'] == '@deprecated') {
-                return '<s>'.$method->getName().'</s>';
+                return '<s>' . $method->getName() . '</s>';
             }
         }
         // else
         return $method->getName();
     }
-    
+
     /**
-     * Returns an HTML-formatted method type; defaults to 'null'
+     * Return an HTML-formatted method type; defaults to 'null'
      * @param ReflectionMethod $method
      * @return string
      */
@@ -290,7 +283,7 @@ class BasicDocumentation {
     }
 
     /**
-     * Returns an HTML-formatted list of method parameters with their types
+     * Return an HTML-formatted list of method parameters with their types
      * @param ReflectionMethod $method
      * @return string
      */
@@ -305,6 +298,18 @@ class BasicDocumentation {
         }
         // return
         return implode(', ', $html);
+    }
+
+    /**
+     * Return highlighted code of file
+     * @return string 
+     */
+    private function getCodeHtml() {
+        $code = file_get_contents($this->filename);
+        if (!$code)
+            $code = "Could not locate {$this->filename}";
+        $code = str_replace("\r\n", "\n", $code);
+        return highlight_string($code, true);
     }
 
     /**
@@ -328,8 +333,6 @@ class BasicDocumentation {
         $lines = preg_split('/\n/', $doc_string);
         // setup annotations
         $annotations = array(array('annotation' => 'description', 'text' => ''));
-        $annotation = 'description';
-        $text = '';
         // regex
         foreach ($lines as $line) {
             if (preg_match('/\* (@\w+) ?(.+)?/', $line, $matches)) {

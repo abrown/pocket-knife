@@ -10,8 +10,8 @@
 <html>
     <head>
         <title>pocket-knife: Administration</title>
-        <link href="<?php echo WebRouting::getDirectoryUrl(); ?>/styles/reset.css" media="all" type="text/css" rel="stylesheet" />
-	<link href="<?php echo WebRouting::getDirectoryUrl(); ?>/styles/base.css" media="all" type="text/css" rel="stylesheet" />
+        <link href="<?php echo WebUrl::getDirectoryUrl(); ?>/styles/reset.css" media="all" type="text/css" rel="stylesheet" />
+	<link href="<?php echo WebUrl::getDirectoryUrl(); ?>/styles/base.css" media="all" type="text/css" rel="stylesheet" />
         <!--<link href="/pocket-knife/www/styles/vertical-rhythm.css" media="all" type="text/css" rel="stylesheet" />-->
     </head>
     <body>

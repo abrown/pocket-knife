@@ -77,7 +77,7 @@ class ResourceList extends Resource {
     public function GET() {
         $this->getStorage()->begin();
         foreach ($this->getStorage()->all() as $id => $data) {
-            $item = new $this->item_type();
+            $item = new $this->item_type($id);
             $item->bind($data);
             $this->items[$id] = $item;
         }

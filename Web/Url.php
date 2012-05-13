@@ -93,7 +93,7 @@ class WebUrl {
      * @example
      * // for a request like 'http://www.example.com/dir/index.php'
      * echo WebRouting::getDirectoryUrl();
-     * // should print 'http://www.example.com/dir'
+     * // should print 'http://www.example.com/dir/'
      * @staticvar string $directory_url
      * @return string 
      */
