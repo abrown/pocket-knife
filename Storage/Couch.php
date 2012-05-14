@@ -6,7 +6,6 @@
  */
 
 /**
- * StorageCouch
  * Stores JSON records in a CouchDB
  * @uses StorageInterface, WebHttp, Settings, Error
  */
