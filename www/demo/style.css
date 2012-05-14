@@ -14,6 +14,19 @@ body{
     width: 72%;
 }
 
+/** HORIZONTAL RULE **/
+hr{
+    background-color: #D9CECE;
+    border: 0;
+    color: #D9CECE;
+    height: 1px;
+    margin: 0 -2em;
+    padding: 0;
+}
+hr.title{
+    margin-bottom: 40px;
+}
+
 /** TEXT **/
 h1, h2, h3, h4, h5, h6{
     font-family: 'Arial', 'Helvetica', 'Verdana', 'Tahoma', sans-serif;
@@ -34,4 +47,16 @@ h2{
 }
 p{
     margin-bottom: 1.5em;
+}
+
+/** FORMS **/
+input{
+    font-size: 16px;
+    padding: 0.25em;
+}
+input[type=text]{
+    width: 15em;
+}
+td{
+    padding-right: 1em;
 }
