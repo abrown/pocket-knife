@@ -129,6 +129,9 @@ class Representation {
             case 'text/html':
             case 'text/plain':
             default:
+                if( is_object($this->getData()) && !method_exists($this->getData(), '__toString')){
+                    return get_class($this->getData()).' has no __toString() method.';
+                }
                 return $this->getData();
         }
     }
