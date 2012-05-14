@@ -105,7 +105,7 @@ class Service {
         if (!$this->content_type)
             $this->content_type = WebHttp::getContentType();
         $representation = new Representation(null, WebHttp::getContentType());
-        
+
         try {
             // find what we act upon
             list($resource, $id, $action) = $this->getRouting();
@@ -159,6 +159,16 @@ class Service {
             // receive incoming data
             $representation->receive();
 
+            // input triggers
+            $action_trigger = $this->action . '_INPUT_TRIGGER';
+            if (method_exists($this->object, $action_trigger)) {
+                $representation = $this->object->$action_trigger($representation);
+            }
+            $any_trigger = 'INPUT_TRIGGER';
+            if (method_exists($this->object, $any_trigger)) {
+                $representation = $this->object->$any_trigger($representation);
+            }
+
             // set ID
             if (isset($this->id) && method_exists($this->object, 'setID')) {
                 $this->object->setID($this->id);
@@ -170,19 +180,30 @@ class Service {
             $callback = array($this->object, $this->action);
             $result = call_user_func_array($callback, array($representation->getData()));
 
-            // get representation and send data
+            // get representation
             $representation = new Representation($result, $this->content_type);
+
+            // output triggers
+            $action_trigger = $this->action . '_OUTPUT_TRIGGER';
+            if (method_exists($this->object, $action_trigger)) {
+                $representation = $this->object->$action_trigger($representation);
+            }
+            $any_trigger = 'OUTPUT_TRIGGER';
+            if (method_exists($this->object, $any_trigger)) {
+                $representation = $this->object->$any_trigger($representation);
+            }
+            
+            // output
+            if ($return_as_string) {
+                return (string) $representation;
+            }
+            $representation->send();
         } catch (Error $e) {
-            // get representation and send data
-            $representation = new Representation($e, $this->content_type);
-            $representation->setCode($e->getCode());
+            if ($return_as_string) {
+                return (string) $e;
+            }
+            $e->send($this->content_type);
         }
-        
-        // output
-        if ($return_as_string) {
-            return (string) $representation;
-        }
-        $representation->send();
     }
 
     /**
@@ -251,4 +272,5 @@ class Service {
         // return
         return $routing;
     }
+
 }
