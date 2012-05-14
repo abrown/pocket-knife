@@ -215,20 +215,21 @@ class Representation {
                 break;
             case 'application/x-www-form-urlencoded':
                 if (WebHttp::getMethod() == 'GET') {
-                    $this->setData($_GET);
+                    $this->setData(to_object($_GET));
                 } elseif (WebHttp::getMethod() == 'POST') {
-                    $this->setData($_POST);
+                    $this->setData(to_object($_POST));
                 } else {
                     $in = get_http_body();
                     $data = array();
                     parse_str($in, $data);
-                    $this->setData($data);
+                    $this->setData(to_object($data));
                 }
                 break;
             case 'text/html':
             case 'text/plain':
             default:
-                return $this->setData(get_http_body());
+                $this->setData(get_http_body());
+                break;
         }
     }
 
