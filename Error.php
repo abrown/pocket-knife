@@ -24,10 +24,10 @@ class Error extends Exception {
      * @param string $content_type
      * @return Representation
      */
-    public function fromRepresentation($content_type) {
-        trigger_error('Error resource cannot receive data.', E_USER_ERROR);
-        return null;
-    }
+//    public function fromRepresentation($content_type) {
+//        trigger_error('Error resource cannot receive data.', E_USER_ERROR);
+//        return null;
+//    }
 
     /**
      * Returns a representation of the resource given a content type 
@@ -35,9 +35,8 @@ class Error extends Exception {
      * accommodate content type differences and possible 
      * resource-to-data binding
      * @param string $content_type
-     * @return Representation
      */
-    public function toRepresentation($content_type, $data) {
+    public function send($content_type) {
         if (!array_key_exists($content_type, Representation::$MAP))
             trigger_error('415 Unsupported media type in Error code: ' . $content_type, E_USER_ERROR);
         // set variables
@@ -47,18 +46,15 @@ class Error extends Exception {
         $this->file = $this->getFile();
         $this->line = $this->getLine();
         $this->trace = explode("\n", $this->getTraceAsString());
-        // create class
-        $class = Representation::$MAP[$content_type];
-        $representation = new $class;
+        // create representation
+        $representation = new Representation($this, $content_type);
+        $representation->setCode($this->http_code);
         // special cases
         if ($content_type == 'text/html') {
-            $template = new WebTemplate($this->html_template, WebTemplate::PHP_STRING);
-            $representation->setTemplate($template);
+            $representation->setTemplate($this->html_template, WebTemplate::PHP_STRING);
         }
-        // set data
-        $representation->setData($this);
-        // return
-        return $representation;
+        // send
+        $representation->send();
     }
 
     /**
@@ -131,7 +127,7 @@ class Error extends Exception {
 <!doctype html>
 <html>
     <head>
-        <title><?php echo $data->http_code; ?> <?php echo $data->http_message; ?></title>
+        <title><?php echo $resource->http_code; ?> <?php echo $resource->http_message; ?></title>
         <style type="text/css">
             html{
                 background-color: #282626;
@@ -189,13 +185,13 @@ class Error extends Exception {
     <body>
 
         <!-- TITLE -->
-        <h1><?php echo $data->http_code; ?> <?php echo $data->http_message; ?></h1>
+        <h1><?php echo $resource->http_code; ?> <?php echo $resource->http_message; ?></h1>
         <hr class="title"/>
-        <p><span class="property">Message</span>: <?php echo $data->message; ?></p>
-        <p><span class="property">Thrown at</span>: <?php echo $data->file; ?>(<?php echo $data->line; ?>)</p>
-        <pre>Thrown at <?php echo $data->file; ?>(<?php echo $data->line; ?>)
+        <p><span class="property">Message</span>: <?php echo $resource->message; ?></p>
+        <p><span class="property">Thrown at</span>: <?php echo $resource->file; ?>(<?php echo $resource->line; ?>)</p>
+        <pre>Thrown at <?php echo $resource->file; ?>(<?php echo $resource->line; ?>)
 <?php
-foreach ($data->trace as $line) {
+foreach ($resource->trace as $line) {
     echo $line . "\n";
 }
 ?></pre>
