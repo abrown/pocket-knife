@@ -136,6 +136,7 @@ class Service {
                 if (!$this->getAcl()->isAllowed($user, $roles, $this->action, $this->resource, $this->id)) {
                     throw new Error("'$user' cannot perform the action '{$this->action}' on the resource '$resource/$id'", 403);
                 }
+                exit();
             }
 
             // special mappping
