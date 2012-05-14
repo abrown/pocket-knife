@@ -64,16 +64,18 @@ class WebPage {
      * @param Resource $resource
      * @return string
      */
-    public static function getResourceTable($resource) {
+    public static function getResourceTable(Resource $resource) {
         $uri = htmlentities($resource->getURI());
         $html = array();
         $html[] = "<table class='{$uri}'>";
         foreach (get_public_vars($resource) as $property => $value) {
             $property = htmlentities($property);
+            if (is_array($value))
+                $value = implode(', ', $value);
             $value = htmlentities($value);
             $html[] = "<tr>";
-            $html[] = "<td class='{$uri}#property'>{$property}</td>";
-            $html[] = "<td id='{$uri}#{$property}'>{$value}</td>";
+            $html[] = "<td class='{$uri}#property' title='{$uri}#property'>{$property}</td>";
+            $html[] = "<td id='{$uri}#{$property}' title='{$uri}#{$property}'>{$value}</td>";
             $html[] = "</tr>";
         }
         $html[] = "</table>";
@@ -85,19 +87,44 @@ class WebPage {
      * @param Resource $resource
      * @return string
      */
-    public static function getResourceForm($resource) {
+    public static function getResourceForm(Resource $resource) {
         $uri = htmlentities($resource->getURI());
         $html = array();
+        $html[] = "<form method='POST' action='".WebUrl::create($uri, false)."'>";
         $html[] = "<table class='{$uri}'>";
         foreach (get_public_vars($resource) as $property => $value) {
             $property = htmlentities($property);
             $value = htmlentities($value);
             $html[] = "<tr>";
-            //$html[] = "<td class='{$uri}#property'>{$property}</td>";
-            //$html[] = "<td id='{$uri}#{$property}'>{$value}</td>";
+            $html[] = "<td class='{$uri}#property'>{$property}</td>";
+            $html[] = "<td id='{$uri}#{$property}'><input type='text' name='{$property}' value='{$value}' /></td>";
             $html[] = "</tr>";
         }
-        $html[] = "</table>";
+        // submit
+        $html[] = "<tr>";
+        $html[] = "<td></td>";
+        $html[] = "<td><input type='submit' id='{$uri}#submit' value='Submit' /></td>";
+        $html[] = "</tr>";
+        $html[] = "</table></form>";
+        return implode("\n", $html);
+    }
+    
+    /**
+     *
+     * @param Resource $resource
+     * @return type 
+     */
+    public static function getResourceLinks(Resource $resource){
+        $uri = htmlentities($resource->getURI());
+        $html = array();
+        $original_method = @$_GET['method'];
+        foreach(get_class_methods($resource) as $method){
+            if( !ctype_upper($method) ) continue;
+            $_GET['method'] = $method;
+            $url = WebUrl::create($uri);
+            $html[] = "<a href='{$url}' title='{$uri}'>{$method}</a>";
+        }
+        $_GET['method'] = $original_method;
         return implode("\n", $html);
     }
 
