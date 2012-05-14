@@ -63,14 +63,14 @@ abstract class Resource {
      * @throws Error
      * @return stdClass
      */
-    public function fromRepresentation($content_type) {
-        if (!array_key_exists($content_type, Representation::$MAP))
-            throw new Error('Unknown request content-type.', 500);
-        $class = Representation::$MAP[$content_type];
-        $representation = new $class;
-        $representation->receive();
-        return $representation;
-    }
+//    public function fromRepresentation($content_type) {
+//        if (!array_key_exists($content_type, Representation::$MAP))
+//            throw new Error('Unknown request content-type.', 500);
+//        $class = Representation::$MAP[$content_type];
+//        $representation = new $class;
+//        $representation->receive();
+//        return $representation;
+//    }
 
     /**
      * Returns a representation of the resource given a content type 
@@ -81,21 +81,21 @@ abstract class Resource {
      * @throws Error
      * @return Representation
      */
-    public function toRepresentation($content_type, $data) {
-        if (!array_key_exists($content_type, Representation::$MAP))
-            throw new Error('Unknown request content-type.', 500);
-        $class = Representation::$MAP[$content_type];
-        $representation = new $class;
-        // templating
-        if ($this->template && method_exists($representation, 'setTemplate')) {
-            $template = new WebTemplate($this->template[0], $this->template[1]);
-            $representation->setTemplate($template);
-        }
-        // set data
-        $representation->setData($data);
-        // return
-        return $representation;
-    }
+//    public function toRepresentation($content_type, $data) {
+//        if (!array_key_exists($content_type, Representation::$MAP))
+//            throw new Error('Unknown request content-type.', 500);
+//        $class = Representation::$MAP[$content_type];
+//        $representation = new $class;
+//        // templating
+//        if ($this->template && method_exists($representation, 'setTemplate')) {
+//            $template = new WebTemplate($this->template[0], $this->template[1]);
+//            $representation->setTemplate($template);
+//        }
+//        // set data
+//        $representation->setData($data);
+//        // return
+//        return $representation;
+//    }
 
     /**
      * Initializes the storage object
