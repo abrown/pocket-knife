@@ -50,7 +50,7 @@ abstract class SecurityAuthentication extends ResourceList {
                 // type
                 ->upOne()->withOptionalProperty('authentication_type')
                 ->isString()
-                ->oneOf('basic', 'digest', 'header', 'session')
+                ->oneOf('basic', 'digest', 'facebook', 'header', 'session')
                 // secret key
                 ->upOne()->withOptionalProperty('password_secret_key')
                 ->isString()
