@@ -8,7 +8,7 @@
 /**
  * Representation of a RESTful resource. It must be able to be
  * sent or received.
- * @uses RepresentationFile, RepresentationForm, RepresentationHtml, RepresentationJson, RepresentationText, RepresentationUpload, RepresentationXml
+ * @uses Error, BasicXml, WebHttp
  * @author andrew
  */
 class Representation {
@@ -46,6 +46,12 @@ class Representation {
      * @var string 
      */
     protected $code = 200;
+
+    /**
+     * A template to be used for text/html responses
+     * @var WebTemplate 
+     */
+    protected $template;
 
     /**
      * Constructor
@@ -109,6 +115,24 @@ class Representation {
     }
 
     /**
+     * Set template
+     * @param string $input see WebTemplate for description
+     * @param int $type one of WebTemplate::[STRING, FILE, PHP_STRING, PHP_FILE]
+     */
+    public function setTemplate($input, $type = self::FILE) {
+        $this->template = new WebTemplate($input, $type);
+    }
+
+    /**
+     * Return template
+     * @return WebTemplate
+     * @throws Error 
+     */
+    public function getTemplate() {
+        return $this->template;
+    }
+
+    /**
      * Return string form of this Representation
      * @return string
      */
@@ -127,10 +151,16 @@ class Representation {
                 return http_build_query($this->getData());
                 break;
             case 'text/html':
+                if ($this->getTemplate()) {
+                    $this->getTemplate()->setVariable('representation', $this);
+                    $this->getTemplate()->setVariable('resource', $this->getData());
+                    $this->getTemplate()->replace('resource', $this->getData());
+                    return $this->getTemplate()->toString();
+                }
             case 'text/plain':
             default:
-                if( is_object($this->getData()) && !method_exists($this->getData(), '__toString')){
-                    return get_class($this->getData()).' has no __toString() method.';
+                if (is_object($this->getData()) && !method_exists($this->getData(), '__toString')) {
+                    throw new Error(get_class($this->getData()) . ' has no __toString() method.', 501);
                 }
                 return $this->getData();
         }
