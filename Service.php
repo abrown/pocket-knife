@@ -158,8 +158,8 @@ class Service {
             }
 
             // get representation and incoming data
-            $input_representation = $this->object->fromRepresentation($this->content_type);
-            $input_representation->receive();
+            $representation = $this->object->fromRepresentation($this->content_type);
+            $representation->receive();
 
             // set ID
             if (isset($this->id) && method_exists($this->object, 'setID')) {
@@ -170,8 +170,7 @@ class Service {
                 throw new Error("Method '{$this->action}' does not exist; request OPTIONS for valid methods.", 405);
             }
             $callback = array($this->object, $this->action);
-            $data = $input_representation->getData();
-            $result = call_user_func_array($callback, array($data));
+            $result = call_user_func_array($callback, array($representation->getData()));
 
             // get representation and send data
             $representation = new Representation($result, $this->content_type);
@@ -254,144 +253,4 @@ class Service {
         // return
         return $routing;
     }
-
-//    /**
-//     * Checks whether the specified type and value are allowed by the configured ACL
-//     * @return boolean
-//     * */
-//    public function allowed($type, $value) {
-//        $value = strtolower($value);
-//        // allow/deny settings
-//        if (is_bool($this->acl))
-//            return $this->acl;
-//        // get list
-//        static $list = null;
-//        if (is_null($list)) {
-//            $list = (array) $this->acl;
-//        }
-//        // walk backwards through list
-//        end($list);
-//        do {
-//            $rule = current($list);
-//            if (preg_match('/^(.+) can(not)? access (.+) in (.+)$/i', $rule, $matches)) {
-//                // parse
-//                $r = array();
-//                $r['user'] = explode(',', $matches[1]);
-//                $r['user'] = array_map('trim', $r['user']);
-//                $r['deny'] = $matches[2];
-//                $r['method'] = explode(',', $matches[3]);
-//                $r['method'] = array_map('trim', $r['method']);
-//                $r['class'] = explode(',', $matches[4]);
-//                $r['class'] = array_map('trim', $r['class']);
-//                // test
-//                if (
-//                        ($r[$type][0] === '*' || in_array($value, $r[$type])) &&
-//                        !$r['deny']
-//                ) {
-//                    return true;
-//                }
-//            } else {
-//                throw new Error('Poorly worded ACL rule: ' . $rule, 500);
-//            }
-//        } while (prev($list) !== false);
-//        // return
-//        return false;
-//    }
-
-    /**
-     * Returns the storage object for this request
-     * @var array
-     * */
-//    protected function getStorage() {
-//        static $object = null;
-//        if (!$object) {
-//            $settings = $this->storage;
-//            // check Settings
-//            if (!isset($settings->type))
-//                throw new Error('Storage type is not defined', 500);
-//            // get class
-//            $class = 'Storage' . ucfirst($settings->type);
-//            // check parents
-//            if (!in_array('StorageInterface', class_implements($class)))
-//                throw new Error($class . ' must implement StorageInterface.', 500);
-//            // create object
-//            $object = new $class($settings);
-//        }
-//        return $object;
-//    }
-//    /**
-//     * Returns the applicable input handler for this request
-//     * @return object
-//     * */
-//    protected function getInput() {
-//        static $object = null;
-//        if (!$object) {
-//            // get class
-//            $content_type = $this->input;
-//            if (is_null($content_type))
-//                $content_type = $this->input;
-//            $class = $this->getContentClass($content_type);
-//            // check parents
-//            if (!in_array('ServiceFormatInterface', class_implements($class)))
-//                throw new Error($class . ' must implement ServiceFormatInterface.', 500);
-//            // create object
-//            $object = new $class();
-//        }
-//        return $object;
-//    }
-//
-//    /**
-//     * Returns the applicable output handler for this request
-//     * @return object
-//     * */
-//    protected function getOutput() {
-//        static $object = null;
-//        if (!$object) {
-//            // get class
-//            $content_type = $this->output;
-//            if (is_null($content_type))
-//                $content_type = $this->output;
-//            $class = $this->getContentClass($content_type);
-//            // check parents
-//            if (!in_array('ServiceFormatInterface', class_implements($class)))
-//                throw new Error($class . ' must implement ServiceFormatInterface.', 500);
-//            // create object
-//            $object = new $class();
-//        }
-//        return $object;
-//    }
-//
-//    /**
-//     * Return the applicable template for this request
-//     * @return object
-//     * */
-//    protected function getTemplate() {
-//        static $object = null;
-//        if (!$object) {
-//            $template_file = $this->template;
-//            $object = new WebTemplate($template_file, WebTemplate::PHP_FILE);
-//            $object->setVariable('service', $this); // TODO: does this violate simplicity?
-//        }
-//        return $object;
-//    }
-
-    /**
-     * Returns format class based on content-type
-     * @param string $content_type
-     */
-    protected function getContentClass($content_type) {
-        $map = array(
-            'text/html' => 'ServiceFormatHtml',
-            'application/x-www-form-urlencoded' => 'ServiceFormatHtml',
-            'application/json' => 'ServiceFormatJson',
-            'application/xml' => 'ServiceFormatXml',
-            'application/soap+xml' => 'ServiceFormatSoap'
-        );
-        // return
-        if (array_key_exists($content_type, $map))
-            return $map[$content_type];
-        else
-            throw new Error('Attempting to use unknown content type: ' . $content_type, 500);
-    }
-
 }

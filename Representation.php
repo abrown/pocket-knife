@@ -113,7 +113,7 @@ class Representation {
      * @return string
      */
     public function __toString() {
-        switch ($this->content_type) {
+        switch ($this->getContentType()) {
             case 'application/json':
                 return json_encode($this->getData());
                 break;
@@ -130,6 +130,72 @@ class Representation {
             case 'text/plain':
             default:
                 return $this->getData();
+        }
+    }
+
+    /**
+     * Receive HTTP request from client
+     * @throws Error 
+     */
+    public function receive() {
+        if (!$this->getContentType())
+            throw new Error('No content type set for representation.', 500);
+        switch ($this->getContentType()) {
+            case 'application/json':
+                $this->setData(json_decode(get_http_body()));
+                break;
+            case 'multipart/form-data':
+                // grab first POST uploaded file
+                $upload = reset($_FILES);
+                if (!$upload)
+                    throw new Error("No uploaded file could be found", 404);
+                if ($upload['error'])
+                    throw new Error("Upload failed: " . $upload['error'], 400);
+                // create new property 'filename'
+                $this->filename = $upload['name'];
+                // get data
+                $this->setData(file_get_contents($upload['tmp_name']));
+                break;
+            case 'application/octet-stream':
+                // create new property 'filename' on the fly
+                $this->filename = md5(date('r'));
+                if (function_exists('apache_ request_ headers')) {
+                    $headers = apache_request_headers();
+                    foreach ($headers as $key => $value) {
+                        if ($key == 'Content-Disposition') {
+                            $start = strpos($value, 'filename=');
+                            if ($start !== false) {
+                                $start += strlen('filename=');
+                                $this->filename = substr($value, $start);
+                            }
+                            break;
+                        }
+                    }
+                } else {
+                    // @todo avoid this
+                    throw new Error('File uploads work best with Apache.', 501);
+                }
+                $this->setData(base64_decode(get_http_body()));
+                break;
+            case 'application/xml':
+                $this->setData(BasicXml::xml_decode(get_http_body()));
+                break;
+            case 'application/x-www-form-urlencoded':
+                if (WebHttp::getMethod() == 'GET') {
+                    $this->setData($_GET);
+                } elseif (WebHttp::getMethod() == 'POST') {
+                    $this->setData($_POST);
+                } else {
+                    $in = get_http_body();
+                    $data = array();
+                    parse_str($in, $data);
+                    $this->setData($data);
+                }
+                break;
+            case 'text/html':
+            case 'text/plain':
+            default:
+                return $this->setData(get_http_body());
         }
     }
 
