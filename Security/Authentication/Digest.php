@@ -39,7 +39,7 @@ class SecurityAuthenticationDigest extends SecurityAuthentication {
      * @param string $content_type
      * @return stdClass 
      */
-    public function fromRepresentation($content_type = null, $parent = null) {
+    public function receive($content_type = null, $parent = null) {
         $out = new stdClass();
         if (isset($_SERVER['PHP_AUTH_DIGEST'])) {
             $data = $this->parse($_SERVER['PHP_AUTH_DIGEST']);
@@ -82,7 +82,7 @@ class SecurityAuthenticationDigest extends SecurityAuthentication {
      * Challenges the user with a HTTP Digest Authentication challenge
      * @param string $content_type 
      */
-    public function toRepresentation($content_type = null, $data = null) {
+    public function send($content_type = null, $data = null) {
         // send header
         $options[] = 'realm="' . $this->message . '"';
         $options[] = 'qop="auth"';
@@ -90,8 +90,9 @@ class SecurityAuthenticationDigest extends SecurityAuthentication {
         $options[] = 'opaque="' . md5($this->message) . '"';
         header('WWW-Authenticate: Digest ' . implode(',', $options));
         // return representation
-        $data = 'Access denied: login with HTTP Digest Authentication.';
-        return parent::toRepresentation($content_type, $data);
+        $representation = new Representation('Access denied: login with HTTP Digest Authentication.', $content_type);
+        $representation->setCode(401);
+        $representation->send();
     }
 
 }

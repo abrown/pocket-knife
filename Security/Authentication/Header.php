@@ -44,7 +44,7 @@ class SecurityAuthenticationHeader extends SecurityAuthentication{
      * @param string $content_type
      * @return stdClass 
      */
-    public function fromRepresentation($content_type = null) {
+    public function receive($content_type = null) {
         $out = new stdClass();
         $out->username = @$_SERVER[$this->username_header];
         $out->password = @$_SERVER[$this->password_header];
@@ -56,7 +56,7 @@ class SecurityAuthenticationHeader extends SecurityAuthentication{
      * Challenges the user with a PHP session authentication challenge
      * @param string $content_type 
      */
-    public function toRepresentation($content_type = null, $data = null) {
+    public function send($content_type = null, $data = null) {
         // set one time key
         WebSession::put('one_time_key', uniqid());
         // create challenge by content types
@@ -84,7 +84,9 @@ class SecurityAuthenticationHeader extends SecurityAuthentication{
                 throw new Error('Unknown content type', 400);
                 break;
         }
-        // return
-        return parent::toRepresentation($content_type, $data);
+        // return representation
+        $representation = new Representation($data, $content_type);
+        $representation->setCode(401);
+        $representation->send();
     }
 }

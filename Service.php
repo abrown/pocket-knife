@@ -119,11 +119,10 @@ class Service {
             // authenticate user
             if ($this->getAuthentication() && !$this->getAuthentication()->isLoggedIn()) {
                 // get credentials
-                $credentials = $this->getAuthentication()->fromRepresentation($this->content_type);
+                $credentials = $this->getAuthentication()->receive($this->content_type);
                 // challenge, if necessary
                 if (!$this->getAuthentication()->isValidCredential($credentials)) {
-                    $output_representation = $this->getAuthentication()->toRepresentation($this->content_type);
-                    $output_representation->send();
+                    $this->getAuthentication()->send($this->content_type);
                     exit();
                 }
             }
@@ -157,8 +156,7 @@ class Service {
                 $this->object = new $resource_class();
             }
 
-            // get representation and incoming data
-            $representation = $this->object->fromRepresentation($this->content_type);
+            // receive incoming data
             $representation->receive();
 
             // set ID

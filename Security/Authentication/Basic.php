@@ -38,7 +38,7 @@ class SecurityAuthenticationBasic extends SecurityAuthentication{
      * @param string $content_type
      * @return stdClass 
      */
-    public function fromRepresentation($content_type = null) {
+    public function receive($content_type = null) {
         $out = new stdClass();
         // implemented as per http://us2.php.net/manual/en/features.http-auth.php
         $out->username = @$_SERVER['PHP_AUTH_USER'];
@@ -51,12 +51,13 @@ class SecurityAuthenticationBasic extends SecurityAuthentication{
      * Challenges the user with a HTTP Basic Authentication challenge
      * @param string $content_type 
      */
-    public function toRepresentation($content_type = null, $data = null) {
+    public function send($content_type = null, $data = null) {
         // send header
         header('WWW-Authenticate: Basic realm="' . $this->message . '"');
         // return representation
-        $data = 'Access denied: login with HTTP Basic Authentication.';
-        return parent::toRepresentation($content_type, $data);
+        $representation = new Representation('Access denied: login with HTTP Basic Authentication.', $content_type);
+        $representation->setCode(401);
+        $representation->send();
     }
 
 }

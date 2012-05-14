@@ -82,12 +82,25 @@ abstract class SecurityAuthentication extends ResourceList {
 
     /**
      * Returns the URI for the authentication resource
-     * @return type 
+     * @return string 
      */
     public function getURI() {
         return 'authentication';
     }
 
+    /**
+     * Authentication methods receive data from the client and return a stdClass
+     * object with a username and password
+     * @return object 
+     */
+    abstract public function receive($content_type);
+    
+    /**
+     * Authentication methods send a challenge to the client in the requested
+     * content-type. 
+     */
+    abstract public function send($content_type);
+    
     /**
      * Returns whether the user is logged in.
      * @return boolean 
