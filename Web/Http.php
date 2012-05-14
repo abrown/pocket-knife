@@ -21,21 +21,15 @@ class WebHttp {
 
     /**
      * Returns HTTP request method. Checks the request URI 
-     * for the 'action' parameter before checking the 
+     * for the 'method' parameter before checking the 
      * real HTTP method. This allows all types of requests from 
      * the browser.
-     * @return string one of [GET, PUT, POST, DELETE, HEAD, LIST]
+     * @return string one of [GET, PUT, POST, DELETE, HEAD, LIST, OPTIONS]
      */
     static function getMethod() {
-        /**
-        $types = array('GET', 'PUT', 'POST', 'DELETE', 'HEAD', 'LIST');
-        if ($_GET && $type = array_intersect(array_keys($_GET), $types)) {
-            return $type[0];
-        }
-        */
         // check for parameter
-        if( array_key_exists('action', $_GET)){
-            return $_GET['action'];
+        if( array_key_exists('method', $_GET)){
+            return $_GET['method'];
         }
         // else:
         return $_SERVER['REQUEST_METHOD'];
