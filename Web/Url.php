@@ -183,7 +183,10 @@ class WebUrl {
     public static function create($tokens, $pass_get_variables = true) {
         if (@$tokens[0] == '/')
             $tokens = substr($tokens, 1);
-        $url = self::getLocationUrl() . '/' . $tokens . '?' . http_build_query($_GET);
+        $url = self::getLocationUrl() . '/' . $tokens;
+        if( $pass_get_variables ){
+            $url .= '?' . http_build_query($_GET);
+        }
         return $url;
     }
 
