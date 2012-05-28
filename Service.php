@@ -116,6 +116,14 @@ class Service {
             if (!$this->id)
                 $this->id = $id;
 
+            // clear session
+            if ($this->resource == 'clear_session') {
+                WebSession::clear();
+                $representation = new Representation("Session cleared.", $this->content_type);
+                $representation->send();
+                exit();
+            }
+            
             // authenticate user
             if ($this->getAuthentication() && !$this->getAuthentication()->isLoggedIn()) {
                 // get credentials
@@ -126,7 +134,7 @@ class Service {
                     exit();
                 }
             }
-
+            
             // authorize request
             if ($this->acl === false) {
                 throw new Error("No users can perform the action '{$this->action}' on the resource '$resource.$id'", 403);
@@ -136,9 +144,8 @@ class Service {
                 if (!$this->getAcl()->isAllowed($user, $roles, $this->action, $this->resource, $this->id)) {
                     throw new Error("'$user' cannot perform the action '{$this->action}' on the resource '$resource/$id'", 403);
                 }
-                exit();
             }
-
+            
             // special mappping
             switch ($this->resource) {
                 case 'admin':
@@ -193,7 +200,7 @@ class Service {
             if (method_exists($this->object, $any_trigger)) {
                 $representation = $this->object->$any_trigger($representation);
             }
-            
+
             // output
             if ($return_as_string) {
                 return (string) $representation;
@@ -249,21 +256,10 @@ class Service {
             // get object (always first)
             reset($tokens);
             $object = current($tokens);
-            // get id or method
-            $undecided = next($tokens);
-            if (method_exists($object, $undecided)) {
-                // found method in class
-                $method = $undecided;
-                $id = null;
-            } else {
-                // default to order object/id/method
-                $id = $undecided;
-                $method = next($tokens);
-            }
-            // method default
-            if (!$method) {
-                $method = WebHttp::getMethod();
-            }
+            // get id
+            $id = next($tokens);
+            // get method
+            $method = WebHttp::getMethod();
             // do not count '*' as id
             if ($id == '*')
                 $id = null;
