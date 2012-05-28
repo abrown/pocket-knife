@@ -4,17 +4,6 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-/**
- * Provides methods for validating any given input
- * @uses Error, WebUrl
- * @example
- * $a = 'google.com';
- * $errors = BasicValidation::validate($a, BasicValidation::NOT_EMPTY|BasicValidation::STRING|BasicValidation::URL);
- * pr($errors); // prints an array of rule failures
- * 
- * $_a = BasicValidation::sanitize($a, BasicValidation::STRING|BasicValidation::URL);
- * pr($_a); // $_a should now pass the validation tests it failed before 
- */
 
 /**
  * Provides methods for validating any given input;
@@ -22,8 +11,9 @@
  * validation condition is not met
  * (see http://en.wikipedia.org/wiki/List_of_HTTP_status_codes)
  * @example
- * BasicValidation::with(42)->isInteger(); // returns BasicValidation object
- * BasicValidation::with(42)->isString()->isEmail(); // throws Error
+ * $x = 42;
+ * BasicValidation::with($x)->isInteger(); // returns BasicValidation object
+ * BasicValidation::with($x)->isString()->isEmail(); // throws Error
  * @uses Error
  */
 class BasicValidation {
@@ -73,6 +63,9 @@ class BasicValidation {
      * @return BasicValidation
      */
     public function withProperty($property) {
+        if ($this->isOptional()) {
+            return $this;
+        }
         if ($this->hasProperty($property)) {
             array_push($this->stack, array($this->name, $this->value));
             $this->name = $this->name . '.' . $property;
@@ -144,7 +137,7 @@ class BasicValidation {
         }
         return $this;
     }
-    
+
     /**
      * Moves to an optional key within an object, or skips the following
      * rules
@@ -193,7 +186,8 @@ class BasicValidation {
         // go to higher level
         list($this->name, $this->value) = array_pop($this->stack);
         // exit optional blanket
-        if( $this->isOptional() ) array_pop($this->unavailable_optional_properties);
+        if ($this->isOptional())
+            array_pop($this->unavailable_optional_properties);
         // return
         return $this;
     }
@@ -369,7 +363,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether the given value is an object or array
+     * Checks whether the given value is not an object, array, or resoure
      * @return BasicValidation 
      */
     public function isScalar() {
@@ -379,7 +373,7 @@ class BasicValidation {
         }
         // test
         if (!is_scalar($this->value)) {
-            throw new Error("'{$this->name}' is not an object or array.", 416);
+            throw new Error("'{$this->name}' is not scalar; it is an object, array, or resource.", 416);
         }
         // return
         return $this;
@@ -395,7 +389,7 @@ class BasicValidation {
             return $this;
         }
         // test
-        if (!is_empty($this->value)) {
+        if (!empty($this->value)) {
             throw new Error("'{$this->name}' is not empty according to PHP's empty() function.", 416);
         }
         // return
@@ -412,7 +406,7 @@ class BasicValidation {
             return $this;
         }
         // test
-        if (is_empty($this->value)) {
+        if (empty($this->value)) {
             throw new Error("'{$this->name}' is empty according to PHP's empty() function.", 416);
         }
         // return
