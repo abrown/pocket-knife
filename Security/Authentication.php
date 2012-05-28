@@ -7,7 +7,7 @@
 
 /**
  * Provides a system for authenticating users
- * @uses ResourceList, SecurityUser
+ * @uses BasicValidation, ResourceList, SecurityUser, WebUrl
  */
 abstract class SecurityAuthentication extends ResourceList {
 
@@ -58,7 +58,7 @@ abstract class SecurityAuthentication extends ResourceList {
                 ->upOne()->withOptionalProperty('password_security')
                 ->oneOf('plaintext', 'hashed', 'encrypted')
                 // storage
-                ->upOne()->withProperty('storage')
+                ->upOne()->withOptionalProperty('storage')
                 ->isObject()
                 ->withProperty('type')
                 ->isString();
@@ -77,7 +77,6 @@ abstract class SecurityAuthentication extends ResourceList {
                 WebHttp::redirect($url);
             }
         }
-        //
     }
 
     /**
@@ -155,12 +154,12 @@ abstract class SecurityAuthentication extends ResourceList {
      * @param string $username
      * @return AuthenticationUser
      */
-    protected function getUser($username) {
+    public function getUser($username) {
         $users = $this->getStorage()->search('username', $username);
         if ($users) {
             $u = current($users);
-            $roles = explode(',', $u->roles);
-            $user = new SecurityUser($u->username, $u->password, array_map('trim', $roles));
+            if( is_string($u->roles) ) $u->roles = explode(',', $u->roles);
+            $user = new SecurityUser($u->username, $u->password, array_map('trim', $u->roles));
             return $user;
         }
         return null;
@@ -172,6 +171,7 @@ abstract class SecurityAuthentication extends ResourceList {
      */
     protected function getPassword($username) {
         $user = $this->getUser($username);
+        pr($user);
         if (is_a($user, 'SecurityUser')) {
             return $user->getPassword($this->password_security, $this->password_secret_key);
         }
