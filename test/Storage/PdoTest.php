@@ -4,8 +4,9 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-
-class StoragePdoTest extends PHPUnit_Framework_TestCase{
+if (!class_exists('TestCase'))
+    require '../Case.php';
+class StoragePdoTest extends TestCase{
     
     public static function setUpBeforeClass() {
         // start pocket knife

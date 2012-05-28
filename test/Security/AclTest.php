@@ -4,7 +4,10 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-class AclTest extends PHPUnit_Framework_TestCase {
+if (!class_exists('TestCase'))
+    require '../Case.php';
+
+class SecurityAclTest extends TestCase {
 
     /**
      * ACL Instance
@@ -15,30 +18,18 @@ class AclTest extends PHPUnit_Framework_TestCase {
     /**
      * Setup
      */
-    public static function setUpBeforeClass() {
-        // start pocket knife
-        $path = dirname(dirname(dirname(__FILE__)));
-        require $path . '/start.php';
-        // get code
-        autoload('BasicClass');
-        BasicClass::autoloadAll('Resource');
+    public function setUp() {
+        // load
         BasicClass::autoloadAll('StorageMemory');
-        BasicClass::autoloadAll('SecurityAcl');
-    }
-    
-    /**
-     * Setup
-     */
-    public function setUp(){
+        BasicClass::autoloadAll('Settings');
         // create ACL
-        $this->acl = new SecurityAcl();
+        $settings = new Settings(array('storage' => array('type' => 'memory', 'data' => array())));
+        $this->acl = new SecurityAcl($settings);
         $this->acl->default_access = 'deny';
-        $db = new StorageMemory();
-        $db->create(new SecurityRule('administrator', '*', '*', '*', true));
-        $db->create(new SecurityRule('user', 'read', '*', '*', true));
-        $db->create(new SecurityRule('user', 'read', 'secret_record', '*', false));
-        $db->create(new SecurityRule('alice', 'delete', '*', 23, true));
-        $this->acl->setStorage($db);        
+        $this->acl->getStorage()->create(new SecurityRule('administrator', '*', '*', '*', true));
+        $this->acl->getStorage()->create(new SecurityRule('user', 'read', '*', '*', true));
+        $this->acl->getStorage()->create(new SecurityRule('user', 'read', 'secret_record', '*', false));
+        $this->acl->getStorage()->create(new SecurityRule('alice', 'delete', '*', 23, true));
     }
 
     /**
@@ -70,8 +61,8 @@ class AclTest extends PHPUnit_Framework_TestCase {
         $actual = $this->acl->isAllowed('alice', null, 'delete', 'secret_record', 1323);
         $this->assertEquals($expected, $actual);
     }
-    
-    public function testGetRulesFor(){
+
+    public function testGetRulesFor() {
         $rules = $this->acl->getRulesFor('user');
         $expected = new SecurityRule('user', 'read', 'secret_record', '*', false);
         $actual = $rules[0];

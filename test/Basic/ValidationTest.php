@@ -4,94 +4,227 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-class BasicValidationTest extends PHPUnit_Framework_TestCase {
+if (!class_exists('TestCase'))
+    require '../Case.php';
 
-    public static function setUpBeforeClass() {
-        // start pocket knife
-        $path = dirname(dirname(dirname(__FILE__)));
-        require $path . '/start.php';
-        // get code
-        autoload('BasicClass');
-        BasicClass::autoloadAll('BasicValidation');
+class BasicValidationTest extends TestCase {
+
+    public function testValidateObject() {
+        $object = new stdClass();
+        $object->a = 42;
+        $object->b = '...';
+        $object->c = new stdClass();
+        $object->c->d = 1.0;
+        // test
+        $actual = (bool) BasicValidation::with($object)->isObject()->withProperty('a')
+                        ->isInteger()->upOne()->withProperty('b')->isString()->upOne()
+                        ->withProperty('c')->isObject()->withProperty('d')->isFloat();
+        $this->assertTrue($actual);
     }
 
-    /**
-     * Demonstrates testing a list of values against a list of rules, including
-     * wildcards
-     */
-    public function testValidate() {
-        $list = array('a' => 1, 'b' => 2, 'c' => 3);
-        $rules = array('*' => BasicValidation::NUMERIC, 'a' => BasicValidation::FLOAT);
-        $actual = BasicValidation::validateList($list, $rules);
-        $expected = array('a' => array('"1" is not a float'));
-        $this->assertEquals($expected, $actual);
+    public function testInvalidateObject() {
+        $object = new stdClass();
+        $object->a = 42;
+        $object->b = '...';
+        $object->c = new stdClass();
+        $object->c->d = 1.0;
+        // test: should throw Error exception
+        $this->setExpectedException('Error');
+        $actual = (bool) BasicValidation::with($object)->isArray();
     }
-    
-    /**
-     * Demonstrates sanitizing some values using the BasicValidation types
-     */
-    public function testSanitize(){
-        $list = array('html' => '<script>dosomething();</script>...', 'url' => 'yahoo.com');
-        $rules = array('*' => BasicValidation::STRING, 'html' => BasicValidation::HTML, 'url' => BasicValidation::URL);
-        $actual = BasicValidation::sanitizeList($list, $rules);
-        $expected = array('html' => '&lt;script&gt;dosomething();&lt;/script&gt;...', 'url' => 'http://yahoo.com/');
-        $this->assertEquals($expected, $actual);        
+
+    public function testValidateArray() {
+        $array = array(1, 2, 3, 'k' => 4);
+        // test
+        $actual = (bool) BasicValidation::with($array)->isArray()->hasKey(0)->
+                        hasKey('k')->withKey('k')->isInteger();
+        $this->assertTrue($actual);
     }
-    
-    /**
-     * Demonstrates how the is() function tests a value to ensure
-     * compliance with set rules
-     */
-    public function testIs() {
-        $b = new BasicValidation();
-        // NULL
-        $this->assertEquals(true, $b->is(null, $b::IS_NULL));
-        $this->assertEquals(false, $b->is(3, $b::IS_NULL));
-        // BOOLEAN
-        $this->assertEquals(true, $b->is(true, $b::BOOLEAN));
-        $this->assertEquals(false, $b->is(0, $b::BOOLEAN));
-        // INT
-        $this->assertEquals(true, $b->is(42, $b::INTEGER));
-        $this->assertEquals(false, $b->is("23", $b::INTEGER));
-        // FLOAT
-        $this->assertEquals(true, $b->is(3.2, $b::FLOAT));
-        $this->assertEquals(false, $b->is(1, $b::FLOAT));
-        // STRING
-        $this->assertEquals(true, $b->is("...", $b::STRING));
-        $this->assertEquals(false, $b->is(null, $b::STRING));
-        // OBJECT
-        $this->assertEquals(true, $b->is(new stdClass(), $b::OBJECT));
-        $this->assertEquals(false, $b->is("...", $b::OBJECT));
-        // SCALAR
-        $this->assertEquals(true, $b->is(0, $b::SCALAR));
-        $this->assertEquals(false, $b->is(array(), $b::SCALAR));
-        // NUMERIC
-        $this->assertEquals(true, $b->is('23', $b::NUMERIC));
-        $this->assertEquals(false, $b->is('. 4', $b::NUMERIC));
-        // EMPTY
-        $this->assertEquals(true, $b->is(array(), $b::IS_EMPTY));
-        $this->assertEquals(false, $b->is(' ', $b::IS_EMPTY));
-        // !EMPTY
-        $this->assertEquals(true, $b->is(array(' '), $b::NOT_EMPTY));
-        $this->assertEquals(false, $b->is(0, $b::NOT_EMPTY));
-        // ALPHANUMERIC
-        $this->assertEquals(true, $b->is('ab_2340 ', $b::ALPHANUMERIC));
-        $this->assertEquals(false, $b->is('path/to/file', $b::ALPHANUMERIC));
-        // EMAIL
-        $this->assertEquals(true, $b->is('example@site.com', $b::EMAIL));
-        $this->assertEquals(false, $b->is('a <ex@s.com>', $b::EMAIL));
-        // URL
-        $this->assertEquals(true, $b->is('http://www.google.com', $b::URL));
-        $this->assertEquals(false, $b->is('gooble.com!#asdf', $b::URL));
-        // DATE
-        $this->assertEquals(true, $b->is('Sat, 18 Feb 2012 10:19:34 -0500', $b::DATE));
-        $this->assertEquals(true, $b->is('tomorrow', $b::DATE));
-        $this->assertEquals(false, $b->is('example', $b::DATE));
-        // HTML
-        $this->assertEquals(true, $b->is('<html><body><p>Hello World!</p></body></html>', $b::HTML));
-        $this->assertEquals(false, $b->is('<li><a>malformed...</li>', $b::HTML));
-        // SQL
-        $this->assertEquals(true, $b->is('SELECT * FROM table', $b::SQL));
-        $this->assertEquals(false, $b->is('...', $b::SQL));
+
+    public function testValidateOneOf() {
+        $x = 'c';
+        // test
+        $actual = (bool) BasicValidation::with($x)->oneOf('a', 'b', 'c');
+        $this->assertTrue($actual);
+        // test invalid
+        $this->setExpectedException('Error');
+        BasicValidation::with($x)->oneOf(1, 2, 3);
     }
+
+    public function testValidateIsNull() {
+        $x = null;
+        // test
+        $actual = (bool) BasicValidation::with($x)->isNull();
+        $this->assertTrue($actual);
+        // test invalid
+        $this->setExpectedException('Error');
+        $x = 42;
+        BasicValidation::with($x)->isNull();
+    }
+
+    public function testValidateBoolean() {
+        $x = true;
+        // test
+        $actual = (bool) BasicValidation::with($x)->isBoolean();
+        $this->assertTrue($actual);
+        // test invalid
+        $this->setExpectedException('Error');
+        $x = 42;
+        BasicValidation::with($x)->isBoolean();
+    }
+
+    public function testValidateInteger() {
+        $x = 42;
+        // test
+        $actual = (bool) BasicValidation::with($x)->isInteger();
+        $this->assertTrue($actual);
+        // test invalid
+        $this->setExpectedException('Error');
+        $x = '...';
+        BasicValidation::with($x)->isInteger();
+    }
+
+    public function testValidateFloat() {
+        $x = 4.2;
+        // test
+        $actual = (bool) BasicValidation::with($x)->isFloat();
+        $this->assertTrue($actual);
+        // test invalid
+        $this->setExpectedException('Error');
+        $x = true;
+        BasicValidation::with($x)->isFloat();
+    }
+
+    public function testValidateNumeric() {
+        $x = '42';
+        // test
+        $actual = (bool) BasicValidation::with($x)->isNumeric();
+        $this->assertTrue($actual);
+        // test invalid
+        $this->setExpectedException('Error');
+        $x = true;
+        BasicValidation::with($x)->isNumeric();
+    }
+
+    public function testValidateString() {
+        $x = '42';
+        // test
+        $actual = (bool) BasicValidation::with($x)->isString();
+        $this->assertTrue($actual);
+        // test invalid
+        $this->setExpectedException('Error');
+        $x = true;
+        BasicValidation::with($x)->isString();
+    }
+
+    public function testValidateScalar() {
+        $x = '...';
+        // test
+        $actual = (bool) BasicValidation::with($x)->isScalar();
+        $this->assertTrue($actual);
+        // test invalid
+        $this->setExpectedException('Error');
+        $x = array('a');
+        BasicValidation::with($x)->isScalar();
+    }
+
+    public function testValidateEmpty() {
+        // test empty
+        $x = '';
+        $actual = (bool) BasicValidation::with($x)->isEmpty();
+        $this->assertTrue($actual);
+        $x = false;
+        $actual = (bool) BasicValidation::with($x)->isEmpty();
+        $this->assertTrue($actual);
+        $x = 0;
+        $actual = (bool) BasicValidation::with($x)->isEmpty();
+        $this->assertTrue($actual);
+        $x = array();
+        $actual = (bool) BasicValidation::with($x)->isEmpty();
+        $this->assertTrue($actual);
+        // test not empty
+        $x = '.';
+        $actual = (bool) BasicValidation::with($x)->isNotEmpty();
+        $this->assertTrue($actual);
+        $x = array('a');
+        $actual = (bool) BasicValidation::with($x)->isNotEmpty();
+        $this->assertTrue($actual);
+    }
+
+    public function testValidateAlphanumeric() {
+        $x = 'pocket-knife_v1';
+        // test
+        $actual = (bool) BasicValidation::with($x)->isAlphanumeric();
+        $this->assertTrue($actual);
+        // test invalid
+        $this->setExpectedException('Error');
+        $x = 'Some text...';
+        BasicValidation::with($x)->isAlphanumeric();
+    }
+
+    public function testValidateEmail() {
+        $x = 'email.address3@some-server.com';
+        // test
+        $actual = (bool) BasicValidation::with($x)->isEmail();
+        $this->assertTrue($actual);
+        // test invalid
+        $this->setExpectedException('Error');
+        $x = 'invalid email address / @ ';
+        BasicValidation::with($x)->isEmail();
+    }
+
+    public function testValidateUrl() {
+        $x = 'http://www.google.com';
+        // test
+        $actual = (bool) BasicValidation::with($x)->isUrl();
+        $this->assertTrue($actual);
+        // test invalid
+        $this->setExpectedException('Error');
+        $x = 'google.com';
+        BasicValidation::with($x)->isUrl();
+    }
+
+    public function testValidatePath() {
+        $x = __FILE__;
+        // test
+        $actual = (bool) BasicValidation::with($x)->isPath();
+        $this->assertTrue($actual);
+        // test invalid
+        $this->setExpectedException('Error');
+        $x = './some-nonexistent-file';
+        BasicValidation::with($x)->isPath();
+    }
+
+    public function testValidateDate() {
+        // test
+        $x = 'tomorrow';
+        $actual = (bool) BasicValidation::with($x)->isDate();
+        $this->assertTrue($actual);
+        $x = '21May2012';
+        $actual = (bool) BasicValidation::with($x)->isDate();
+        $this->assertTrue($actual);
+        // test invalid
+        $this->setExpectedException('Error');
+        $x = 53;
+        BasicValidation::with($x)->isDate();
+    }
+
+    public function testValidateHtml() {
+        // test
+        $x = '<p>some text with a <a href="...">link</a></p>';
+        $actual = (bool) BasicValidation::with($x)->isHtml();
+        $this->assertTrue($actual);
+        // test invalid
+        $this->setExpectedException('Error');
+        $x = '<p>no end element...';
+        BasicValidation::with($x)->isHtml();
+    }
+
+    public function testValidateSql() {
+        // test invalid
+        $this->setExpectedException('Error');
+        $x = '...';
+        BasicValidation::with($x)->isSql();
+    }
+
 }

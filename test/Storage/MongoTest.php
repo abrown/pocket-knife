@@ -4,22 +4,12 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-
-class StorageMongoTest extends PHPUnit_Framework_TestCase{
+if (!class_exists('TestCase'))
+    require '../Case.php';
+class StorageMongoTest extends TestCase{
     
     public static $id;
     
-    public static function setUpBeforeClass() {
-        // start pocket knife
-        $path = dirname(dirname(__FILE__));
-        require $path . '/start.php';
-        // get code
-        autoload('StorageInterface');
-        autoload('StorageMongo');
-        autoload('WebHttp');
-        autoload('Settings');
-        autoload('Error');
-    }
     
     public function setUp(){
         $settings = new Settings(array(
