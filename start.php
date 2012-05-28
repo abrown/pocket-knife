@@ -19,6 +19,7 @@ function get_base_dir() {
  * @param string $class 
  */
 function autoload($class) {
+    if( class_exists($class, false) ) return true;
     $replaced = preg_replace('/([a-z])([A-Z])/', '$1/$2', $class);
     $replaced = str_replace('/', DS, $replaced);
     $path = get_base_dir() . DS . $replaced . '.php';
