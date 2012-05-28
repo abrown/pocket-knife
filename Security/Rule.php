@@ -8,7 +8,7 @@
 /**
  * Provides a system for managing a user access control list and
  * restricting/permitting access to resources
- * @uses ResourceItem
+ * @uses ResourceItem, Error
  */
 class SecurityRule extends ResourceItem {
 

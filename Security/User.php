@@ -8,7 +8,7 @@
 /**
  * Represents a loggeded-in (authenticated) user; uses AES (Rijndael) to encrypt
  * and decrypt and MD5 to hash.
- * @uses
+ * @uses ResourceItem, Error
  */
 class SecurityUser extends ResourceItem {
 
