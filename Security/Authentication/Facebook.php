@@ -6,22 +6,29 @@
  */
 
 /**
- * Provides methods for authenticating Facebook users with OAuth2.0
+ * Provides methods for authenticating Facebook users with OAuth2.0; to use
+ * Facebook authentication, your application must be registered as a Facebook
+ * app. To do this:
+ * 1) navigate to https://developers.facebook.com/apps and click
+ * 'Create New App', enter a name and namespace, and click 'Continue'.
+ * 2) Edit the 'Site URL' parameter under 'Website with Facebook Login' to 
+ * reflect your current server URL; for safety, Facebook will only redirect 
+ * requests to this URL.
+ * 3) once the app is registered, copy your 'App ID' and 'App Secret' to your
+ * local settings file/database, using the properties 'app_id' and 'app_secret'.
+ * Note: as of the writing of this class (May 2012), device authentication is not
+ * available to all Facebook apps--therefore, the app uses HTTP redirects to
+ * channel the user's browser through the login process. Note that this limits
+ * the client to a browser supporting redirects.
+ * @uses SecurityAuthentication, WebSession, WebHttp, Error
  */
 class SecurityAuthenticationFacebook extends SecurityAuthentication {
 
     public $app_id = "YOUR_APP_ID";
     public $app_secret = "YOUR_APP_SECRET";
-    public $storage;
 
     /**
-     * Message appears in login window
-     * @var string 
-     */
-    public $message = 'facebook authentication';
-
-    /**
-     * Constructor, sets additional session cookie parameters
+     * Constructor, sets additional validation rules
      * @param type $settings 
      */
     public function __construct($settings) {
@@ -36,42 +43,41 @@ class SecurityAuthenticationFacebook extends SecurityAuthentication {
     }
 
     /**
-     * Returns whether the user is logged in; for HTTP authentication, the
-     * logs in with every HTTP request
+     * Return whether the user is logged in; since this form of authentication
+     * depends on $_SESSION, avoid clearing it or affecting 'facebook_access_token'
+     * during execution.
      * @return boolean 
      */
     public function isLoggedIn() {
         if (WebSession::get('facebook_access_token')) {
-            $user = new SecurityUser($this->getCurrentUser(), WebSession::get('facebook_access_token'), 'guest');
-            $this->getStorage()->begin();
-            $this->getStorage()->create($user);
-            $this->getStorage()->commit();
             return true;
         }
         return false;
     }
 
     /**
-     * Returns the name of the current user
+     * Return the name of the current user
      * @return type 
      */
     public function getCurrentUser() {
-        $url = "https://graph.facebook.com/me?access_token=" . WebSession::get('facebook_access_token');
-        $data = json_decode(WebHttp::request($url));
-        return @$data->name;
+        if (!WebSession::get('facebook_username')) {
+            if (!WebSession::get('facebook_access_token')) {
+                return null;
+            }
+            $url = "https://graph.facebook.com/me?access_token=" . WebSession::get('facebook_access_token');
+            $data = json_decode(WebHttp::request($url));
+            WebSession::put('facebook_username', $data->name);
+        }
+        return WebSession::get('facebook_username');
     }
 
     /**
-     * Returns response from an HTTP Basic Authentication request
+     * Return the Facebook credentials stored for this session
      * @param string $content_type
      * @return stdClass 
      */
     public function receive($content_type = null) {
-        try {
-            $user = $this->getCurrentUser();
-        } catch (Error $e) {
-            $user = 'guest';
-        }
+        $user = $this->getCurrentUser();
         $out = new stdClass();
         $out->username = $user;
         $out->password = WebSession::get('facebook_access_token');
@@ -80,7 +86,9 @@ class SecurityAuthenticationFacebook extends SecurityAuthentication {
     }
 
     /**
-     * Challenges the user with a HTTP Basic Authentication challenge
+     * Challenges the user with the Facebook login screen; uses HTTP redirects
+     * to support OAuth 2.0 authentication
+     * @todo when available, implement device authentication instead
      * @param string $content_type 
      */
     public function send($content_type = null, $data = null) {
@@ -108,6 +116,9 @@ class SecurityAuthenticationFacebook extends SecurityAuthentication {
         parse_str($response, $params);
         // save access token
         WebSession::put('facebook_access_token', @$params['access_token']);
+        // redirect
+        WebHttp::redirect(WebUrl::create(WebUrl::getAnchoredUrl(), false));
+        exit();
     }
 
 }
