@@ -7,6 +7,7 @@
 
 /**
  * Provides methods for authenticating users with HTTP Basic Authentication
+ * @uses SecurityAuthentication, Representation
  */
 class SecurityAuthenticationBasic extends SecurityAuthentication{
 

@@ -7,6 +7,7 @@
 
 /**
  * Provides methods for authenticating users with HTTP Digest Authentication
+ * @uses SecurityAuthentication, Representation
  */
 class SecurityAuthenticationDigest extends SecurityAuthentication {
 

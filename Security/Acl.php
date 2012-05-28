@@ -8,7 +8,7 @@
 /**
  * Provides a system for managing a user access control list and
  * restricting/permitting access to resources
- * @uses SecurityRule, ResourceList
+ * @uses ResourceList, SecurityRule, BasicValidation
  */
 class SecurityAcl extends ResourceList {
 
@@ -18,6 +18,10 @@ class SecurityAcl extends ResourceList {
      */
     public $default_access = 'deny'; // deny | allow
 
+    /**
+     * Constructor
+     * @param Settings $settings 
+     */
     public function __construct($settings) {
         // validate
         BasicValidation::with($settings)

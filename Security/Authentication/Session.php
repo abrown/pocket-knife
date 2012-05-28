@@ -7,6 +7,7 @@
 
 /**
  * Provides methods for authenticating users with PHP sessions
+ * @uses SecurityAuthentication, Representation
  */
 class SecurityAuthenticationSession extends SecurityAuthentication {
 
