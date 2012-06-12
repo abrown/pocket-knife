@@ -39,15 +39,9 @@ class SiteAdministration{
 	public function execute(){
 		// check routing
 		if( !isset($_GET['action']) || !method_exists($this, $_GET['action']) ) $action = 'home';
-		$action = $_GET['action'];
+		else $action = $_GET['action'];
 		// check file existence
 		$file = @$_GET['file'];
-		try{
-			$file = $this->site->find($file);
-		}
-		catch(Exception $e){
-			return $e->getMessage();
-		}
 		// do action
 		$content = $this->$action($file);
 		// do templating
@@ -71,7 +65,8 @@ class SiteAdministration{
 		Select a file to edit:
 	</p>
 	<p>
-		<input type="text" id="admin-search-files" value="search" />
+		<input type="text" id="admin-search-files" value="search" 
+		onfocus="if(this.value==\'search\') this.value = \'\';" />
 	</p>
 	<ul class="admin-site-map">
 		<template:files/>
@@ -95,18 +90,41 @@ class SiteAdministration{
 	}
 	
 	protected $edit_template = '
+	<script type="text/javascript">
+	function insertAtCursor(myField, myValue) {
+		//IE support
+		if (document.selection) {
+			myField.focus();
+			sel = document.selection.createRange();
+			sel.text = myValue;
+		}
+		//MOZILLA/NETSCAPE support
+		else if (myField.selectionStart || myField.selectionStart == \'0\') {
+			var startPos = myField.selectionStart;
+			var endPos = myField.selectionEnd;
+			myField.value = myField.value.substring(0, startPos)
+				+ myValue
+				+ myField.value.substring(endPos, myField.value.length);
+		} else {
+			myField.value += myValue;
+		}
+	}
+	</script>
 	<form action="<template:save_url/>" method="POST">
-		<textarea id="admin-file"><template:file/></textarea>
+		<textarea id="admin-file" name="file-contents"
+		onkeydown="if(window.event.keyCode==9){insertAtCursor(this, \'    \'); return false;}"><template:file/></textarea>
 		<input type="submit" value="Save"/>
-		<input type="submit" value="Cancel" onclick="window.location = \'<template:back_url/>\'" />
+		<input type="submit" value="Cancel" onclick="window.location = \'<template:back_url/>\'; return false;" />
 	</form>
 	';
 	public function edit($file){
+		// find file
+		$absolute_file = $this->site->find($file);
 		// create URLs
 		$url = WebRouting::getLocationUrl().'/admin';
 		$save_url = $url.'?file='.$file.'&action=save';
 		// get file contents
-		$file_contents = file_get_contents($file);
+		$file_contents = file_get_contents($absolute_file);
 		// create page
 		$template = new WebTemplate($this->edit_template, WebTemplate::STRING);
 		$template->replace('save_url', $save_url);
@@ -116,7 +134,22 @@ class SiteAdministration{
 		return $template->toString();
 	}
 	
+	protected $save_template = '
+	<p>The file "<template:file/>" has been saved</p>
+	<p><a href="<template:back_url/>">Back</a></p>';
 	public function save($file){
+		// find file
+		$absolute_file = $this->site->find($file);
+		// create URLs
+		$url = WebRouting::getLocationUrl().'/admin';
+		// save file
+		file_put_contents($absolute_file, $_POST['file-contents']);
+		// create page
+		$template = new WebTemplate($this->save_template, WebTemplate::STRING);
+		$template->replace('file', $file);
+		$template->replace('back_url', $url);
+		// return
+		return $template->toString();
 		
 	}
 	public function delete($file){
