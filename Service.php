@@ -81,15 +81,21 @@ class Service {
      */
     public function __construct($settings) {
         // validate
-        BasicValidation::with($settings)
-                ->withOptionalProperty('authentication')
-                ->withProperty('authentication_type')
-                ->isString()
-                ->upAll()
-                ->withProperty('representations')
-                ->isArray()
-                ->withKey(0)
-                ->isString();
+        try {
+            BasicValidation::with($settings)
+                    ->withOptionalProperty('authentication')
+                    ->withProperty('authentication_type')
+                    ->isString()
+                    ->upAll()
+                    ->withProperty('representations')
+                    ->isArray()
+                    ->withKey(0)
+                    ->isString();
+        } catch (Error $e) {
+            // send an HTTP response because validation errors may occur before execute() is ever run
+            $e->send(WebHttp::getContentType());
+            exit();
+        }
         // import settings
         foreach ($this as $property => $value) {
             if (isset($settings->$property)) {
