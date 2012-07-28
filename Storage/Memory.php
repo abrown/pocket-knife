@@ -7,7 +7,7 @@
 
 /**
  * Stores records in memory within this class; best used for testing
- * @uses StorageInterface, Error
+ * @uses StorageInterface, Error, BasicValidation
  */
 class StorageMemory implements StorageInterface{
     
@@ -29,7 +29,7 @@ class StorageMemory implements StorageInterface{
     public function __construct($settings){
         BasicValidation::with($settings)
                 ->withOptionalProperty('data')
-                ->isArray();
+                ->isObject();
         // import data
         if( isset($settings->data) ){
             $this->data = $settings->data;
@@ -138,7 +138,7 @@ class StorageMemory implements StorageInterface{
     public function all($number_of_records = null, $page = null){
         if( $number_of_records > 0 && $page > 0 ){
             $offset = $number_of_records * ($page - 1);
-            return array_slice($this->data, $offset, $number_of_records, true);
+            return array_slice((array) $this->data, $offset, $number_of_records, true);
         }
         // else
         return $this->data;
