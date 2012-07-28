@@ -186,7 +186,18 @@ class StorageJson implements StorageInterface {
      * @return array
      */
     public function all($number_of_records = null, $page = null) {
-        return $this->data;
+        if( is_int($number_of_records) ){
+            if( is_int($page) ){
+                $offset = (abs($page) - 1) * $number_of_records;
+            }
+            else{
+                $offset = 0;
+            }
+            return array_slice((array) $this->data, $offset, $number_of_records, true);
+        }
+        else{
+            return (array) $this->data;
+        }
     }
 
     /**
