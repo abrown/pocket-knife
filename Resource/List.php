@@ -8,7 +8,7 @@
 /**
  * Provides a generic template for objects that are lists. Used in web 
  * services, specifically Service.
- * @uses Resource
+ * @uses Resource, ResourceItem, Settings, WebHttp
  */
 class ResourceList extends Resource {
 
@@ -76,12 +76,40 @@ class ResourceList extends Resource {
      */
     public function GET() {
         $this->getStorage()->begin();
-        foreach ($this->getStorage()->all() as $id => $data) {
+        // get filtered resources
+        if (WebHttp::getParameter('filter_on')) {
+            $key = (string) WebHttp::getParameter('filter_on');
+            $value = (string) WebHttp::getParameter('filter_with');
+            $resources = $this->getStorage()->search($key, $value);
+        }
+        // get paged resources
+        else if (WebHttp::getParameter('page')) {
+            $page_size = (int) WebHttp::getParameter('page_size');
+            if( $page_size < 1 ){
+                throw new Error("Page size is outside of allowed range.", 416);
+            }
+            if ($page_size === null ) {
+                $page_size = 20;
+            }
+            $page = (int) WebHttp::getParameter('page');
+            if ($page < 1) {
+                throw new Error("Page number is outside of allowed range.", 416);
+            }
+            $resources = $this->getStorage()->all($page_size, $page);
+        }
+        // get all resource
+        else {
+            $resources = $this->getStorage()->all(); // @TODO: make this an Iterator
+        }
+        // bind
+        $this->items = array();
+        foreach ($resources as $id => $data) {
             $item = new $this->item_type($id);
             $item->bind($data);
             $this->items[$id] = $item;
         }
         $this->getStorage()->commit();
+        // return
         return $this;
     }
 
