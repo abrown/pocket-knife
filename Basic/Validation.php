@@ -278,6 +278,44 @@ class BasicValidation {
     }
 
     /**
+     * Check whether the value is greater than a given number
+     * @param mixed $number
+     * @return BasicValidation
+     * @throws Error 
+     */
+    public function isGreaterThan($number) {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if ($this->value <= $number) {
+            throw new Error("'{$this->name}' is not greater than '$number'.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Check whether the value is less than a given number
+     * @param mixed $number
+     * @return BasicValidation
+     * @throws Error 
+     */
+    public function isLessThan($number) {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if ($this->value >= $number) {
+            throw new Error("'{$this->name}' is not less than '$number'.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
      * Checks whether this value is a float
      * @return BasicValidation 
      */
