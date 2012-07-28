@@ -123,7 +123,7 @@ class Service {
                 $representation->send();
                 exit();
             }
-            
+
             // authenticate user
             if ($this->getAuthentication() && !$this->getAuthentication()->isLoggedIn()) {
                 // get credentials
@@ -134,7 +134,7 @@ class Service {
                     exit();
                 }
             }
-            
+
             // authorize request
             if ($this->acl === false) {
                 throw new Error("No users can perform the action '{$this->action}' on the resource '$resource.$id'", 403);
@@ -145,7 +145,7 @@ class Service {
                     throw new Error("'$user' cannot perform the action '{$this->action}' on the resource '$resource/$id'", 403);
                 }
             }
-            
+
             // special mappping
             switch ($this->resource) {
                 case 'admin':
@@ -182,6 +182,9 @@ class Service {
                 $this->object->setID($this->id);
             }
             // call method
+            if (!in_array($this->action, array('GET', 'PUT', 'POST', 'DELETE', 'HEAD', 'OPTIONS'))) {
+                throw new Error("Method '{$this->action}' is an invalid HTTP method; request OPTIONS for valid methods.", 405);
+            }
             if (!method_exists($this->object, $this->action)) {
                 throw new Error("Method '{$this->action}' does not exist; request OPTIONS for valid methods.", 405);
             }
