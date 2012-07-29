@@ -110,7 +110,7 @@ class Error extends Exception {
         500 => 'Internal Server Error', // A generic error message, given when no more specific message is suitable.[2]
         501 => 'Not Implemented', // The server either does not recognise the request method, or it lacks the ability to fulfill the request.[2]
         502 => 'Bad Gateway', // The server was acting as a gateway or proxy and received an invalid response from the upstream server.[2]
-        503 => 'Service Unavailab', // The server is currently unavailable (because it is overloaded or down for maintenance).[2] Generally, this is a temporary state.
+        503 => 'Service Unavailable', // The server is currently unavailable (because it is overloaded or down for maintenance).[2] Generally, this is a temporary state.
         504 => 'Gateway Timeout', // The server was acting as a gateway or proxy and did not receive a timely response from the upstream server.[2]
         505 => 'HTTP Version Not Supported', // The server does not support the HTTP protocol version used in the request.[2]
         506 => 'Variant Also Negotiates (RFC 2295)', // Transparent content negotiation for the request results in a circular reference.[21]
