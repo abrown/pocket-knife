@@ -36,6 +36,7 @@ class Settings {
     /**
      * Testing rules
      */
+
     const MANDATORY = 1;
     const OPTIONAL = 2;
     const SINGLE = 4;
@@ -51,6 +52,9 @@ class Settings {
     public function __construct($list = null) {
         if ($list === null) {
             
+        } elseif (is_string($list)) {
+            // assume this is a path
+            $this->load($list);
         } elseif (is_array($list)) {
             $object = to_object($list);
             $this->data = $object;
@@ -66,20 +70,20 @@ class Settings {
     public function getData() {
         return $this->data;
     }
-    
+
     /**
      * Copies a given configuration into an object's declared properties
      * @param mixed $settings 
      * @param mixed $object
      */
-    static public function toObject($settings, &$object){
-        if( is_a($settings, 'Settings') ){
+    static public function toObject($settings, &$object) {
+        if (is_a($settings, 'Settings')) {
             $settings = $settings->getData();
         }
         // add to object
-        foreach($settings as $key => $value){
+        foreach ($settings as $key => $value) {
             // check if property exists
-            if( !property_exists($object, $key) ){
+            if (!property_exists($object, $key)) {
                 $class = get_class($object);
                 throw new Error("Object '$class' does not have the property '$key'");
             }
@@ -233,7 +237,7 @@ class Settings {
         if (!$path || !is_file($path))
             throw new Error('Could not find Settings file: ' . $path, 500);
         // save path
-        $this->path = $path;        
+        $this->path = $path;
         // get configuration from file type
         $info = pathinfo($path);
         switch ($info['extension']) {
