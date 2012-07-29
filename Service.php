@@ -177,10 +177,16 @@ class Service {
             $action_trigger = $this->action . '_INPUT_TRIGGER';
             if (method_exists($this->object, $action_trigger)) {
                 $representation = $this->object->$action_trigger($representation);
+                if (!is_a($representation, 'Representation')) {
+                    throw new Error('Input triggers must return a Representation', 500);
+                }
             }
             $any_trigger = 'INPUT_TRIGGER';
             if (method_exists($this->object, $any_trigger)) {
                 $representation = $this->object->$any_trigger($representation);
+                if (!is_a($representation, 'Representation')) {
+                    throw new Error('Input triggers must return a Representation', 500);
+                }
             }
 
             // set ID
@@ -204,10 +210,16 @@ class Service {
             $action_trigger = $this->action . '_OUTPUT_TRIGGER';
             if (method_exists($this->object, $action_trigger)) {
                 $representation = $this->object->$action_trigger($representation);
+                if (!is_a($representation, 'Representation')) {
+                    throw new Error('Input triggers must return a Representation', 500);
+                }
             }
             $any_trigger = 'OUTPUT_TRIGGER';
             if (method_exists($this->object, $any_trigger)) {
                 $representation = $this->object->$any_trigger($representation);
+                if (!is_a($representation, 'Representation')) {
+                    throw new Error('Input triggers must return a Representation', 500);
+                }
             }
 
             // output
@@ -219,6 +231,11 @@ class Service {
             if ($return_as_string) {
                 return (string) $e;
             }
+            // change multipart/form-data to text/html so browsers can recognize it
+            if ($this->content_type == 'multipart/form-data') {
+                $this->content_type = 'text/html';
+            }
+            // send error
             $e->send($this->content_type);
         }
     }
