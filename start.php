@@ -19,7 +19,9 @@ function get_base_dir() {
  * @param string $class 
  */
 function autoload($class) {
-    if( class_exists($class, false) ) return true;
+    if (class_exists($class, false)){
+        return true;
+    }
     $replaced = preg_replace('/([a-z])([A-Z])/', '$1/$2', $class);
     $replaced = str_replace('/', DS, $replaced);
     $path = get_base_dir() . DS . $replaced . '.php';
@@ -122,7 +124,7 @@ function to_object($thing) {
         return $object;
     }
     // case: already an object
-    elseif( is_object($thing) ){
+    elseif (is_object($thing)) {
         return $thing;
     }
     // case: nothing to return
