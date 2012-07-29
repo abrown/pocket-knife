@@ -150,6 +150,9 @@ class Representation {
             case 'application/x-www-form-urlencoded':
                 return http_build_query($this->getData());
                 break;
+            case 'multipart/form-data':
+                return 'Cannot return data as multipart/form-data';
+                break;
             case 'text/html':
                 if ($this->getTemplate()) {
                     $this->getTemplate()->setVariable('representation', $this);
@@ -160,7 +163,7 @@ class Representation {
             case 'text/plain':
             default:
                 if (is_object($this->getData()) && !method_exists($this->getData(), '__toString')) {
-                    throw new Error(get_class($this->getData()) . ' has no __toString() method.', 501);
+                     throw new Error(get_class($this->getData()) . ' has no __toString() method.', 501);
                 }
                 return $this->getData();
         }
@@ -178,16 +181,27 @@ class Representation {
                 $this->setData(json_decode(get_http_body()));
                 break;
             case 'multipart/form-data':
-                // grab first POST uploaded file
-                $upload = reset($_FILES);
-                if (!$upload)
-                    throw new Error("No uploaded file could be found", 404);
-                if ($upload['error'])
-                    throw new Error("Upload failed: " . $upload['error'], 400);
-                // create new property 'filename'
-                $this->filename = $upload['name'];
-                // get data
-                $this->setData(file_get_contents($upload['tmp_name']));
+                // grab POST variables
+                $data = to_object($_POST);
+                // grab all POST uploaded files
+                $data->files = new stdClass();
+                foreach ($_FILES as $name => $file) {
+                    $data->files->$name = new stdClass();
+                    // check for errors
+                    if ($file['error']) {
+                        throw new Error("Upload failed: " . $file['error'], 400);
+                    }
+                    // get data
+                    $data->files->$name->name = $file['name'];
+                    $data->files->$name->type = $file['type'];
+                    $data->files->$name->contents = file_get_contents($file['tmp_name']);
+                    $data->files->$name->size = strlen($data->files->$name->contents);
+                    // check size
+                    if ($data->files->$name->size != $file['size']) {
+                        throw new Error("File corrupted: " . $file['name'], 400);
+                    }
+                }
+                $this->setData($data);
                 break;
             case 'application/octet-stream':
                 // create new property 'filename' on the fly
