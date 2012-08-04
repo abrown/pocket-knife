@@ -70,8 +70,9 @@ class WebPage {
         $html[] = "<table class='{$uri}'>";
         foreach (get_public_vars($resource) as $property => $value) {
             $property = htmlentities($property);
-            if (is_array($value))
+            if (is_array($value)) {
                 $value = implode(', ', $value);
+            }
             $value = htmlentities($value);
             $html[] = "<tr>";
             $html[] = "<td class='{$uri}#property' title='{$uri}#property'>{$property}</td>";
@@ -90,7 +91,7 @@ class WebPage {
     public static function getResourceForm(Resource $resource) {
         $uri = htmlentities($resource->getURI());
         $html = array();
-        $html[] = "<form method='POST' action='".WebUrl::create($uri, false)."'>";
+        $html[] = "<form method='POST' action='" . WebUrl::create($uri, false) . "'>";
         $html[] = "<table class='{$uri}'>";
         foreach (get_public_vars($resource) as $property => $value) {
             $property = htmlentities($property);
@@ -108,18 +109,50 @@ class WebPage {
         $html[] = "</table></form>";
         return implode("\n", $html);
     }
-    
+
+    public static function getResourceList(ResourceList $list) {
+        //$uri = htmlentities($list->getURI());
+        $uri = 'list';
+        $html = array();
+        $html[] = "<table class='{$uri}'>";
+        // head
+        $class = $list->getItemType();
+        $object = new $class;
+        $html[] = "<tr class='head'>";
+        foreach(get_public_vars($object) as $property => $value){
+            $html[] = "<th>{$property}</th>";
+        }
+        $html[] = "<th></th>";
+        $html[] = "</tr>";
+        // rows
+        foreach ($list->items as $item) {
+            $_uri = htmlentities($item->getURI());
+            $html[] = "<tr>";
+            foreach (get_public_vars($item) as $property => $value) {
+                $property = htmlentities($property);
+                $value = htmlentities($value);
+                $html[] = "<td class='{$_uri}#{$property}'>{$value}</td>";
+             }
+            $html[] = "<td id='{$_uri}#links'>".self::getResourceLinks($item)."</td>";
+            $html[] = "</tr>";
+        }
+        // submit
+        $html[] = "</table>";
+        return implode("\n", $html);
+    }
+
     /**
      *
      * @param Resource $resource
      * @return type 
      */
-    public static function getResourceLinks(Resource $resource){
+    public static function getResourceLinks(Resource $resource) {
         $uri = htmlentities($resource->getURI());
         $html = array();
         $original_method = @$_GET['method'];
-        foreach(get_class_methods($resource) as $method){
-            if( !ctype_upper($method) ) continue;
+        foreach (get_class_methods($resource) as $method) {
+            if (!ctype_upper($method))
+                continue;
             $_GET['method'] = $method;
             $url = WebUrl::create($uri);
             $html[] = "<a href='{$url}' title='{$uri}'>{$method}</a>";
