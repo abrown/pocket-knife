@@ -108,11 +108,13 @@ class Service {
      * Handles requests, creates instances, and returns result
      */
     public function execute($return_as_string = false) {
-        if (!$this->content_type)
+        if (!$this->content_type){
             $this->content_type = WebHttp::getContentType();
-        $representation = new Representation(null, WebHttp::getContentType());
-
+        }
         try {
+            // create input representation
+            $representation = new Representation(null, WebHttp::getContentType());
+
             // find what we act upon
             list($resource, $id, $action) = $this->getRouting();
             if (!$this->resource)
