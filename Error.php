@@ -20,16 +20,6 @@ class Error extends Exception {
     public $trace;
 
     /**
-     * Returns the exception as the given a content type.
-     * @param string $content_type
-     * @return Representation
-     */
-//    public function fromRepresentation($content_type) {
-//        trigger_error('Error resource cannot receive data.', E_USER_ERROR);
-//        return null;
-//    }
-
-    /**
      * Returns a representation of the resource given a content type 
      * and data; should be overloaded in descendant classes to 
      * accommodate content type differences and possible 
@@ -51,7 +41,7 @@ class Error extends Exception {
         $representation->setCode($this->http_code);
         // special cases
         if ($content_type == 'text/html') {
-            $representation->setTemplate($this->html_template, WebTemplate::PHP_STRING);
+            $representation->setTemplate(get_base_dir() . DS . 'error-template.php', WebTemplate::PHP_FILE);
         }
         // send
         $representation->send();
@@ -123,80 +113,4 @@ class Error extends Exception {
         599 => 'Network connect timeout error', // This status code is not specified in any RFCs, but is used by some[which?] HTTP proxies to signal a network connect timeout behind the proxy to a client in front of the proxy. 
     );
 
-    protected $html_template = <<<'TEMPLATE_STRING'
-<!doctype html>
-<html>
-    <head>
-        <title><?php echo $resource->http_code; ?> <?php echo $resource->http_message; ?></title>
-        <style type="text/css">
-            html{
-                background-color: #282626;
-            }
-            body{
-                background-color: #ffffff;
-                display: block;
-                font-size: 16px;
-                font-family: 'Georgia', 'Times New Roman', serif;
-                line-height: 16px;
-                margin: 2em auto 2em;
-                max-width: 1200px;
-                min-width: 600px;
-                padding: 2em;
-                width: 72%;
-            }
-
-            /** HORIZONTAL RULE **/
-            hr{
-                background-color: #D9CECE;
-                border: 0;
-                color: #D9CECE;
-                height: 1px;
-                margin: 0 -2em;
-                padding: 0;
-            }
-            hr.title{
-                margin-bottom: 40px;
-            }
-
-            /** TEXT **/
-            h1, h2, h3, h4, h5, h6{
-                font-family: 'Arial', 'Helvetica', 'Verdana', 'Tahoma', sans-serif;
-                font-weight: bold;
-            }
-            h1{
-                font-size: 3em;
-                line-height: 1em;
-            }
-            p{
-                margin-bottom: 0em;
-            }
-            span.property{
-                font-style: italic;
-            }
-            pre{
-                background-color: #D9CECE;
-                color: black;
-                padding: 1em;
-                overflow-x: scroll;
-                overflow-y: hidden;
-            }
-        </style>
-    </head>
-    <body>
-
-        <!-- TITLE -->
-        <h1><?php echo $resource->http_code; ?> <?php echo $resource->http_message; ?></h1>
-        <hr class="title"/>
-        <p><span class="property">Message</span>: <?php echo $resource->message; ?></p>
-        <p><span class="property">Thrown at</span>: <?php echo $resource->file; ?>(<?php echo $resource->line; ?>)</p>
-        <pre>Thrown at <?php echo $resource->file; ?>(<?php echo $resource->line; ?>)
-<?php
-foreach ($resource->trace as $line) {
-    echo $line . "\n";
-}
-?></pre>
-    </body>
-</html>
-TEMPLATE_STRING;
-    
 }
