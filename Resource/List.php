@@ -38,6 +38,14 @@ class ResourceList extends Resource {
     public function getURI() {
         return '/' . strtolower(get_class($this));
     }
+    
+    /**
+     * Returns the list's item type
+     * @return ResourceItem
+     */
+    public function getItemType(){
+        return $this->item_type;
+    }
 
     /**
      * Creates and returns storage object
