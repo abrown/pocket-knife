@@ -65,10 +65,10 @@
         <p><span class="property">Message</span>: <?php echo $resource->message; ?></p>
         <p><span class="property">Thrown at</span>: <?php echo $resource->file; ?>(<?php echo $resource->line; ?>)</p>
         <pre>Thrown at <?php echo $resource->file; ?>(<?php echo $resource->line; ?>)
-            <?php
-            foreach ($resource->trace as $line) {
-                echo $line . "\n";
-            }
-            ?></pre>
+<?php
+foreach ($resource->trace as $line) {
+    echo $line . "\n";
+}
+?></pre>
     </body>
 </html>
