@@ -44,14 +44,17 @@ class WebUrl {
     }
 
     /**
-     * Returns the HTTP request URI
+     * Returns the HTTP request URI; has been modified so it will
+     * match the Resource::getURI() method--in other words, it
+     * will return a unique but normalized descriptor for the 
+     * resource requested. Similar to WebUrl::getAnchoredUrl().
      * @example
-     * For a URL like "http://www.example.com/index.php?etc", the URI
-     * returned will be "/index.php?etc"
+     * For a URL like "http://www.example.com/s.php/Resource/14/Version:b?etc", the URI
+     * returned will be "resource/14/version:b".
      * @return string
      */
-    static function getUri() {
-        return $_SERVER['REQUEST_URI'];
+    static function getURI() {
+        return strtolower(self::getAnchoredUrl());
     }
 
     /**
@@ -149,6 +152,9 @@ class WebUrl {
     /**
      * Returns the filename (a.k.a. tokens, but not yet in array
      * form) after the anchor and up to the '?'.
+     * @example
+     * For a URL like "http://www.example.com/s.php/Resource/14/Version:b?etc", the URI
+     * returned will be "Resource/14/Version:b".
      * @return string
      */
     public static function getAnchoredUrl() {
