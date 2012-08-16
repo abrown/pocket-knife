@@ -70,10 +70,18 @@ class Service {
     public $id;
 
     /**
-     * Defines the Content-Type for the current request
+     * Defines the MIME type for the incoming data; is set by
+     * the client in the HTTP Content-Type header
      * @var string 
      */
     public $content_type;
+
+    /**
+     * Defines the MIME type for the outgoing data; is set
+     * by the client in the HTTP Accept header
+     * @var type 
+     */
+    public $accept;
 
     /**
      * Constructor
@@ -108,12 +116,17 @@ class Service {
      * Handles requests, creates instances, and returns result
      */
     public function execute($return_as_string = false) {
-        if (!$this->content_type){
+        // get input/output MIME types
+        if (!$this->content_type) {
             $this->content_type = WebHttp::getContentType();
         }
+        if (!$this->accept) {
+            $this->accept = WebHttp::getAccept();
+        }
+        // handle request
         try {
             // create input representation
-            $representation = new Representation(null, WebHttp::getContentType());
+            $representation = new Representation(null, $this->content_type);
 
             // find what we act upon
             list($resource, $id, $action) = $this->getRouting();
@@ -138,7 +151,7 @@ class Service {
                 $credentials = $this->getAuthentication()->receive($this->content_type);
                 // challenge, if necessary
                 if (!$this->getAuthentication()->isValidCredential($credentials)) {
-                    $this->getAuthentication()->send($this->content_type);
+                    $this->getAuthentication()->send($this->accept);
                     exit();
                 }
             }
@@ -155,14 +168,16 @@ class Service {
             }
 
             // special mappping
-            switch ($this->resource) {
-                case 'admin':
-                    $this->resource = 'SiteAdministration';
-                    break;
-                case 'config':
-                    $this->resource = 'SiteConfiguration';
-                    break;
-            }
+            /*
+              switch ($this->resource) {
+              case 'admin':
+              $this->resource = 'SiteAdministration';
+              break;
+              case 'config':
+              $this->resource = 'SiteConfiguration';
+              break;
+              }
+             */
 
             // create object instance if necessary
             if (!$this->object) {
@@ -170,6 +185,18 @@ class Service {
                     throw new Error('Could not find Resource class: ' . $this->resource, 404);
                 $resource_class = $this->resource;
                 $this->object = new $resource_class();
+            }
+
+            // test cache
+            if (!method_exists($this->object, 'isCacheable')) {
+                throw new Error('Resource must display cacheability using isCacheable() method', 500);
+            }
+            if (!$return_as_string && $this->object->isCacheable()) {
+                $uri = WebUrl::getURI();
+                if (!StorageCache::isModified($uri)) {
+                    StorageCache::sendNotModified();
+                    exit();
+                }
             }
 
             // receive incoming data
@@ -206,7 +233,7 @@ class Service {
             $result = call_user_func_array($callback, array($representation->getData()));
 
             // get representation
-            $representation = new Representation($result, $this->content_type);
+            $representation = new Representation($result, $this->accept);
 
             // output triggers
             $action_trigger = $this->action . '_OUTPUT_TRIGGER';
@@ -227,18 +254,19 @@ class Service {
             // output
             if ($return_as_string) {
                 return (string) $representation;
+            } else {
+                // caching
+                if ($this->object->isCacheable()) {
+                    StorageCache::sendModified(WebUrl::getURI());
+                }
             }
             $representation->send();
         } catch (Error $e) {
             if ($return_as_string) {
                 return (string) $e;
             }
-            // change multipart/form-data to text/html so browsers can recognize it
-            if ($this->content_type == 'multipart/form-data') {
-                $this->content_type = 'text/html';
-            }
             // send error
-            $e->send($this->content_type);
+            $e->send($this->accept);
         }
     }
 
