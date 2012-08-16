@@ -119,6 +119,11 @@ class StorageJson implements StorageInterface {
                 $id = (int) $last + 1;
             else
                 $id = $last . '$1';
+            // save ID in record if necessary
+            if( property_exists($record, 'id') ){
+                $record->id = $id;
+            }
+            // save record
             $this->data->$id = $record;
         }
         $this->isChanged = true;
