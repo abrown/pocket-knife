@@ -78,10 +78,60 @@ class WebHttp {
         }
         // try $_SERVER[CONTENT_TYPE]; may need to set a RewriteRule in .htaccess; see stackoverflow.com/questions/5519802
         if (array_key_exists('CONTENT_TYPE', $_SERVER) && $_SERVER['CONTENT_TYPE']) {
-            return strtok($_SERVER['CONTENT_TYPE'], ';');
+            return trim(strtok($_SERVER['CONTENT_TYPE'], ';'));
         }
         // else
         return 'text/html';
+    }
+
+    /**
+     * Returns the MIME type the client is requesting; 
+     * defaults to 'text/html'
+     * @return string 
+     */
+    static function getAccept() {
+        $accept = 'text/html';
+        // look first in $_GET; allows users to manually specify Accept header
+        if (array_key_exists('accept', $_GET)) {
+            $accept = $_GET['accept'];
+        }
+        // try $_SERVER[HTTP_ACCEPT]
+        else if (array_key_exists('HTTP_ACCEPT', $_SERVER) && $_SERVER['HTTP_ACCEPT']) {
+            $accept = trim(strtok($_SERVER['HTTP_ACCEPT'], ','));
+        }
+        // resolve */*, etc. to our default
+        if (!array_key_exists($accept, Representation::$MAP)) {
+            $accept = 'text/html';
+        }
+        // else
+        return $accept;
+    }
+
+    /**
+     * Return Etag (in If-None-Match header) sent by the client 
+     * in order to determine whether the client's cached resource 
+     * is up-to-date. See RFC2616, Section 13.3.
+     * @return string
+     */
+    static function getIfNoneMatch() {
+        if (array_key_exists('HTTP_IF_NONE_MATCH', $_SERVER) && $_SERVER['HTTP_IF_NONE_MATCH']) {
+            return trim($_SERVER['HTTP_IF_NONE_MATCH'], ' "');
+        }
+        return null;
+    }
+
+    /**
+     * Return If-Modified-Since header sent by the client in order 
+     * to determine whether the client's cached resource is 
+     * up-to-date. See RFC2616, Section 13.3; this recommends
+     * using both Etags and Last-Modifie.
+     * @return int unix time of last update
+     */
+    static function getIfModifiedSince() {
+        if (array_key_exists('HTTP_IF_MODIFIED_SINCE', $_SERVER) && $_SERVER['HTTP_IF_MODIFIED_SINCE']) {
+            return strtotime($_SERVER['HTTP_IF_MODIFIED_SINCE']);
+        }
+        return null;
     }
 
     /**
