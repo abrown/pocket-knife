@@ -28,7 +28,8 @@ class ResourceList extends Resource {
      * Constructor
      */
     public function __construct() {
-        
+        // start transaction processing
+        $this->getStorage()->begin();
     }
 
     /**
@@ -36,7 +37,21 @@ class ResourceList extends Resource {
      * @return string
      */
     public function getURI() {
-        return '/' . strtolower(get_class($this));
+        return strtolower(get_class($this));
+    }
+    
+    /**
+     * Mark the resource changed; updates the cache and commits
+     * to storage. Must be called only after all storage 
+     * modifications are complete.
+     */
+    public function changed() {
+        // update cache
+        if ($this->isCacheable()) {
+            StorageCache::markModified($this->getURI());
+        }
+        // commit transaction
+        $this->getStorage()->commit();
     }
     
     /**
@@ -83,7 +98,6 @@ class ResourceList extends Resource {
      * @return ResourceList
      */
     public function GET() {
-        $this->getStorage()->begin();
         // get filtered resources
         if (WebHttp::getParameter('filter_on')) {
             $key = (string) WebHttp::getParameter('filter_on');
@@ -116,7 +130,6 @@ class ResourceList extends Resource {
             $item->bind($data);
             $this->items[$id] = $item;
         }
-        $this->getStorage()->commit();
         // return
         return $this;
     }
@@ -135,12 +148,12 @@ class ResourceList extends Resource {
             throw new Error('POST requires list items', 400);
         }
         // create
-        $this->getStorage()->begin();
         $ids = array();
         foreach ($list as $item) {
             $ids[] = $this->getStorage()->create($item);
         }
-        $this->getStorage()->commit();
+        // mark changed
+        $this->changed();
         // return
         return $ids;
     }
@@ -160,12 +173,13 @@ class ResourceList extends Resource {
             throw new Error('PUT requires list items', 400);
         }
         // update
-        $this->getStorage()->begin();
         $ids = array();
         foreach ($list as $id => $item) {
             $ids[] = $this->getStorage()->update($item, $id);
         }
-        $this->getStorage()->commit();
+        // mark changed
+        $this->changed();
+        // return
         return $ids;
     }
 
@@ -175,9 +189,10 @@ class ResourceList extends Resource {
      * @return boolean whether the list was successfully deleted
      */
     public function DELETE() {
-        $this->getStorage()->begin();
         $success = $this->getStorage()->deleteAll();
-        $this->getStorage()->commit();
+        // mark changed
+        $this->changed();
+        // return
         return $success;
     }
 
@@ -187,9 +202,7 @@ class ResourceList extends Resource {
      * @return int 
      */
     public function HEAD() {
-        $this->getStorage()->begin();
         $count = $this->getStorage()->count();
-        $this->getStorage()->commit();
         return $count;
     }
 

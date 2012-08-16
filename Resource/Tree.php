@@ -68,6 +68,8 @@ class ResourceTree extends Resource {
                 $this->child->setID($_id);
             }
         }
+        // begin transaction processing
+        $this->getStorage()->begin();
     }
 
     /**
@@ -180,7 +182,7 @@ class ResourceTree extends Resource {
      * @return string
      */
     public function getURI() {
-        $uri = '/' . get_class($this) . '/';
+        $uri = get_class($this) . '/';
         $uri .= ($this->getID() === null ) ? '*' : $this->getID();
         if ($this->child) {
             $uri .= $this->getChild()->getURI();
@@ -225,9 +227,7 @@ class ResourceTree extends Resource {
      */
     public function GET() {
         // get data
-        $this->getStorage()->begin();
         $this->bind($this->getStorage()->read($this->getID()));
-        $this->getStorage()->commit();
         // GET children
         $this->getChild()->GET();
         // return
@@ -241,16 +241,17 @@ class ResourceTree extends Resource {
      * @return mixed
      */
     public function POST($entity) {
-        if ($entity === null)
+        if ($entity === null) {
             throw new Error('No item given to create', 400);
+        }
         // last child
         $last_child = &$this->getLastChild();
         // bind
         $last_child->bind($entity);
         // create
-        $last_child->getStorage()->begin();
         $id = $last_child->getStorage()->create($last_child, $last_child->getID());
-        $last_child->getStorage()->commit();
+        // mark changed
+        $last_child->changed();
         // return
         return $id;
     }
@@ -280,9 +281,9 @@ class ResourceTree extends Resource {
             }
         }
         // update
-        $last_child->getStorage()->begin();
-        $id = $last_child->getStorage()->update($last_child, $last_child->getID());
-        $last_child->getStorage()->commit();
+        $last_child->getStorage()->update($last_child, $last_child->getID());
+        // mark changed
+        $last_child->changed();
         // return
         return $this;
     }
@@ -296,9 +297,9 @@ class ResourceTree extends Resource {
         // last child
         $last_child = &$this->getLastChild();
         // create
-        $last_child->getStorage()->begin();
-        $id = $last_child->getStorage()->delete($last_child->getID());
-        $last_child->getStorage()->commit();
+        $last_child->bind($last_child->getStorage()->delete($last_child->getID()));
+        // mark changed
+        $last_child->changed();
         // return
         return $last_child;
     }
@@ -312,11 +313,9 @@ class ResourceTree extends Resource {
         // last child
         $last_child = &$this->getLastChild();
         // create
-        $last_child->getStorage()->begin();
         if (!$last_child->getStorage()->exists($last_child->getID())) {
             throw new Error($this->getUri() . " does not exist.", 404);
         }
-        $last_child->getStorage()->commit();
     }
 
     /**
@@ -343,7 +342,7 @@ class ResourceTree extends Resource {
         // get children
         if (is_array($this->allowed_children)) {
             foreach ($this->allowed_children as $child) {
-                $response->children[$child] = $this->getChild()->OPTIONS();               
+                $response->children[$child] = $this->getChild()->OPTIONS();
             }
         } else if ($this->allowed_children === true && $this->child !== null) {
             $class_name = get_class($this->getChild());

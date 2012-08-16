@@ -28,8 +28,12 @@ class ResourceItem extends Resource {
      * Constructor
      */
     public function __construct($id = null) {
-        if ($id !== null && $id !== '*')
+        // set ID; * is a wildcard ID
+        if ($id !== null && $id !== '*') {
             $this->setID($id);
+        }
+        // start transaction processing
+        $this->getStorage()->begin();
     }
 
     /**
@@ -37,7 +41,21 @@ class ResourceItem extends Resource {
      * @return string
      */
     public function getURI() {
-        return '/' . strtolower(get_class($this)) . '/' . $this->getID();
+        return strtolower(get_class($this)) . '/' . $this->getID();
+    }
+
+    /**
+     * Mark the resource changed; updates the cache and commits
+     * to storage. Must be called only after all storage 
+     * modifications are complete.
+     */
+    public function changed() {
+        // update cache
+        if ($this->isCacheable()) {
+            StorageCache::markModified($this->getURI());
+        }
+        // commit transaction
+        $this->getStorage()->commit();
     }
 
     /**
@@ -92,9 +110,7 @@ class ResourceItem extends Resource {
      * @return ResourceItem
      */
     public function GET() {
-        $this->getStorage()->begin();
         $this->bind($this->getStorage()->read($this->getID()));
-        $this->getStorage()->commit();
         return $this;
     }
 
@@ -110,9 +126,10 @@ class ResourceItem extends Resource {
         // bind
         $this->bind($entity);
         // create
-        $this->getStorage()->begin();
         $id = $this->getStorage()->create($this, $this->getID());
-        $this->getStorage()->commit();
+        // mark changed
+        $this->changed();
+        // return
         return $id;
     }
 
@@ -139,9 +156,10 @@ class ResourceItem extends Resource {
             }
         }
         // update
-        $this->getStorage()->begin();
         $this->bind($this->getStorage()->update($entity, $this->getID()));
-        $this->getStorage()->commit();
+        // mark changed
+        $this->changed();
+        // return
         return $this;
     }
 
@@ -151,9 +169,11 @@ class ResourceItem extends Resource {
      * @return Resource
      */
     public function DELETE() {
-        $this->getStorage()->begin();
+        // load the resource, then delete it
         $this->bind($this->getStorage()->delete($this->getID()));
-        $this->getStorage()->commit();
+        // mark changed
+        $this->changed();
+        // return
         return $this;
     }
 
@@ -163,11 +183,9 @@ class ResourceItem extends Resource {
      * @return null 
      */
     public function HEAD() {
-        $this->getStorage()->begin();
         if (!$this->getStorage()->exists($this->getID())) {
             throw new Error($this->getUri() . " does not exist.", 404);
         }
-        $this->getStorage()->commit();
     }
 
     /**
