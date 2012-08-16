@@ -85,7 +85,7 @@ class BasicXml {
             $writer->endElement();
         }
         else {
-            throw new Error("Cannot encode an object of type " . gettype($thing));
+            throw new Error("Cannot encode an object of type " . gettype($thing), 400);
         }
     }
 
