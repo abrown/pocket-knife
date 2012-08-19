@@ -120,7 +120,7 @@ class StorageJson implements StorageInterface {
             else
                 $id = $last . '$1';
             // save ID in record if necessary
-            if( property_exists($record, 'id') ){
+            if (property_exists($record, 'id')) {
                 $record->id = $id;
             }
             // save record
@@ -191,16 +191,14 @@ class StorageJson implements StorageInterface {
      * @return array
      */
     public function all($number_of_records = null, $page = null) {
-        if( is_int($number_of_records) ){
-            if( is_int($page) ){
+        if (is_int($number_of_records)) {
+            if (is_int($page)) {
                 $offset = (abs($page) - 1) * $number_of_records;
-            }
-            else{
+            } else {
                 $offset = 0;
             }
             return array_slice((array) $this->data, $offset, $number_of_records, true);
-        }
-        else{
+        } else {
             return (array) $this->data;
         }
     }
@@ -242,8 +240,10 @@ class StorageJson implements StorageInterface {
      * @return mixed
      */
     public function first() {
-        foreach ($this->data as $i => $v) {
-            return $v;
+        if (is_object($this->data)) {
+            foreach ($this->data as $i => $v) {
+                return $v;
+            }
         }
     }
 

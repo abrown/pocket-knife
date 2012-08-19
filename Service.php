@@ -28,13 +28,15 @@ class Service {
     /**
      * Settings for the ACL section; see Acl.php.
      * Defines access to each object/method/id combination; set to true to allow all, false to deny all
-     * @example $this->acl = array('user/29 can access [create, read] by posts/get_allowed/29 in posts');
+     * @example 
+     * $this->acl = array('admin can * posts/*');
+     * $this->acl = array('user/53 cannot POST posts/29');
      * @var mixed
      * */
     public $acl = true;
 
     /**
-     *
+     * 
      * @var mixed
      */
     public $representations = '*';
@@ -101,7 +103,7 @@ class Service {
                     ->isString();
         } catch (Error $e) {
             // send an HTTP response because validation errors may occur before execute() is ever run
-            $e->send(WebHttp::getContentType());
+            $e->send(WebHttp::getAccept());
             exit();
         }
         // import settings
@@ -116,15 +118,16 @@ class Service {
      * Handles requests, creates instances, and returns result
      */
     public function execute($return_as_string = false) {
-        // get input/output MIME types
-        if (!$this->content_type) {
-            $this->content_type = WebHttp::getContentType();
-        }
-        if (!$this->accept) {
-            $this->accept = WebHttp::getAccept();
-        }
         // handle request
         try {
+            // get input/output MIME types
+            if (!$this->content_type) {
+                $this->content_type = $this->getContentType();
+            }
+            if (!$this->accept) {
+                $this->accept = $this->getAccept();
+            }
+
             // create input representation
             $representation = new Representation(null, $this->content_type);
 
@@ -137,34 +140,21 @@ class Service {
             if (!$this->id)
                 $this->id = $id;
 
+            // do security tasks (authenticate, authorize)
+            $this->executeSecurity();
+
             // clear session
             if ($this->resource == 'clear_session') {
                 WebSession::clear();
-                $representation = new Representation("Session cleared.", $this->content_type);
+                $representation = new Representation("Session cleared.", $this->accept);
                 $representation->send();
                 exit();
-            }
-
-            // authenticate user
-            if ($this->getAuthentication() && !$this->getAuthentication()->isLoggedIn()) {
-                // get credentials
-                $credentials = $this->getAuthentication()->receive($this->content_type);
-                // challenge, if necessary
-                if (!$this->getAuthentication()->isValidCredential($credentials)) {
-                    $this->getAuthentication()->send($this->accept);
-                    exit();
-                }
-            }
-
-            // authorize request
-            if ($this->acl === false) {
-                throw new Error("No users can perform the action '{$this->action}' on the resource '$resource.$id'", 403);
-            } elseif ($this->acl !== true) {
-                $user = $this->getAuthentication()->getCurrentUser();
-                $roles = $this->getAuthentication()->getCurrentRoles();
-                if (!$this->getAcl()->isAllowed($user, $roles, $this->action, $this->resource, $this->id)) {
-                    throw new Error("'$user' cannot perform the action '{$this->action}' on the resource '$resource/$id'", 403);
-                }
+            } elseif ($this->resource == 'clear_cache') {
+                // @TODO do not open this to the public
+                // StorageCache::clear();
+                $representation = new Representation("Session cleared.", $this->accept);
+                $representation->send();
+                exit();
             }
 
             // special mappping
@@ -203,16 +193,16 @@ class Service {
             $representation->receive();
 
             // input triggers
-            $action_trigger = $this->action . '_INPUT_TRIGGER';
-            if (method_exists($this->object, $action_trigger)) {
-                $representation = $this->object->$action_trigger($representation);
+            $any_trigger = 'INPUT_TRIGGER';
+            if (method_exists($this->object, $any_trigger)) {
+                $representation = $this->object->$any_trigger($representation);
                 if (!is_a($representation, 'Representation')) {
                     throw new Error('Input triggers must return a Representation', 500);
                 }
             }
-            $any_trigger = 'INPUT_TRIGGER';
-            if (method_exists($this->object, $any_trigger)) {
-                $representation = $this->object->$any_trigger($representation);
+            $action_trigger = $this->action . '_INPUT_TRIGGER';
+            if (method_exists($this->object, $action_trigger)) {
+                $representation = $this->object->$action_trigger($representation);
                 if (!is_a($representation, 'Representation')) {
                     throw new Error('Input triggers must return a Representation', 500);
                 }
@@ -236,16 +226,16 @@ class Service {
             $representation = new Representation($result, $this->accept);
 
             // output triggers
-            $action_trigger = $this->action . '_OUTPUT_TRIGGER';
-            if (method_exists($this->object, $action_trigger)) {
-                $representation = $this->object->$action_trigger($representation);
+            $any_trigger = 'OUTPUT_TRIGGER';
+            if (method_exists($this->object, $any_trigger)) {
+                $representation = $this->object->$any_trigger($representation);
                 if (!is_a($representation, 'Representation')) {
                     throw new Error('Input triggers must return a Representation', 500);
                 }
             }
-            $any_trigger = 'OUTPUT_TRIGGER';
-            if (method_exists($this->object, $any_trigger)) {
-                $representation = $this->object->$any_trigger($representation);
+            $action_trigger = $this->action . '_OUTPUT_TRIGGER';
+            if (method_exists($this->object, $action_trigger)) {
+                $representation = $this->object->$action_trigger($representation);
                 if (!is_a($representation, 'Representation')) {
                     throw new Error('Input triggers must return a Representation', 500);
                 }
@@ -266,8 +256,45 @@ class Service {
                 return (string) $e;
             }
             // send error
+            if (!$this->accept) {
+                $this->accept = 'text/html';
+            }
             $e->send($this->accept);
         }
+    }
+
+    /**
+     * 
+     */
+    public function executeSecurity() {
+        // test ACL for 'deny all'
+        if ($this->acl === false) {
+            throw new Error("No users can perform the action '{$this->action}' on the resource '$resource.$id'", 403);
+        }
+        // test ACL for 'allow'
+        if ($this->getAcl()->isAllowed('*', '*', $this->action, $this->resource, $this->id)) {
+            return true;
+        }
+        // authenticate user
+        if ($this->getAuthentication() && !$this->getAuthentication()->isLoggedIn()) {
+            // get credentials
+            $credentials = $this->getAuthentication()->receive($this->content_type);
+            // challenge, if necessary
+            if (!$this->getAuthentication()->isValidCredential($credentials)) {
+                $this->getAuthentication()->send($this->accept);
+                exit();
+            }
+        }
+        // autorize request
+        if ($this->acl !== true) {
+            $user = $this->getAuthentication()->getCurrentUser();
+            $roles = $this->getAuthentication()->getCurrentRoles();
+            if (!$this->getAcl()->isAllowed($user, $roles, $this->action, $this->resource, $this->id)) {
+                throw new Error("'$user' cannot perform the action '{$this->action}' on the resource '$resource/$id'", 403);
+            }
+        }
+        // return 
+        return true;
     }
 
     /**
@@ -276,16 +303,23 @@ class Service {
      * @return SecurityAuthentication 
      */
     public function getAuthentication() {
-        static $authentication = null;
-        if (is_null($authentication)) {
+        static $auth = null;
+        if (is_null($auth)) {
             if ($this->authentication === false) {
                 $authentication = false;
             } else {
+                // add default memory storage if 'users' list exists
+                if (property_exists($this->authentication, 'users') && is_array($this->authentication->users)) {
+                    $this->authentication->storage = new stdClass();
+                    $this->authentication->storage->type = 'memory';
+                    $this->authentication->storage->data = to_object($this->authentication->users);
+                }
+                // instantiate authentication
                 $class = 'SecurityAuthentication' . ucfirst($this->authentication->authentication_type);
-                $authentication = new $class($this->authentication);
+                $auth = new $class($this->authentication);
             }
         }
-        return $authentication;
+        return $auth;
     }
 
     /**
@@ -296,6 +330,15 @@ class Service {
     public function getAcl() {
         static $acl = null;
         if (is_null($acl)) {
+            // add default memory storage if 'acl' is a list
+            if (is_array($this->acl)) {
+                $rules = $this->acl;
+                $this->acl = new stdClass();
+                $this->acl->storage = new stdClass();
+                $this->acl->storage->type = 'memory';
+                $this->acl->storage->data = to_object($rules);
+            }
+            // instantiate ACL
             $acl = new SecurityAcl($this->acl);
         }
         return $acl;
@@ -324,6 +367,68 @@ class Service {
         }
         // return
         return $routing;
+    }
+
+    /**
+     * Calculate the MIME type of the data the client is sending; this setting
+     * is affected by the 'representations' property--this list of MIME types will
+     * limit allowed Content-Types. If no type is given in the HTTP request, the 
+     * application will default to the first type given in 'representations'.
+     * @return string
+     * @throws Error 
+     */
+    public function getContentType() {
+        // get content-type
+        $content_type = WebHttp::getContentType();
+        // ensure a representation is available
+        if (!array_key_exists($content_type, Representation::$MAP)) {
+            $content_type = 'text/html';
+        }
+        // test for wildcard
+        if ($this->representations == '*') {
+            return $content_type;
+        }
+        // test for header existence
+        if (!$content_type) {
+            return $this->representations[0];
+        }
+        // test if header is valid
+        if (!in_array($content_type, $this->representations)) {
+            throw new Error("This application does not allow the following Content-Type: {$content_type}", 400);
+        }
+        // return
+        return $content_type;
+    }
+
+    /**
+     * Calculate the MIME type to send to the client; this setting
+     * is affected by the 'representations' property--this list of MIME types will
+     * limit allowed Accept types. If no type is given in the HTTP request, the 
+     * application will default to the first type given in 'representations'.
+     * @return string
+     * @throws Error 
+     */
+    public function getAccept() {
+        // get content-type
+        $accept = WebHttp::getAccept();
+        // ensure a representation is available
+        if (!array_key_exists($accept, Representation::$MAP)) {
+            $accept = 'text/html';
+        }
+        // test for wildcard
+        if ($this->representations == '*') {
+            return $accept;
+        }
+        // test for header existence
+        if (!$accept) {
+            return $this->representations[0];
+        }
+        // test if header is valid
+        if (!in_array($accept, $this->representations)) {
+            throw new Error("This application does not allow the following Accept: {$accept}", 400);
+        }
+        // return
+        return $accept;
     }
 
 }

@@ -61,7 +61,7 @@ class WebHttp {
     /**
      * Returns the Content-Type of the incoming HTTP request. Checks the request
      * URI first for a 'content-type' parameter; then uses apache-as-a-module
-     * to find a content-type; defaults to 'text/html'
+     * to find a content-type; defaults to null
      * @return string 
      */
     static function getContentType() {
@@ -81,16 +81,16 @@ class WebHttp {
             return trim(strtok($_SERVER['CONTENT_TYPE'], ';'));
         }
         // else
-        return 'text/html';
+        return null;
     }
 
     /**
      * Returns the MIME type the client is requesting; 
-     * defaults to 'text/html'
+     * defaults to null
      * @return string 
      */
     static function getAccept() {
-        $accept = 'text/html';
+        $accept = null;
         // look first in $_GET; allows users to manually specify Accept header
         if (array_key_exists('accept', $_GET)) {
             $accept = $_GET['accept'];
@@ -98,10 +98,6 @@ class WebHttp {
         // try $_SERVER[HTTP_ACCEPT]
         else if (array_key_exists('HTTP_ACCEPT', $_SERVER) && $_SERVER['HTTP_ACCEPT']) {
             $accept = trim(strtok($_SERVER['HTTP_ACCEPT'], ','));
-        }
-        // resolve */*, etc. to our default
-        if (!array_key_exists($accept, Representation::$MAP)) {
-            $accept = 'text/html';
         }
         // else
         return $accept;

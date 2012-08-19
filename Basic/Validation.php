@@ -110,7 +110,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks for property existence in an object; uses isset() instead of 
+     * Check for property existence in an object; uses isset() instead of 
      * property_existst() to handle classes with property overloading 
      * (i.e. __isset, __unset).
      * @param string $property 
@@ -121,6 +121,20 @@ class BasicValidation {
             throw new Error("'{$this->name}' is not an object.", 416);
         if (!isset($this->value->$property))
             throw new Error("Property '$property' does not exist in '{$this->name}'.", 416);
+        return $this;
+    }
+
+    /**
+     * Check that a property does not exist in an object; uses property_exists()
+     * to ensure the property is not named but has value of null. 
+     * @param string $property 
+     * @return BasicValidation
+     */
+    public function hasNoProperty($property) {
+        if (!is_object($this->value))
+            throw new Error("'{$this->name}' is not an object.", 416);
+        if (property_exists($this->value, $property))
+            throw new Error("Property '$property' must not exist in '{$this->name}'.", 416);
         return $this;
     }
 
@@ -166,7 +180,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks for key existence in an array
+     * Check for key existence in an array
      * @param string $key 
      * @return BasicValidation
      */
@@ -175,6 +189,20 @@ class BasicValidation {
             throw new Error("'{$this->name}' is not an array.", 416);
         if (!isset($this->value[$key]))
             throw new Error("Key '$key' does not exist in '{$this->name}'.", 416);
+        return $this;
+    }
+
+    /**
+     * Check that a key does not exist in an array; uses array_key_exists()
+     * to ensure the key is not named but has value of null. 
+     * @param string $key 
+     * @return BasicValidation
+     */
+    public function hasNoKey($key) {
+        if (!is_object($this->value))
+            throw new Error("'{$this->name}' is not an object.", 416);
+        if (array_key_exists($key, $this->value))
+            throw new Error("Property '$key' must not exist in '{$this->name}'.", 416);
         return $this;
     }
 
@@ -207,7 +235,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether the value in question is one the passed parameters
+     * Check whether the value in question is one the passed parameters
      * @example BasicValidation::with($var)->oneOf('a', 'b', 'c');
      * @param mixed
      * @return BasicValidation 
@@ -227,7 +255,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether this value is null
+     * Check whether this value is null
      * @return BasicValidation 
      */
     public function isNull() {
@@ -244,7 +272,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether this value is boolean
+     * Check whether this value is boolean
      * @return BasicValidation 
      */
     public function isBoolean() {
@@ -261,7 +289,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether this value is an integer
+     * Check whether this value is an integer
      * @return BasicValidation 
      */
     public function isInteger() {
@@ -316,7 +344,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether this value is a float
+     * Check whether this value is a float
      * @return BasicValidation 
      */
     public function isFloat() {
@@ -333,7 +361,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether the given value is numeric
+     * Check whether the given value is numeric
      * @return BasicValidation 
      */
     public function isNumeric() {
@@ -350,7 +378,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether this value is a string
+     * Check whether this value is a string
      * @return BasicValidation 
      */
     public function isString() {
@@ -367,7 +395,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether this value is an array
+     * Check whether this value is an array
      * @return BasicValidation 
      */
     public function isArray() {
@@ -384,7 +412,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether this value is an object
+     * Check whether this value is an object
      * @return BasicValidation 
      */
     public function isObject() {
@@ -401,7 +429,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether the given value is not an object, array, or resoure
+     * Check whether the given value is not an object, array, or resoure
      * @return BasicValidation 
      */
     public function isScalar() {
@@ -418,7 +446,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether the given value is empty
+     * Check whether the given value is empty
      * @return BasicValidation 
      */
     public function isEmpty() {
@@ -435,7 +463,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether the given value is not empty
+     * Check whether the given value is not empty
      * @return BasicValidation 
      */
     public function isNotEmpty() {
@@ -452,7 +480,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether the given string is alpha-numeric
+     * Check whether the given string is alpha-numeric
      * @return BasicValidation 
      */
     public function isAlphanumeric() {
@@ -470,7 +498,29 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether the given value is a valid e-mail address
+     * Check whether the string is under a specified length
+     * @param int $length
+     * @return BasicValidation
+     * @throws Error 
+     */
+    public function hasLengthUnder($length) {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if (!is_string($this->value)) {
+            throw new Error("'{$this->name}' must be a string to have a length under {$length}.", 416);
+        }
+        if( strlen($this->value) >= $length){
+            throw new Error("'{$this->name}' must have a length under {$length}.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Check whether the given value is a valid e-mail address
      * @return BasicValidation 
      */
     public function isEmail() {
@@ -488,7 +538,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether the given value is a valid URL
+     * Check whether the given value is a valid URL
      * @return BasicValidation 
      */
     public function isUrl() {
@@ -507,7 +557,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether the given value is a valid path
+     * Check whether the given value is a valid path
      * @return BasicValidation 
      */
     public function isPath() {
@@ -524,7 +574,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether the given value is a PHP-readable date
+     * Check whether the given value is a PHP-readable date
      * @return BasicValidation 
      */
     public function isDate() {
@@ -541,7 +591,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether the given string is valid HTML
+     * Check whether the given string is valid HTML
      * @return BasicValidation 
      */
     public function isHtml() {// is optional?
@@ -560,7 +610,7 @@ class BasicValidation {
     }
 
     /**
-     * Checks whether the given value is valid SQL
+     * Check whether the given value is valid SQL
      * @return BasicValidation 
      */
     public function isSql() {
@@ -570,6 +620,26 @@ class BasicValidation {
         }
         // test
         throw new Error('Not yet implemented.', 500);
+        // return
+        return $this;
+    }
+
+    /**
+     * Check whether a string conforms to a regular expression
+     * @example
+     * BasicValidation::with(...)->isRegex('/[a-z ]+/i'); // only allow letters and spaces
+     * @param string $regex_pattern
+     * @return BasicValidation
+     */
+    public function matches($regex_pattern) {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if (!preg_match($regex_pattern, $this->value)) {
+            throw new Error("'{$this->name}' does not match the regular expression: {$regex_pattern}.", 416);
+        }
         // return
         return $this;
     }

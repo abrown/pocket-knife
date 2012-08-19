@@ -59,36 +59,6 @@ class ResourceItem extends Resource {
     }
 
     /**
-     * Creates and returns storage object
-     * @return StorageInterface
-     */
-    public function getStorage() {
-        static $storage = null;
-        if (!$storage) {
-            $settings = new Settings($this->storage);
-            // check Settings
-            if (!isset($settings->type))
-                throw new Error('Storage type is not defined', 500);
-            // get class
-            $class = 'Storage' . ucfirst($settings->type);
-            // check parents
-            if (!in_array('StorageInterface', class_implements($class)))
-                throw new Error($class . ' must implement StorageInterface.', 500);
-            // create object
-            $storage = new $class($settings);
-        }
-        return $storage;
-    }
-
-    /**
-     * Sets storage configuration
-     * @param Settings $settings 
-     */
-    public function setStorage($settings) {
-        $this->storage = $settings;
-    }
-
-    /**
      * Returns item ID
      * @return mixed 
      */

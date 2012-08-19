@@ -15,6 +15,14 @@
 class ResourceGeneric extends Resource {
 
     /**
+     * Constructor
+     */
+    public function __construct() {
+        // start transaction processing
+        $this->getStorage()->begin();
+    }
+
+    /**
      * Returns the object URI
      * @return string
      */
@@ -23,19 +31,17 @@ class ResourceGeneric extends Resource {
     }
 
     /**
-     * Initializes the storage object; uses class variables to store data
-     * @return this
+     * Mark the resource changed; updates the cache and commits
+     * to storage. Must be called only after all storage 
+     * modifications are complete.
      */
-    public function setStorage($settings) {
-        return $this;
-    }
-
-    /**
-     * Returns the storage object; uses class variables to store data
-     * @return this
-     */
-    public function getStorage() {
-        return $this;
+    public function changed() {
+        // update cache
+        if ($this->isCacheable()) {
+            StorageCache::markModified($this->getURI());
+        }
+        // commit transaction
+        $this->getStorage()->commit();
     }
 
     /**

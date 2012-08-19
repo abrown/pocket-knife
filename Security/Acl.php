@@ -35,6 +35,48 @@ class SecurityAcl extends ResourceList {
                 $this->$property = $settings->$property;
             }
         }
+        // execute ResourceList constructor
+        parent::__construct();
+        // reformat rules if necessary
+        if( is_string($this->getStorage()->first()) ){
+            //pr($this->getStorage());
+            foreach($this->getStorage()->all() as $id => $rule){
+                $rule = self::parse($rule);
+                $this->getStorage()->update($rule, $id);
+            }
+            $this->changed();
+        }
+    }
+    
+    /**
+     * Parse a string into a list of rules based on the pattern: 
+     * @param type $string 
+     * @return SecurityRule
+     */
+    public static function parse($string){
+        preg_match('@(\S+) (can|cannot) (\S+) (\S+)/(\S*)@', $string, $match);
+        if($match){
+            $name = $match[1];
+            if( $match[2] == 'can' ){
+                $access = true;
+            }
+            else{
+                $access = false;
+            }
+            $action = $match[3];
+            $resource = $match[4];
+            if( !strlen($match[5]) ){
+                $id = '*';
+            }
+            else{
+                $id = $match[5];
+            }
+            // return
+            return new SecurityRule($name, $action, $resource, $id, $access);
+        }
+        // return
+        throw new Error("SecurityRule does not conform to the pattern: [name] can|cannot [action] [resource]/[id]", 500);
+        return null;
     }
 
     /**

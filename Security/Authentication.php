@@ -37,11 +37,16 @@ abstract class SecurityAuthentication extends ResourceList {
     public $password_security = 'encrypted';
 
     /**
+     * Type of item within this list
+     * @var string 
+     */
+    protected $item_type = 'SecurityUser';
+
+    /**
      * Constructor
      * @param Settings
      */
     public function __construct($settings) {
-        parent::__construct();
         // validate
         BasicValidation::with($settings)
                 // https
@@ -77,6 +82,8 @@ abstract class SecurityAuthentication extends ResourceList {
                 WebHttp::redirect($url);
             }
         }
+        // execute ResourceList constructor
+        parent::__construct();
     }
 
     /**
@@ -93,13 +100,13 @@ abstract class SecurityAuthentication extends ResourceList {
      * @return object 
      */
     abstract public function receive($content_type);
-    
+
     /**
      * Authentication methods send a challenge to the client in the requested
      * content-type. 
      */
     abstract public function send($content_type);
-    
+
     /**
      * Returns whether the user is logged in.
      * @return boolean 
@@ -134,17 +141,16 @@ abstract class SecurityAuthentication extends ResourceList {
         // return
         return true;
     }
-    
+
     /**
      * Returns the current user's roles
      * @return array 
      */
-    public function getCurrentRoles(){
+    public function getCurrentRoles() {
         $user = $this->getUser($this->getCurrentUser());
-        if( !isset($user->roles) || !$user->roles ){
+        if (!isset($user->roles) || !$user->roles) {
             return array();
-        }
-        else{
+        } else {
             return $user->roles;
         }
     }
@@ -158,7 +164,8 @@ abstract class SecurityAuthentication extends ResourceList {
         $users = $this->getStorage()->search('username', $username);
         if ($users) {
             $u = current($users);
-            if( is_string($u->roles) ) $u->roles = explode(',', $u->roles);
+            if (is_string($u->roles))
+                $u->roles = explode(',', $u->roles);
             $user = new SecurityUser($u->username, $u->password, array_map('trim', $u->roles));
             return $user;
         }
@@ -171,7 +178,6 @@ abstract class SecurityAuthentication extends ResourceList {
      */
     protected function getPassword($username) {
         $user = $this->getUser($username);
-        pr($user);
         if (is_a($user, 'SecurityUser')) {
             return $user->getPassword($this->password_security, $this->password_secret_key);
         }

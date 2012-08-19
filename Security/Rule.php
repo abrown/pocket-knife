@@ -10,7 +10,7 @@
  * restricting/permitting access to resources
  * @uses ResourceItem, Error
  */
-class SecurityRule extends ResourceItem {
+class SecurityRule {
 
     /**
      * User name or role name
@@ -89,5 +89,4 @@ class SecurityRule extends ResourceItem {
         }
         return $result;
     }
-
 }
