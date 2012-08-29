@@ -325,7 +325,7 @@ class WebTemplate {
             $text = substr($text, 0, $a) . $value . substr($text, $d);
         }
         // tidy code
-        if ($this->tidy && class_exists('tidy')) {
+        if ($this->tidy && class_exists('tidy', false)) {
             $config = array('indent' => true, 'output-xhtml' => true, 'wrap' => 120, 'indent-spaces' => 4);
             $tidy = new tidy();
             $text = $tidy->repairString($text, $config, 'utf8');
