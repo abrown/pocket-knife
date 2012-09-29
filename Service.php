@@ -144,6 +144,7 @@ class Service {
             $this->executeSecurity();
 
             // clear session
+            /*
             if ($this->resource == 'clear_session') {
                 WebSession::clear();
                 $representation = new Representation("Session cleared.", $this->accept);
@@ -156,6 +157,8 @@ class Service {
                 $representation->send();
                 exit();
             }
+             * 
+             */
 
             // special mappping
             /*
@@ -177,15 +180,28 @@ class Service {
                 $this->object = new $resource_class();
             }
 
-            // test cache
+            // cache
             if (!method_exists($this->object, 'isCacheable')) {
                 throw new Error('Resource must display cacheability using isCacheable() method', 500);
             }
             if (!$return_as_string && $this->object->isCacheable()) {
                 $uri = WebUrl::getURI();
-                if (!StorageCache::isModified($uri)) {
-                    StorageCache::sendNotModified();
+                $cache = Cache::getInstance();
+                $cache->GET($uri);
+                // if client has a current resource, use that
+                if ($cache->isClientCurrent()) {
+                    header('HTTP/1.1 304 Not Modified');
                     exit();
+                } 
+                // if the action is GET, use the cached copy
+                elseif($this->action == 'GET') {
+                    $representation = new Representation($cache->resource, $this->accept);
+                    $representation = $this->executeOutputTriggers($cache->resource, $this->action, $representation);
+                    // send headers
+                    header('Etag: "' . $cache->getEtag() . '"');
+                    header('Last-Modified: ' . $cache->getLastModified());
+                    // send resource
+                    $representation->send();
                 }
             }
 
@@ -193,20 +209,7 @@ class Service {
             $representation->receive();
 
             // input triggers
-            $any_trigger = 'INPUT_TRIGGER';
-            if (method_exists($this->object, $any_trigger)) {
-                $representation = $this->object->$any_trigger($representation);
-                if (!is_a($representation, 'Representation')) {
-                    throw new Error('Input triggers must return a Representation', 500);
-                }
-            }
-            $action_trigger = $this->action . '_INPUT_TRIGGER';
-            if (method_exists($this->object, $action_trigger)) {
-                $representation = $this->object->$action_trigger($representation);
-                if (!is_a($representation, 'Representation')) {
-                    throw new Error('Input triggers must return a Representation', 500);
-                }
-            }
+            $representation = $this->executeInputTriggers($this->object, $this->action, $representation);
 
             // set ID
             if (isset($this->id) && method_exists($this->object, 'setID')) {
@@ -226,31 +229,23 @@ class Service {
             $representation = new Representation($result, $this->accept);
 
             // output triggers
-            $any_trigger = 'OUTPUT_TRIGGER';
-            if (method_exists($this->object, $any_trigger)) {
-                $representation = $this->object->$any_trigger($representation);
-                if (!is_a($representation, 'Representation')) {
-                    throw new Error('Input triggers must return a Representation', 500);
-                }
-            }
-            $action_trigger = $this->action . '_OUTPUT_TRIGGER';
-            if (method_exists($this->object, $action_trigger)) {
-                $representation = $this->object->$action_trigger($representation);
-                if (!is_a($representation, 'Representation')) {
-                    throw new Error('Input triggers must return a Representation', 500);
-                }
-            }
+            $representation = $this->executeOutputTriggers($this->object, $this->action, $representation);
 
             // output
             if ($return_as_string) {
                 return (string) $representation;
             } else {
                 // caching
-                if ($this->object->isCacheable()) {
-                    StorageCache::sendModified(WebUrl::getURI());
+                if ($this->object->isCacheable() && $this->action == 'GET') {
+                    $cache = Cache::getInstance();
+                    $cache->PUT($this->object);
+                    // send headers
+                    header('Etag: "' . $cache->getEtag() . '"');
+                    header('Last-Modified: ' . $cache->getLastModified());
                 }
             }
             $representation->send();
+            
         } catch (Error $e) {
             if ($return_as_string) {
                 return (string) $e;
@@ -295,6 +290,58 @@ class Service {
         }
         // return 
         return true;
+    }
+
+    /**
+     * Execute applicable input triggers in the given Resource
+     * @param Resource $object
+     * @param string $action
+     * @param Representation $representation
+     * @return Representation
+     * @throws Error
+     */
+    public function executeInputTriggers($object, $action, $representation) {
+        $any_trigger = 'INPUT_TRIGGER';
+        if (method_exists($this->object, $any_trigger)) {
+            $representation = $this->object->$any_trigger($representation);
+            if (!is_a($representation, 'Representation')) {
+                throw new Error('Input triggers must return a Representation', 500);
+            }
+        }
+        $action_trigger = $this->action . '_INPUT_TRIGGER';
+        if (method_exists($this->object, $action_trigger)) {
+            $representation = $this->object->$action_trigger($representation);
+            if (!is_a($representation, 'Representation')) {
+                throw new Error('Input triggers must return a Representation', 500);
+            }
+        }
+        return $representation;
+    }
+    
+    /**
+     * Execute applicable output triggers in the given Resource
+     * @param Resource $object
+     * @param string $action
+     * @param Representation $representation
+     * @return Representation
+     * @throws Error
+     */
+    public function executeOutputTriggers($object, $action, $representation) {
+        $any_trigger = 'OUTPUT_TRIGGER';
+        if (method_exists($this->object, $any_trigger)) {
+            $representation = $this->object->$any_trigger($representation);
+            if (!is_a($representation, 'Representation')) {
+                throw new Error('Input triggers must return a Representation', 500);
+            }
+        }
+        $action_trigger = $this->action . '_OUTPUT_TRIGGER';
+        if (method_exists($this->object, $action_trigger)) {
+            $representation = $this->object->$action_trigger($representation);
+            if (!is_a($representation, 'Representation')) {
+                throw new Error('Input triggers must return a Representation', 500);
+            }
+        }
+        return $representation;
     }
 
     /**

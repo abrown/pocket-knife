@@ -38,7 +38,7 @@ class ResourceGeneric extends Resource {
     public function changed() {
         // update cache
         if ($this->isCacheable()) {
-            StorageCache::markModified($this->getURI());
+            Cache::getInstance()->PUT($this);
         }
         // commit transaction
         $this->getStorage()->commit();
