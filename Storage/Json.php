@@ -7,15 +7,9 @@
 
 /**
  * Stores JSON records in a JSON file on the local server; uses indexes
- * @uses StorageInterface, Error, Error
+ * @uses StorageInterface, BasicValidation, Settings, Error
  */
 class StorageJson implements StorageInterface {
-
-    /**
-     * Whether the request changes the data
-     * @var boolean 
-     */
-    public $isChanged = false;
 
     /**
      * Stores the path to the JSON database
@@ -24,16 +18,16 @@ class StorageJson implements StorageInterface {
     public $location;
 
     /**
-     * Structure model for each record
-     * @var mixed 
-     */
-    public $schema;
-
-    /**
      * Database data
      * @var mixed 
      */
     protected $data;
+
+    /**
+     * Whether the request changes the data
+     * @var boolean 
+     */
+    protected $isChanged = false;
 
     /**
      * Constructor
@@ -44,13 +38,9 @@ class StorageJson implements StorageInterface {
         if (!$settings || !is_a($settings, 'Settings'))
             throw new Error('StorageJson requires a Settings object', 500);
         // determines what settings must be passed
-        $settings_template = array(
-            'location' => Settings::MANDATORY | Settings::STRING,
-            'schema' => Settings::OPTIONAL
-        );
-        // validate settings
-        $settings->validate($settings_template);
-        // copy settings into this object
+        BasicValidation::with($settings)
+                ->withProperty('location')->isString();
+        // import settings
         foreach ($this as $key => $value) {
             if (isset($settings->$key))
                 $this->$key = $settings->$key;
@@ -66,8 +56,7 @@ class StorageJson implements StorageInterface {
         }
         // read database
         else {
-            $json = file_get_contents($this->location);
-            $this->data = json_decode($json);
+            $this->begin();
         }
     }
 
@@ -75,7 +64,8 @@ class StorageJson implements StorageInterface {
      * Begins transaction
      */
     public function begin() {
-        // TODO: lock records
+        $json = file_get_contents($this->location);
+        $this->data = json_decode($json);
     }
 
     /**
@@ -86,13 +76,15 @@ class StorageJson implements StorageInterface {
             $json = json_encode($this->data);
             file_put_contents($this->location, $json);
         }
+        $this->isChanged = false;
     }
 
     /**
      * Rolls back transaction
      */
     public function rollback() {
-        // TODO: unlock records
+        $this->isChanged = false;
+        $this->begin();
     }
 
     /**
@@ -112,7 +104,7 @@ class StorageJson implements StorageInterface {
         if ($id) {
             $this->data->$id = $record;
         } else {
-            $last = $this->last();
+            $last = $this->getLastID();
             if (is_null($last))
                 $id = 1;
             elseif (is_numeric($last))
@@ -120,7 +112,7 @@ class StorageJson implements StorageInterface {
             else
                 $id = $last . '$1';
             // save ID in record if necessary
-            if (property_exists($record, 'id')) {
+            if (is_object($record) && property_exists($record, 'id')) {
                 $record->id = $id;
             }
             // save record
@@ -236,7 +228,7 @@ class StorageJson implements StorageInterface {
     }
 
     /**
-     * Returns the first element
+     * Return the first element
      * @return mixed
      */
     public function first() {
@@ -248,10 +240,19 @@ class StorageJson implements StorageInterface {
     }
 
     /**
-     * Returns last element
+     * Return the last element
      * @return mixed
      */
     public function last() {
+        $id = $this->getLastID();
+        return $this->data->$id;
+    }
+
+    /**
+     * Return last ID
+     * @return int
+     */
+    public function getLastID() {
         $last = null;
         foreach ($this->data as $i => $v) {
             if ($i > $last)
