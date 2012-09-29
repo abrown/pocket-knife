@@ -19,17 +19,31 @@ function get_base_dir() {
  * @param string $class 
  */
 function autoload($class) {
-    if (class_exists($class, false)){
+    if (class_exists($class, false)) {
         return true;
     }
     $replaced = preg_replace('/([a-z])([A-Z])/', '$1/$2', $class);
     $replaced = str_replace('/', DS, $replaced);
-    $path = get_base_dir() . DS . $replaced . '.php';
-    if (!is_file($path)) {
+    $relative_path = $replaced . '.php';
+    // search pocket-knife directory
+    $path = get_base_dir() . DS . $relative_path;
+    if (is_file($path)) {
+        require $path;
+        return true;
         throw new Error('Class \'' . $class . '\' not found at \'' . $path . '\'', 404);
         return false;
     }
-    require $path;
+    // search include directories
+    $includes = explode(PATH_SEPARATOR, get_include_path());
+    foreach($includes as $include){
+        $path = $include . DS. $relative_path;
+        if(is_file($path)){
+            require $path;
+            return true;
+        }
+    }
+    // error
+    throw new Error("Class '{$class}' not found in either the pocket-knife or include directories; the relative path for the class is '{$relative_path}'. Use add_include_path() to add additional directories to search.", 404); 
     return true;
 }
 
@@ -42,6 +56,15 @@ if (!function_exists('__autoload')) {
         return autoload($class);
     }
 
+}
+
+/**
+ * Add an include path; used by autoload() to find classes
+ * @param string $path
+ * @return string or boolean
+ */
+function add_include_path($path) {
+    return set_include_path(get_include_path() . PATH_SEPARATOR . $path);
 }
 
 /**
