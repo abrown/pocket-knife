@@ -7,9 +7,9 @@
 
 /**
  * Stores records in a CSV file on the local server
- * @uses StorageInterface, Error, Error
+ * @uses StorageInterface, Error, Settings, BasicValidation
  */
-class StorageCSV implements StorageInterface {
+class StorageCsv implements StorageInterface {
 
     /**
      * Whether the request changes the data
@@ -24,12 +24,21 @@ class StorageCSV implements StorageInterface {
     public $location;
 
     /**
-     * Structure model for each record
-     * @var object 
+     * Character separating columns
+     * @var string
      */
-    public $schema;
     public $delimiter = ',';
+
+    /**
+     * Character enclosing columns
+     * @var string
+     */
     public $enclosure = '"';
+
+    /**
+     * Character escape
+     * @var string
+     */
     public $escape = '\\';
 
     /**
@@ -37,6 +46,12 @@ class StorageCSV implements StorageInterface {
      * @var object 
      */
     protected $data;
+
+    /**
+     * Whether the request changes the data
+     * @var boolean
+     */
+    protected $isChanged = false;
 
     /**
      * Constructor
@@ -47,7 +62,11 @@ class StorageCSV implements StorageInterface {
         BasicValidation::with($settings)
                 ->withProperty('location')->isPath()
                 ->upAll()
-                ->withProperty('schema')->isObject();
+                ->withOptionalProperty('enclosure')->isString()
+                ->upAll()
+                ->withOptionalProperty('delimiter')->isString()
+                ->upAll()
+                ->withOptionalProperty('escape')->isString();
         // import settings
         foreach ($this as $property => $value) {
             if (isset($settings->$property)) {
@@ -65,8 +84,7 @@ class StorageCSV implements StorageInterface {
         }
         // read database
         else {
-            $json = file_get_contents($this->location);
-            $this->data = json_decode($json);
+            $this->begin();
         }
     }
 
@@ -116,19 +134,22 @@ class StorageCSV implements StorageInterface {
                 throw new Error("Could not open the file '{$this->location}'", 500);
             }
             // write data to file
-            foreach($this->data as $id => $object){
+            foreach ($this->data as $id => $object) {
                 fputcsv($handle, (array) $object, $this->delimiter, $this->enclosure, $this->escape);
             }
             // close 
             fclose($handle);
         }
+        // clear changed
+        $this->isChanged = false;
     }
 
     /**
      * Rolls back transaction
      */
     public function rollback() {
-        // @todo
+        $this->isChanged = false;
+        $this->begin();
     }
 
     /**
@@ -145,19 +166,23 @@ class StorageCSV implements StorageInterface {
      * @param mixed $id 
      */
     public function create($record, $id = null) {
-        if ($id) {
-            $this->data->$id = $record;
-        } else {
-            $last = $this->last();
+        if (is_null($id)) {
+            $last = $this->getLastID();
             if (is_null($last))
                 $id = 1;
             elseif (is_numeric($last))
                 $id = (int) $last + 1;
             else
                 $id = $last . '$1';
-            $this->data->$id = $record;
+            // save ID in record if necessary
+            if (is_object($record) && property_exists($record, 'id')) {
+                $record->id = $id;
+            }
         }
+        // save
+        $this->data->$id = $record;
         $this->isChanged = true;
+        // return
         return $id;
     }
 
@@ -167,12 +192,14 @@ class StorageCSV implements StorageInterface {
      * @return mixed 
      */
     public function read($id) {
-        if (is_null($id))
+        if (is_null($id)) {
             throw new Error('READ action requires an ID', 400);
-        if (property_exists($this->data, $id))
+        }
+        if (property_exists($this->data, $id)) {
             return $this->data->$id;
-        else
+        } else {
             throw new Error("READ action could not find ID '$id'", 404);
+        }
     }
 
     /**
@@ -181,10 +208,12 @@ class StorageCSV implements StorageInterface {
      * @param mixed $id 
      */
     public function update($record, $id) {
-        if (is_null($id))
+        if (is_null($id)) {
             throw new Error('UPDATE action requires an ID', 400);
-        if (!property_exists($this->data, $id))
+        }
+        if (!property_exists($this->data, $id)) {
             throw new Error("UPDATE action could not find ID '$id'", 400);
+        }
         // change each field
         foreach ($record as $key => $value) {
             $this->data->$id->$key = $value;
@@ -198,10 +227,12 @@ class StorageCSV implements StorageInterface {
      * @param mixed $id 
      */
     public function delete($id) {
-        if (is_null($id))
+        if (is_null($id)) {
             throw new Error('DELETE action requires an ID', 400);
-        if (!property_exists($this->data, $id))
+        }
+        if (!property_exists($this->data, $id)) {
             throw new Error("DELETE action could not find ID '$id'", 400);
+        }
         $record = $this->data->$id;
         unset($this->data->$id);
         $this->isChanged = true;
