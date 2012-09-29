@@ -19,12 +19,6 @@ class ResourceItem extends Resource {
     protected $id;
 
     /**
-     * Stores the storage method
-     * @var StorageInterface
-     */
-    protected $storage;
-
-    /**
      * Constructor
      */
     public function __construct($id = null) {
