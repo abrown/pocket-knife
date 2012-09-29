@@ -34,6 +34,11 @@ class StorageMongo implements StorageInterface{
      * @param type $settings 
      */
     public function __construct($settings = null){
+        // check for Mongo
+        if( !class_exists('Mongo', false) ){
+            throw new Error('Mongo storage is not available because the Mongo PHP extension is not installed. See "http://php.net/manual/en/mongo.installation.php" for instructions.', 500);
+        }
+        // check that settings are of correct type
         if( !$settings || !is_a($settings, 'Settings') ) throw new Error('StoragePdo requires a Settings', 500);
         // determines what Settings must be passed
         $settings_template = array(
