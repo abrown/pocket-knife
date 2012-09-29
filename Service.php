@@ -140,8 +140,8 @@ class Service {
             if (!$this->id)
                 $this->id = $id;
 
-            // do security tasks (authenticate, authorize)
-            $this->executeSecurity();
+            // do security tasks (authenticate, authorize); throws Error
+            self::performSecurityCheck($this, $this);
 
             // clear session
             if ($this->resource == 'clear_session') {
@@ -264,84 +264,80 @@ class Service {
     }
 
     /**
-     * 
+     * Perform a security check on the current request using an ACL and authorization
+     * scheme defined in $settings. In Service context, this can be passed as the 
+     * second parameter.
+     * @example 
+     * // pass $configuration as the first parameter
+     * $configuration = new Settings();
+     * $configuration->representations = array('text/html', 'application/json');
+     * $configuration->set('authentication.enforce_https', false);
+     * $configuration->set('authentication.authentication_type', 'digest');
+     * $configuration->set('authentication.password_security', 'plaintext');
+     * $admin_user = array('username' => 'admin', 'roles' => 'administrator', 'password' => '...');
+     * $configuration->set('authentication.users', array($admin_user));
+     * $configuration->acl = array(
+     *  'admin can * some_resource/*',
+     *  '* can GET another_resource/23 ',
+     * );
      */
-    public function executeSecurity() {
+    public static function performSecurityCheck($settings, $request) {
+        // validate settings
+        BasicValidation::with($settings)
+                ->withProperty('acl')
+                ->upAll()
+                ->withProperty('authentication')
+                ->withProperty('authentication_type')
+                ->oneOf('basic', 'digest', 'facebook', 'header', 'session');
+        // validate request
+        BasicValidation::with($request)
+                ->withOptionalProperty('action')->isString()->upAll()
+                ->withOptionalProperty('resource')->isString()->upAll()
+                ->withOptionalProperty('id')->upAll()
+                ->withProperty('content_type')->isString()->upAll()
+                ->withProperty('accept')->isString();
+        // create URI; used to identify the request in thrown Errors
+        $uri = ($request->resource !== null) ? $request->resource : 'UnnamedResource';
+        $uri .= ($request->id !== null) ? '/' . $request->id : '';
         // test ACL for 'deny all'
-        if ($this->acl === false) {
-            throw new Error("No users can perform the action '{$this->action}' on the resource '$resource.$id'", 403);
+        if ($settings->acl === false) {
+            throw new Error("No users can perform the action '{$request->action}' on the resource '$uri'", 403);
         }
-        // test ACL for 'allow'
-        if ($this->getAcl()->isAllowed('*', '*', $this->action, $this->resource, $this->id)) {
+        // load ACL
+        $acl = new SecurityAcl($settings->acl);
+        // test ACL for 'allow' all
+        if ($acl->isAllowed('*', '*', $request->action, $request->resource, $request->id)) {
             return true;
         }
+        // add default memory storage if 'users' list exists
+        if (property_exists($settings->authentication, 'users') && is_array($settings->authentication->users)) {
+            $settings->authentication->storage = new stdClass();
+            $settings->authentication->storage->type = 'memory';
+            $settings->authentication->storage->data = to_object($settings->authentication->users);
+        }
+        // load authentication
+        $class = 'SecurityAuthentication' . ucfirst($settings->authentication->authentication_type);
+        $auth = new $class($settings->authentication);
         // authenticate user
-        if ($this->getAuthentication() && !$this->getAuthentication()->isLoggedIn()) {
+        if ($auth && !$auth->isLoggedIn()) {
             // get credentials
-            $credentials = $this->getAuthentication()->receive($this->content_type);
+            $credentials = $auth->receive($request->content_type);
             // challenge, if necessary
-            if (!$this->getAuthentication()->isValidCredential($credentials)) {
-                $this->getAuthentication()->send($this->accept);
+            if (!$auth->isValidCredential($credentials)) {
+                $auth->send($request->accept);
                 exit();
             }
         }
-        // autorize request
-        if ($this->acl !== true) {
-            $user = $this->getAuthentication()->getCurrentUser();
-            $roles = $this->getAuthentication()->getCurrentRoles();
-            if (!$this->getAcl()->isAllowed($user, $roles, $this->action, $this->resource, $this->id)) {
-                throw new Error("'$user' cannot perform the action '{$this->action}' on the resource '$resource/$id'", 403);
+        // authorize request
+        if ($acl !== true) {
+            $user = $auth->getCurrentUser();
+            $roles = $auth->getCurrentRoles();
+            if (!$acl->isAllowed($user, $roles, $request->action, $request->resource, $request->id)) {
+                throw new Error("'$user' cannot perform the action '{$request->action}' on the resource '$uri'", 403);
             }
         }
         // return 
         return true;
-    }
-
-    /**
-     * Returns SecurityAuthentication object for this request
-     * @staticvar string $authentication
-     * @return SecurityAuthentication 
-     */
-    public function getAuthentication() {
-        static $auth = null;
-        if (is_null($auth)) {
-            if ($this->authentication === false) {
-                $authentication = false;
-            } else {
-                // add default memory storage if 'users' list exists
-                if (property_exists($this->authentication, 'users') && is_array($this->authentication->users)) {
-                    $this->authentication->storage = new stdClass();
-                    $this->authentication->storage->type = 'memory';
-                    $this->authentication->storage->data = to_object($this->authentication->users);
-                }
-                // instantiate authentication
-                $class = 'SecurityAuthentication' . ucfirst($this->authentication->authentication_type);
-                $auth = new $class($this->authentication);
-            }
-        }
-        return $auth;
-    }
-
-    /**
-     * Returns SecurityAcl object for this request
-     * @staticvar string $authentication
-     * @return SecurityAuthentication 
-     */
-    public function getAcl() {
-        static $acl = null;
-        if (is_null($acl)) {
-            // add default memory storage if 'acl' is a list
-            if (is_array($this->acl)) {
-                $rules = $this->acl;
-                $this->acl = new stdClass();
-                $this->acl->storage = new stdClass();
-                $this->acl->storage->type = 'memory';
-                $this->acl->storage->data = to_object($rules);
-            }
-            // instantiate ACL
-            $acl = new SecurityAcl($this->acl);
-        }
-        return $acl;
     }
 
     /**
