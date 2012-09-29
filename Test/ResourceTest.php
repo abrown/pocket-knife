@@ -8,15 +8,17 @@
 /**
  * Override 'get_http_body' to mock HTTP inputs
  */
-function get_http_body() {
-    return ResourceTest::$REQUEST_BODY;
+if (!function_exists('get_http_body')) {
+    function get_http_body() {
+        return RepresentationTest::$REQUEST_BODY;
+    }
 }
 
 /**
  * Get autoload ready for Library example class
  */
 $path = dirname(dirname(__FILE__));
-require $path . '/start.php';
+require_once $path . '/start.php';
 autoload('BasicClass');
 BasicClass::autoloadAll('Resource');
 

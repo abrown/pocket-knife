@@ -13,7 +13,7 @@ class SettingsTest extends PHPUnit_Framework_TestCase{
     public static function setUpBeforeClass() {
         // start pocket knife
         $path = dirname(dirname(__FILE__));
-        require $path . '/start.php';
+        require_once $path . '/start.php';
         // get code
         autoload('BasicClass');
         BasicClass::autoloadAll('Settings');
@@ -39,7 +39,7 @@ class SettingsTest extends PHPUnit_Framework_TestCase{
         $array = $this->array;
         $config = $this->config;
         // test
-        $this->assertTrue( is_object($config->getInstance()) );
+        $this->assertTrue( is_object($config->getData()) );
         $this->assertEquals($array['one'], $config->one);
         $this->assertEquals($array['list1'][2], $config->list1->{2});
         $this->assertEquals((object) $array['list2'], $config->list2);

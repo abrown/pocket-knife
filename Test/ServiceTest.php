@@ -16,17 +16,21 @@ function file_get_contents($file){
     else return \file_get_contents($file);
 }
 
+/**
+ * Get autoload ready for Library example class
+ */
+$path = dirname(dirname(__FILE__));
+require_once $path . '/start.php';
+autoload('BasicClass');
+\BasicClass::autoloadAll('Service');
+\BasicClass::autoloadAll('ResourceGeneric');
+
 class ServiceTest extends \PHPUnit_Framework_TestCase {
 
     public $instance;
     
     public static function setUpBeforeClass() {
-        // start pocket knife
-        $path = dirname(dirname(__FILE__));
-        require $path . '/start.php';
-        // get code
-        autoload('BasicClass');
-        BasicClass::autoloadAll('Service');
+
     }
 
     public function setUp() {
@@ -78,7 +82,7 @@ class ServiceTest extends \PHPUnit_Framework_TestCase {
  * do not have to worry about storing data; anything that needs
  * storing will be stored in the class instance as a property.
  */
-class UrlShortener extends ResourceGeneric{
+class UrlShortener extends \ResourceGeneric{
     public function shorten($url){
         return substr(md5($url), 0, 10); // real classy...
     }

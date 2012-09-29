@@ -9,7 +9,7 @@ class StartTest extends PHPUnit_Extensions_OutputTestCase {
     public static function setUpBeforeClass() {
         // start pocket knife
         $path = dirname(dirname(__FILE__));
-        require $path . '/start.php';
+        require_once $path . '/start.php';
         // load classes
         autoload('Error');
     }
@@ -26,6 +26,11 @@ class StartTest extends PHPUnit_Extensions_OutputTestCase {
     public function testAutoload() {
         autoload('Service');
         $this->assertContains('Service', get_declared_classes());
+    }
+    
+    public function testAddIncludePath(){
+        add_include_path('/etc');
+        $this->assertRegExp('#/etc#i', get_include_path());
     }
 
     public function testPr() {

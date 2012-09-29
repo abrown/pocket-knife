@@ -9,7 +9,7 @@ class SiteTest extends PHPUnit_Extensions_OutputTestCase {
     public static function setUpBeforeClass() {
         // start pocket knife
         $path = dirname(dirname(__FILE__));
-        require $path . '/start.php';
+        require_once $path . '/start.php';
         // get code
         autoload('BasicClass');
         BasicClass::autoloadAll('Site');
