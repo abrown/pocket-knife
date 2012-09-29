@@ -7,7 +7,7 @@
 
 /**
  * Stores records in memory within this class; best used for testing
- * @uses StorageInterface, Error, BasicValidation
+ * @uses StorageInterface, Error, BasicValidation, Settings
  */
 class StorageMemory implements StorageInterface {
 
@@ -19,9 +19,15 @@ class StorageMemory implements StorageInterface {
 
     /**
      * Database data
-     * @var mixed 
+     * @var array 
      */
     protected $data = array();
+
+    /**
+     * Queue of data to be added/changed in database
+     * @var array
+     */
+    protected $queue = array();
 
     /**
      * Constructor
@@ -42,21 +48,29 @@ class StorageMemory implements StorageInterface {
      * Begins transaction
      */
     public function begin() {
-        // nothing to do
+        $this->queue = array();
     }
 
     /**
      * Completes transaction
      */
     public function commit() {
-        // nothing to do
+        if ($this->isChanged) {
+            foreach ($this->queue as $id => $record) {
+                $this->data[$id] = $record;
+            }
+        }
+        // clear queue
+        $this->queue = array();
+        $this->isChanged = false;
     }
 
     /**
      * Rolls back transaction
      */
     public function rollback() {
-        // nothing to do
+        $this->queue = array();
+        $this->isChanged = false;
     }
 
     /**
@@ -73,13 +87,23 @@ class StorageMemory implements StorageInterface {
      * @param mixed $id 
      */
     public function create($record, $id = null) {
-        if (!is_null($id)) {
-            throw new Error('CREATE ID must be null.', 400);
-        } else {
-            $id = $this->lastID() + 1;
-            $this->data[$id] = $record;
+        if (is_null($id)) {
+            $last = $this->getLastID();
+            if (is_null($last))
+                $id = 1;
+            elseif (is_numeric($last))
+                $id = (int) $last + 1;
+            else
+                $id = $last . '$1';
+            // save ID in record if necessary
+            if (is_object($record) && property_exists($record, 'id')) {
+                $record->id = $id;
+            }
         }
+        // save
+        $this->queue[$id] = $record;
         $this->isChanged = true;
+        // return
         return $id;
     }
 
@@ -107,16 +131,14 @@ class StorageMemory implements StorageInterface {
             throw new Error('UPDATE action requires an ID', 400);
         if (!$this->exists($id))
             throw new Error("UPDATE action could not find ID '$id'", 400);
-        // ensure record is an object
-        if( !is_object($this->data[$id]) ){
-            $this->data[$id] = (object) $this->data[$id];
-        }
+        // ensure record is an object and move to queue
+        $this->queue[$id] = (object) $this->data[$id];
         // change each field
         foreach ($record as $key => $value) {
-            $this->data[$id]->$key = $value;
+            $this->queue[$id]->$key = $value;
             $this->isChanged = true;
         }
-        return $this->data[$id];
+        return $this->queue[$id];
     }
 
     /**
@@ -203,7 +225,8 @@ class StorageMemory implements StorageInterface {
      * @return mixed
      */
     public function last() {
-        $id = $this->lastID();
+        $id = $this->getLastID();
+        pr($id);
         return $this->data[$id];
     }
 
@@ -212,9 +235,14 @@ class StorageMemory implements StorageInterface {
      * @return int
      */
 
-    public function lastID() {
+    public function getLastID() {
+        if ($this->isChanged) {
+            $list = $this->queue;
+        } else {
+            $list = $this->data;
+        }
         $last = null;
-        foreach ($this->data as $i => $v) {
+        foreach ($list as $i => $v) {
             if ($i > $last)
                 $last = $i;
         }
