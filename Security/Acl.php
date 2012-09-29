@@ -23,6 +23,14 @@ class SecurityAcl extends ResourceList {
      * @param Settings $settings 
      */
     public function __construct($settings) {
+        // add default memory storage if settings is a list
+        if (is_array($settings)) {
+            $rules = $settings;
+            $settings = new stdClass();
+            $settings->storage = new stdClass();
+            $settings->storage->type = 'memory';
+            $settings->storage->data = to_object($rules);
+        }
         // validate
         BasicValidation::with($settings)
                 ->withProperty('storage')
@@ -38,37 +46,35 @@ class SecurityAcl extends ResourceList {
         // execute ResourceList constructor
         parent::__construct();
         // reformat rules if necessary
-        if( is_string($this->getStorage()->first()) ){
+        if (is_string($this->getStorage()->first())) {
             //pr($this->getStorage());
-            foreach($this->getStorage()->all() as $id => $rule){
+            foreach ($this->getStorage()->all() as $id => $rule) {
                 $rule = self::parse($rule);
                 $this->getStorage()->update($rule, $id);
             }
             $this->changed();
         }
     }
-    
+
     /**
      * Parse a string into a list of rules based on the pattern: 
      * @param type $string 
      * @return SecurityRule
      */
-    public static function parse($string){
+    public static function parse($string) {
         preg_match('@(\S+) (can|cannot) (\S+) (\S+)/(\S*)@', $string, $match);
-        if($match){
+        if ($match) {
             $name = $match[1];
-            if( $match[2] == 'can' ){
+            if ($match[2] == 'can') {
                 $access = true;
-            }
-            else{
+            } else {
                 $access = false;
             }
             $action = $match[3];
             $resource = $match[4];
-            if( !strlen($match[5]) ){
+            if (!strlen($match[5])) {
                 $id = '*';
-            }
-            else{
+            } else {
                 $id = $match[5];
             }
             // return
