@@ -122,6 +122,11 @@ class SecurityUser extends ResourceItem {
      * @return string
      */
     protected function encrypt($data, $key) {
+        // check for mcrypt
+        if (!function_exists('mcrypt_encrypt')) {
+            throw new Error('User password encryption is not available because php-mcrypt is not installed. On a Debian-based Linux distro, run "sudo apt-get install php5-mcrypt" and restart the web server.', 500);
+        }
+        // encrypt
         $encrypted = mcrypt_encrypt(MCRYPT_RIJNDAEL_256, md5($key), $data, MCRYPT_MODE_CBC, md5(md5($key)));
         return base64_encode($encrypted);
     }
@@ -132,6 +137,11 @@ class SecurityUser extends ResourceItem {
      * @return string
      */
     protected function decrypt($data, $key) {
+        // check for mcrypt
+        if (!function_exists('mcrypt_decrypt')) {
+            throw new Error('User password encryption is not available because php-mcrypt is not installed. On a Debian-based Linux distro, run "sudo apt-get install php5-mcrypt" and restart the web server.', 500);
+        }
+        // decrypt
         $decrypted = mcrypt_decrypt(MCRYPT_RIJNDAEL_256, md5($key), base64_decode($data), MCRYPT_MODE_CBC, md5(md5($key)));
         return rtrim($decrypted, "\0");
     }
