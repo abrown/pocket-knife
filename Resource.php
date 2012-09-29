@@ -16,7 +16,7 @@
  * $output = $resource->HTTP_METHOD($input);
  * // step 3: send
  * $resource->toRepresentation($content_type, $output);
- * @uses Error
+ * @uses Error, Settings
  */
 abstract class Resource {
 
