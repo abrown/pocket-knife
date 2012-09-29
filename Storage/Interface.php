@@ -15,7 +15,7 @@ interface StorageInterface{
      * Setup-related functions
      */
     public function begin();
-//     public function commit();
+    public function commit();
     public function rollback();
     public function isChanged();
 
