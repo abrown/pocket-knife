@@ -246,6 +246,11 @@ class Service {
      *  'admin can * some_resource/*',
      *  '* can GET another_resource/23 ',
      * );
+     * // create request
+     * $request = new stdClass();
+     * list($request->resource, $resource->id, $resource->action) = Service::getRouting();
+     * $request->content_type = WebHttp::getContentType();
+     * $request->accept = WebHttp::getAccept();
      */
     public static function performSecurityCheck($settings, $request) {
         // validate settings
