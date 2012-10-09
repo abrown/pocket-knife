@@ -46,7 +46,7 @@ class ResourceItem extends Resource {
     public function changed() {
         // update cache
         if ($this->isCacheable()) {
-            StorageCache::markModified($this->getURI());
+            Cache::getInstance()->DELETE($this->getURI());
         }
         // commit transaction
         $this->getStorage()->commit();

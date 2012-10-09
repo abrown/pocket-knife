@@ -113,7 +113,7 @@ abstract class Resource {
      */
     public function changed() {
         if ($this->isCacheable()) {
-            StorageCache::markModified($this->getURI());
+            Cache::getInstance()->DELETE($this->getURI());
         }
     }
 
