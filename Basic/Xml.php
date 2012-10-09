@@ -96,7 +96,7 @@ class BasicXml {
      */
     public static function xml_decode($string) {
         if( empty($string) ) return null;
-        $reader = XMLReader::XML($string);
+        $reader = @XMLReader::XML($string);
         $reader->read();
         $variable = BasicXml::_xml_decode($reader);
         return $variable;
@@ -107,8 +107,7 @@ class BasicXml {
      * @param XMLReader $reader
      * @return mixed
      */
-    private function _xml_decode($reader) {
-        //pr($reader->name);
+    private static function _xml_decode($reader) {
         $variable = null;
         // get scalar
         $scalars = array('boolean', 'integer', 'double', 'string', 'null');
