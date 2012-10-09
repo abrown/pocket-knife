@@ -64,7 +64,7 @@ class WebUrl {
      * this from the URL.
      * @return string
      */
-    protected function getAnchor() {
+    static protected function getAnchor() {
         return '.php';
     }
 
@@ -77,9 +77,9 @@ class WebUrl {
      * @staticvar string $site_url
      * @return type 
      */
-    public static function getSiteUrl(){
+    public static function getSiteUrl() {
         static $site_url = null;
-        if( $site_url === null ){
+        if ($site_url === null) {
             $url = self::getUrl();
             $end = strpos($url, '/', 8);
             if ($end !== false)
@@ -89,7 +89,7 @@ class WebUrl {
         }
         return $site_url;
     }
-    
+
     /**
      * Returns the request URL from its beginning through the 
      * directory holding the current script.
@@ -175,6 +175,28 @@ class WebUrl {
     }
 
     /**
+     * Create a URL with the current directory and the given relative URL string.
+     * Relative URLs beginning with a forward slash will be created from the site
+     * top-level; without the forward slash they will be created from the current
+     * directory.
+     * @example
+     * // on a page at http://example.com/dir/index.php/some_resource/23
+     * echo WebUrl::create('style.css');
+     * // echoes 'http://example.com/dir/style.css'
+     * echo WebUrl::create('/style.css');
+     * // echoes 'http://example.com/style.css'
+     * @param string $relative_url
+     * @return string
+     */
+    public static function create($relative_url) {
+        if (strlen($relative_url) && $relative_url[0] == '/') {
+            return self::getSiteUrl() . $relative_url;
+        } else {
+            return self::getDirectoryUrl() . $relative_url;
+        }
+    }
+
+    /**
      * Builds a URL with current location, given tokens, and
      * GET variables (if $pass_get_variables is set).
      * @example
@@ -186,11 +208,11 @@ class WebUrl {
      * @param string $tokens
      * @param boolean $pass_get_variables
      */
-    public static function create($tokens, $pass_get_variables = true) {
+    public static function createAnchoredUrl($tokens, $pass_get_variables = true) {
         if (@$tokens[0] == '/')
             $tokens = substr($tokens, 1);
         $url = self::getLocationUrl() . '/' . $tokens;
-        if( $pass_get_variables ){
+        if ($pass_get_variables) {
             $url .= '?' . http_build_query($_GET);
         }
         return $url;
