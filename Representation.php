@@ -155,9 +155,10 @@ class Representation {
                 break;
             case 'text/html':
                 if ($this->getTemplate()) {
+                    $resource = $this->getData();
                     $this->getTemplate()->setVariable('representation', $this);
-                    $this->getTemplate()->setVariable('resource', $this->getData());
-                    $this->getTemplate()->replace('resource', $this->getData());
+                    $this->getTemplate()->setVariable('resource', $resource);
+                    $this->getTemplate()->replace('resource', $resource);
                     return $this->getTemplate()->toString();
                 }
             case 'text/plain':
