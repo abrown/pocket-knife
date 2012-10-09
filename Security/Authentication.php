@@ -10,7 +10,13 @@
  * @uses BasicValidation, ResourceList, SecurityUser, WebUrl
  */
 abstract class SecurityAuthentication extends ResourceList {
-
+    
+    /**
+     * Do not cache the ACL
+     * @var boolean
+     */
+    protected $cacheable = false;
+    
     /**
      * Forces the session to move to HTTPS
      * @var boolean

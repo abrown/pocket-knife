@@ -11,6 +11,12 @@
  * @uses ResourceList, SecurityRule, BasicValidation
  */
 class SecurityAcl extends ResourceList {
+    
+    /**
+     * Do not cache the ACL
+     * @var boolean
+     */
+    protected $cacheable = false;
 
     /**
      * Sets whether the ACL will be restrictive or permissive by default

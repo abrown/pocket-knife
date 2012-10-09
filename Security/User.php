@@ -12,6 +12,11 @@
  */
 class SecurityUser extends ResourceItem {
 
+    /**
+     * Do not cache the ACL
+     * @var boolean
+     */
+    protected $cacheable = false;
     public $username;
     public $password;
     public $roles = array();
