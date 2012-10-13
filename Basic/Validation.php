@@ -512,7 +512,7 @@ class BasicValidation {
         if (!is_string($this->value)) {
             throw new Error("'{$this->name}' must be a string to have a length under {$length}.", 416);
         }
-        if( strlen($this->value) >= $length){
+        if (strlen($this->value) >= $length) {
             throw new Error("'{$this->name}' must have a length under {$length}.", 416);
         }
         // return
@@ -583,7 +583,7 @@ class BasicValidation {
             return $this;
         }
         // test
-        if (strtotime($this->value) === false) {
+        if (@strtotime($this->value) === false) {
             throw new Error("'{$this->name}' is not a valid date.", 416);
         }
         // return
@@ -639,6 +639,25 @@ class BasicValidation {
         // test
         if (!preg_match($regex_pattern, $this->value)) {
             throw new Error("'{$this->name}' does not match the regular expression: {$regex_pattern}.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
+     * Check whether the current value is a valid Settings object
+     * @return \BasicValidation
+     * @throws Error
+     */
+    public function isSettings() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if ($this->value === null || !is_a($this->value, 'Settings')) {
+            throw new Error("'{$this->name}' is not a valid Settings object; the value being checked must be an instance of the Settings class.", 500);
+                
         }
         // return
         return $this;
