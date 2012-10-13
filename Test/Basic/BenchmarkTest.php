@@ -3,9 +3,10 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-require_once dirname(__FILE__) . '/../Case.php';
 
-class BasicBenchmarkTest extends TestCase {
+require_once dirname(__DIR__).'/start.php';
+
+class BasicBenchmarkTest extends TestCase{
 
     /**
      * Uses the timing functions available in BasicBenchmark

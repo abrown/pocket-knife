@@ -16,7 +16,7 @@ class StorageFileTest extends StorageGeneric {
         // create settings
         $settings = new Settings(array(
                     'location' => get_test_dir() . '/sandbox',
-                    'format' => 'php'
+                    'format' => 'json'
                 ));
         // create instance
         self::$instance = new StorageFile($settings);

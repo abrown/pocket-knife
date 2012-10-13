@@ -4,15 +4,7 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-if (!class_exists('TestCase', false)) {
-    require '../Case.php';
-}
-
-// pre-load ResourceTree
-if (!class_exists('ResourceTree', false)) {
-    TestCase::setUpBeforeClass();
-    BasicClass::autoloadAll('ResourceTree');
-}
+require_once dirname(__DIR__) . '/start.php';
 
 class ResourceTreeTest extends TestCase {
 
@@ -20,8 +12,6 @@ class ResourceTreeTest extends TestCase {
      * Setup
      */
     public static function setUpBeforeClass() {
-        BasicClass::autoloadAll('Resource');
-        BasicClass::autoloadAll('ResourceTree');
         // setup URL
         global $_SERVER;
         $_SERVER['SERVER_NAME'] = 'www.example.com';
@@ -69,31 +59,36 @@ class ResourceTreeTest extends TestCase {
         $tree = new ResourceTree();
         $tree->getChild()->setChild(new stdClass()); // throws error, child must be of type 'level2'
     }
-    
+
     /**
      * Test URI 
      */
-    public function testURI(){
+    public function testURI() {
         $tree = new ResourceTree();
         $this->assertEquals('/ResourceTree/*/level1/35/level2/xyz/level3/92', $tree->getURI());
     }
 
 }
 
+test_autoload('ResourceTree', 'StorageMemory');
+
 class level1 extends ResourceTree {
 
     protected $allowed_children = array('level2');
+    protected $storage = array('type' => 'memory');
 
 }
 
 class level2 extends ResourceTree {
 
     protected $allowed_children = array('level3');
+    protected $storage = array('type' => 'memory');
 
 }
 
 class level3 extends ResourceTree {
 
     protected $allowed_children = false;
+    protected $storage = array('type' => 'memory');
 
 }

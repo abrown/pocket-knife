@@ -4,7 +4,7 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-require_once '../start.php';
+require_once dirname(__DIR__).'/start.php';
 
 class StorageGeneric extends PHPUnit_Framework_TestCase {
 

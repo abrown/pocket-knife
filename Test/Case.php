@@ -16,16 +16,9 @@ class TestCase extends PHPUnit_Framework_TestCase {
      * Set up framework and autoload classes
      */
     public static function setUpBeforeClass() {
-        // start pocket-knife
-        $path = dirname(__DIR__);
-        if (!function_exists('pr'))
-            require $path . '/start.php';
-        // autoload
-        if( !class_exists('BasicClass') ){
-            autoload('BasicClass');
-        }
+        // use test_autoload() from start.php to autoload all required classes for this test
         if (self::getCalledClass() != 'Case') {
-            BasicClass::autoloadAll(self::getCalledClass());
+            test_autoload(self::getCalledClass());
         }
     }
 
@@ -42,21 +35,5 @@ class TestCase extends PHPUnit_Framework_TestCase {
     public function testStub(){
         
     }
-
-//    /**
-//     * Checks that all necessary files have been autoloaded
-//     */
-//    public function testAllFilesAutoloaded() {
-//        try {
-//            $dependencies = BasicClass::findDependencies($this->getCalledClass());
-//            foreach($dependencies as $dependency){
-//                if( in_array($dependency, get_declared_classes())){
-//                    $this->fail("Could not find: ".$dependency);
-//                }
-//            }
-//        } catch (Error $e) {
-//            $this->fail($e->message);
-//        }
-//    }
 
 }

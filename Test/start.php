@@ -6,12 +6,15 @@ function get_test_dir() {
 }
 
 // load pocket-knife
-$path = dirname(dirname(__FILE__));
+$path = dirname(get_test_dir());
 require_once $path . '/start.php';
 
-// load BasicClass
+// load common classes
 autoload('BasicClass');
+autoload('Error');
+autoload('Settings');
 
+// setup test autoload
 function test_autoload() {
     foreach (func_get_args() as $class) {
         BasicClass::autoloadAll($class);
@@ -19,7 +22,7 @@ function test_autoload() {
 }
 
 // load generic storage test
-require_once $path . '/test/Storage/Generic.php';
+//require_once get_test_dir() . '/Storage/Generic.php';
 
-// load Settings class
-autoload('Settings');
+// load generic test case
+require_once get_test_dir() . '/Case.php';
