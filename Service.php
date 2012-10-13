@@ -107,11 +107,7 @@ class Service {
             exit();
         }
         // import settings
-        foreach ($this as $property => $value) {
-            if (isset($settings->$property)) {
-                $this->$property = $settings->$property;
-            }
-        }
+        $settings->copyTo($this);
     }
 
     /**

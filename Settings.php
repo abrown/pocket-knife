@@ -6,12 +6,24 @@
  */
 
 /**
- * Provides a framework for storing, editing, and using configurations.
- * @uses Error, Error
+ * Provides a framework for editing and storing configurations. By using the 
+ * StorageFile storage method, the configuration file is stored in JSON, PHP, or
+ * text format (e.g. "property=value"). The format used is determined by the
+ * file extension: ".php" for PHP, ".json" for JSON, and ".config" for the plain
+ * text format. As well, this class provides the copyTo() method to transfer
+ * data from an instantiated configuration into another object.
+ * @uses Error, StorageFile
  * @example
- * Should work like:
- *  add "Settings::setPath('path/to/Settings.php');"
- *  use "$config = Settings::getdata(); $config['var']; ..."
+ * $config = new Settings('path/to/configuration-file.config');
+ * // use properties directly
+ * echo $config->some_property;
+ * $config->some_property = '...';
+ * // use properties using dot-notation
+ * echo $config->get('some_property.some_array_index');
+ * $config->set('some_property.another_property', '...');
+ * // use copyTo() to transfer configuration data into an object
+ * $class = new Class();
+ * $config->copyTo($class);
  */
 class Settings {
 
@@ -19,56 +31,75 @@ class Settings {
      * Current Settings data
      * @var object 
      */
-    private $data;
+    protected $data;
 
     /**
      * Path to load/save Settings file
      * @var string
      */
-    private $path;
+    protected $path;
 
     /**
      * Records whether the data has been changed
      * @var boolean
      */
-    private $changed = false;
+    protected $changed = false;
 
     /**
-     * Testing rules
+     * Constructor; assume strings are paths, arrays/objects are configurations
+     * @param mixed $list_or_file 
      */
-
-    const MANDATORY = 1;
-    const OPTIONAL = 2;
-    const SINGLE = 4;
-    const MULTIPLE = 8;
-    const STRING = 16;
-    const NUMERIC = 32;
-    const PATH = 64;
-
-    /**
-     * Constructor
-     * @param array $array 
-     */
-    public function __construct($list = null) {
-        if ($list === null) {
-            
-        } elseif (is_string($list)) {
+    public function __construct($list_or_file = null) {
+        if (is_string($list_or_file)) {
             // assume this is a path
-            $this->load($list);
-        } elseif (is_array($list)) {
-            $object = to_object($list);
-            $this->data = $object;
-        } elseif (is_object($list)) {
-            $this->data = $list;
+            $this->load($list_or_file);
+        } elseif (is_array($list_or_file)) {
+            // store as configuration
+            $this->data = $list_or_file;
+            $this->changed = true;
+        } elseif (is_object($list_or_file)) {
+            // store as configuration
+            $this->data = $list_or_file;
+            $this->changed = true;
         }
     }
 
     /**
-     * Returns current Settings data
-     * @return mixed 
+     * Load Settings from file; if given a $path parameter, it will 
+     * set it in the $path property.
+     * @param string $path
      */
-    public function getData() {
-        return $this->data;
+    public function load($path = null) {
+        if ($path !== null) {
+            $this->setPath($path);
+        }
+        // check existence
+        if (!is_file($this->path)) {
+            throw new Error('Could not find settings file: ' . $this->path . '. Ensure the file exists and is readable.', 404);
+        }
+        // use StorageFile to get data
+        $this->data = $this->getStorage()->read($info['filename']);
+    }
+
+    /**
+     * Write the Settings object to file; if given a $path parameter, it will 
+     * set it in the $path property.
+     * @param string $path
+     */
+    public function store($path = null) {
+        if ($path !== null) {
+            $this->setPath($path);
+        }
+        // only store if data is changed
+        if (!$this->changed) {
+            return;
+        }
+        // check existence
+        if (!is_file($this->path)) {
+            throw new Error('Could not find settings file: ' . $this->path . '. Ensure the file exists and is readable.', 404);
+        }
+        // use StorageFile to get data
+        $this->data = $this->getStorage()->create($this->data, $info['filename']);
     }
 
     /**
@@ -76,30 +107,64 @@ class Settings {
      * @param mixed $settings 
      * @param mixed $object
      */
-    static public function toObject($settings, &$object) {
-        if (is_a($settings, 'Settings')) {
-            $settings = $settings->getData();
-        }
+    public function copyTo(&$object) {
         // add to object
-        foreach ($settings as $key => $value) {
-            // check if property exists
-            if (!property_exists($object, $key)) {
-                $class = get_class($object);
-                throw new Error("Object '$class' does not have the property '$key'");
+        foreach ($this->getData() as $key => $value) {
+            // check if property exists and add to the object
+            if (is_object($object) && property_exists($object, $key)) {
+                $object->$key = $value;
             }
-            // add to object
-            $object->$key = $value;
         }
+    }
+
+    /**
+     * Reset data
+     * @return void
+     */
+    public function reset() {
+        $this->changed = true;
+        $this->data = null;
+    }
+
+    /**
+     * Return current data
+     * @return mixed 
+     */
+    public function getData() {
+        return $this->data;
+    }
+
+    /**
+     * Sets path to Settings file
+     * @param string $path
+     * @return boolean
+     */
+    public function setPath($path) {
+        if (!is_file($path))
+            throw new Error('Could not find Settings file given: ' . $path, 500);
+        $this->$path = $path;
+    }
+
+    /**
+     * Return whether the settings have changed.
+     * @return boolean
+     */
+    public function isChanged() {
+        return $this->changed;
     }
 
     /**
      * Checks inaccessible keys in current data for existence
      * @param string $key
      * @return booolean
-     * @example when calling property_exists( $settings, $key );
      * */
     public function __isset($key) {
-        return isset($this->data->$key);
+        if (is_object($this->data) && isset($this->data->$key)) {
+            return true;
+        } elseif (is_array($this->data) && isset($this->data[$key])) {
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -109,10 +174,12 @@ class Settings {
      * @example when calling $settings->some_property
      */
     public function __get($key) {
-        if (!isset($this->data->$key))
-            return null;
-        else
+        if (is_object($this->data) && isset($this->data->$key)) {
             return $this->data->$key;
+        } elseif (is_array($this->data) && isset($this->data[$key])) {
+            return $this->data[$key];
+        }
+        return null;
     }
 
     /**
@@ -123,14 +190,17 @@ class Settings {
      */
     public function get($key) {
         $keys = explode('.', $key);
-        $object = $this->data;
+        $thing = $this->data;
         foreach ($keys as $k) {
-            if (!property_exists($object, $k))
-                return null;
-            else
-                $object = &$object->$k;
+            if (is_object($thing) && property_exists($thing, $k)) {
+                $thing = &$thing->$k;
+            } elseif (is_array($thing) && array_key_exists($k, $thing)) {
+                $thing = &$thing[$k];
+            } else {
+                $thing = null;
+            }
         }
-        return $object;
+        return $thing;
     }
 
     /**
@@ -142,7 +212,11 @@ class Settings {
      */
     public function __set($key, $value) {
         $this->changed = true;
-        $this->data->$key = $value;
+        if (is_object($this->data)) {
+            $this->data->$key = $value;
+        } elseif (is_array($this->data)) {
+            $this->data[$key] = $value;
+        }
     }
 
     /**
@@ -155,299 +229,41 @@ class Settings {
     public function set($key, $value) {
         $this->changed = true;
         $keys = explode('.', $key);
-        $object = &$this->data;
+        $thing = &$this->data;
         foreach ($keys as $k) {
-            if (!property_exists($object, $k))
-                $object->$k = new stdClass();
-            $object = &$object->$k;
+            if (!is_object($thing) && !is_array($thing)) {
+                $thing = new stdClass();
+            }
+            // set
+            if (is_object($thing)) {
+                $thing = &$thing->$k;
+            } elseif (is_array($thing)) {
+                $thing = &$thing[$k];
+            }
         }
-        $object = $value;
+        $thing = $value;
     }
 
     /**
-     * Tests current Settings against a template
-     * @param array $template 
+     * Return StorageFile instance used to read and write configuration files.
+     * @return StorageFile
      */
-    public function validate($template) {
-        if (!is_array($template))
-            throw new Error('Invalid Settings template.', 500);
-        foreach ($template as $key => $rule) {
-            if (!is_numeric($rule))
-                throw new Error("Invalid Settings template rule: '$key' => '$rule'", 500);
-            // rules
-            $value = $this->get($key);
-            $optional = $rule & self::OPTIONAL;
-            $testable = true;
-            if ($optional && is_null($value))
-                $testable = false;
-            if ($rule & self::MANDATORY) {
-                if (is_null($value))
-                    throw new Error("Invalid Settings: must have '$key' key", 500);
+    public function getStorage() {
+        if (!isset($this->_storage)) {
+            // get format
+            $info = pathinfo($this->path);
+            $format = 'config';
+            if ($info['extension'] == 'json') {
+                $format = 'json';
+            } elseif ($info['extension'] == 'php') {
+                $format = 'php';
             }
-            if ($rule & self::SINGLE && $testable) {
-                if (is_array($value) || is_object($value))
-                    throw new Error("Invalid Settings: key '$key' must not contain multiple items", 500);
-            }
-            if ($rule & self::MULTIPLE && $testable) {
-                if (!is_array($value) && !is_object($value))
-                    throw new Error("Invalid Settings: key '$key' must contain multiple items", 500);
-            }
-            if ($rule & self::STRING && $testable) {
-                if (!is_string($value))
-                    throw new Error("Invalid Settings: key '$key' must be a string", 500);
-            }
-            if ($rule & self::NUMERIC && $testable) {
-                if (!is_numeric($value))
-                    throw new Error("Invalid Settings: '$key' must be a number", 500);
-            }
-            if ($rule & self::PATH && $testable) {
-                if (!is_file($value) && !is_dir($value) && !is_link($value))
-                    throw new Error("Invalid Settings: '$key' must be a valid path", 500);
-            }
+            // get location
+            $location = dirname($this->path);
+            // use StorageFile
+            $this->_storage = new StorageFile(new Settings(array('location' => $location, 'format' => $format)));
         }
-        return true;
-    }
-
-    /**
-     * Sets path to Settings file
-     * @param <string> $path
-     * @return <boolean>
-     */
-    public function setPath($path) {
-        if (!is_file($path))
-            throw new Error('Could not find Settings file given: ' . $path, 500);
-        $this->$path = $path;
-        return true;
-    }
-
-    /**
-     * Reset Settings data
-     * @return void
-     */
-    public function reset() {
-        $this->changed = true;
-        $this->data = null;
-    }
-
-    /**
-     * Load Settings from file
-     * @return Settings
-     */
-    public function load($path) {
-        if (!$path || !is_file($path))
-            throw new Error('Could not find Settings file: ' . $path, 500);
-        // save path
-        $this->path = $path;
-        // get configuration from file type
-        $info = pathinfo($path);
-        switch ($info['extension']) {
-            // JSON
-            case 'json':
-                $content = file_get_contents($path);
-                $this->data = json_decode($content);
-                break;
-            // PHP
-            case 'php':
-                include($path);
-                $result = get_defined_vars();
-                unset($result['_'], $result['_SERVER'], $result['argv']);
-                $this->data = to_object($result);
-                break;
-            // LINUX-STYLE
-            // TODO: could probably speed this up
-            case '.config':
-            default:
-                $result = new stdClass();
-                $lines = file($path);
-                $heading = false;
-                foreach ($lines as $line) {
-                    // remove comment
-                    $line = preg_replace('/#.*$/', '', $line);
-                    // empty line
-                    if (preg_match('/^\s*$/m', $lines, $match)) {
-                        continue;
-                    }
-                    // heading change
-                    elseif (preg_match('/^\[(.*)\]\s*$/m', $lines, $match)) {
-                        $heading = $match[1];
-                        $this->data->$heading = new stdClass();
-                        continue;
-                    }
-                    // new key/pair
-                    elseif (strpos($line, '=') !== false) {
-                        list($key, $value) = explode('=', $line);
-                        // get key
-                        $key = trim($key);
-                        // get value
-                        $value = trim($value);
-                        if (strpos($value, ',') !== false) {
-                            $value = explode(',', $value);
-                            array_walk($value, 'trim');
-                        }
-                        // set
-                        if ($heading)
-                            $this->data->$heading->$key = $value;
-                        else
-                            $this->data->$key = $value;
-                    }
-                }
-                break;
-        }
-    }
-
-    /**
-     * Write the Settings object to file
-     * @param Settings $config 
-     */
-    public function store() {
-        if (!is_file($this->path))
-            throw new Error('Could not find Settings file: ' . $config->path, 500);
-        $output = "<?php\n";
-        foreach ($config as $key => $value) {
-            $output .= self::write_key($key, $value) . "\n";
-        }
-        $output .= "?>";
-        return file_put_contents($this->path, $output);
-    }
-
-    /**
-     * Writes a Settings to a JSON file
-     * @param object $config
-     * @param string $path
-     * @return boolean 
-     */
-    static private function writeJson($config, $path) {
-        $json = json_encode($config);
-        return file_put_contents($path, $json);
-    }
-
-    /**
-     * Writes a Settings to a PHP file
-     * @param type $config
-     * @param type $path 
-     * @return boolean
-     */
-    static private function writePhp($config, $path) {
-        $output = "<?php\n";
-        foreach ($config as $key => $value) {
-            $output .= self::writePhpKey($key, $value) . "\n";
-        }
-        $output .= "?>";
-        return file_put_contents($path, $output);
-    }
-
-    /**
-     * Creates a PHP string representing the given $key and $value
-     * @param any $key
-     * @param any $value
-     * @param int $_indent
-     * @return string 
-     */
-    static private function writePhpKey($key, $value, $_indent = 0) {
-        $indent = str_repeat("\t", $_indent);
-        if (is_object($value))
-            throw new Error('Cannot save objects to Settings file', 500);
-        elseif (is_int($value))
-            $format = '%s$%s = %d;';
-        elseif (is_float($value))
-            $format = '%s$%s = %f;';
-        elseif (is_string($value)) {
-            $value = addslashes($value);
-            $format = '%s$%s = \'%s\';';
-        } elseif (is_bool($value))
-            $format = ($value) ? '%s$%s = true;' : '%s$%s = false;';
-        elseif (is_array($value)) {
-            $output = sprintf('%s$%s = array( ', $indent, $key) . "\n";
-            $_indent++;
-            foreach ($value as $_key => $_value) {
-                $line = self::write_key($_key, $_value, $_indent);
-                $line = substr($line, 0, -1) . ',' . "\n"; // replace comma for semi-colon
-                $line = preg_replace('/\$([^ ]+) *=/', '\'$1\' =>', $line, 1); // replace = with =>
-                $output .= $line;
-            }
-            $output .= sprintf('%s); ', $indent);
-            return $output;
-        }
-        // return
-        return sprintf($format, $indent, $key, $value);
-    }
-
-    static public function writeConfig($config, $path) {
-        $output = '';
-        $depth = MathSet::getDepth($config);
-        // case: no headings needed
-        if ($depth < 3) {
-            foreach ($config as $key => $value) {
-                $output .= self::writeConfigKey($key, $value) . "\n";
-            }
-        }
-        // case: headings needed
-        else {
-            // find top-level keys
-            $scalar = array();
-            $non_scalar = array();
-            foreach ($config as $key => $value) {
-                if (is_scalar($value))
-                    $scalar[] = $key;
-                else
-                    $non_scalar[] = $key;
-            }
-            // output
-            foreach ($scalar as $key) {
-                $output .= self::writeConfigKey($key, $config->$key);
-            }
-            foreach ($non_scalar as $key) {
-                $output .= "[$key]\n";
-                $output .= self::writeConfigKey($key, $config->$key);
-                $output .= "\n";
-            }
-        }
-        // write
-        return file_put_contents($path, $output);
-    }
-
-    /**
-     * Writes a config key in linux-style format
-     * @param string $key
-     * @param any $value
-     * @return string 
-     */
-    static private function writeConfigKey($key, $value) {
-        if (is_array($value)) {
-            // test if all keys are integers
-            $keys = array_keys();
-            $all_integer_test = true;
-            foreach ($keys as $key) {
-                if (!is_int($key)) {
-                    $all_integer_test = false;
-                    break;
-                }
-            }
-            // case: numeric array
-            if ($all_integer_test) {
-                $output = sprintf('%s = %s', $key, implode(', ', $value)) . "\n";
-            }
-            // case: associative array
-            else {
-                $output = '';
-                foreach ($value as $k => $v) {
-                    $output .= self::writeConfigKey($key . '.' . $k, $v) . "\n";
-                }
-            }
-        }
-        // case: object
-        elseif (is_object($value)) {
-            $output = '';
-            foreach ($value as $k => $v) {
-                $output .= self::writeConfigKey($key . '.' . $k, $v) . "\n";
-            }
-        }
-        // case: scalars
-        else {
-            $output = sprintf('%s = %s', $key, $value) . "\n";
-        }
-        // return
-        return $output;
+        return $this->_storage;
     }
 
 }

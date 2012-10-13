@@ -32,23 +32,20 @@ class SecurityAcl extends ResourceList {
         // add default memory storage if settings is a list
         if (is_array($settings)) {
             $rules = $settings;
-            $settings = new stdClass();
+            $settings = new Settings();
             $settings->storage = new stdClass();
             $settings->storage->type = 'memory';
             $settings->storage->data = to_object($rules);
         }
         // validate
         BasicValidation::with($settings)
+                ->isSettings()
                 ->withProperty('storage')
                 ->isObject()
                 ->withProperty('type')
                 ->isString();
         // import settings
-        foreach ($this as $property => $value) {
-            if (isset($settings->$property)) {
-                $this->$property = $settings->$property;
-            }
-        }
+        $settings->copyTo($this);
         // execute ResourceList constructor
         parent::__construct();
         // reformat rules if necessary

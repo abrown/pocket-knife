@@ -60,6 +60,7 @@ class StorageCsv implements StorageInterface {
     public function __construct($settings) {
         // validate
         BasicValidation::with($settings)
+                ->isSettings()
                 ->withProperty('location')->isPath()
                 ->upAll()
                 ->withOptionalProperty('enclosure')->isString()
@@ -68,11 +69,7 @@ class StorageCsv implements StorageInterface {
                 ->upAll()
                 ->withOptionalProperty('escape')->isString();
         // import settings
-        foreach ($this as $property => $value) {
-            if (isset($settings->$property)) {
-                $this->$property = $settings->$property;
-            }
-        }
+        $settings->copyTo($this);
         // create database if necessary
         $this->data = new stdClass();
         if (!is_file($this->location)) {

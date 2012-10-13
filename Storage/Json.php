@@ -34,17 +34,12 @@ class StorageJson implements StorageInterface {
      * @param Settings $settings 
      */
     public function __construct($settings) {
-        // check settings
-        if (!$settings || !is_a($settings, 'Settings'))
-            throw new Error('StorageJson requires a Settings object', 500);
-        // determines what settings must be passed
+        // validate
         BasicValidation::with($settings)
+                ->isSettings()
                 ->withProperty('location')->isString();
         // import settings
-        foreach ($this as $key => $value) {
-            if (isset($settings->$key))
-                $this->$key = $settings->$key;
-        }
+        $settings->copyTo($this);
         // create database if necessary
         $this->data = new stdClass();
         if (!is_file($this->location)) {

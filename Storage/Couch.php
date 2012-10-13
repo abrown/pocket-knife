@@ -34,19 +34,20 @@ class StorageCouch implements StorageInterface{
      * @param type $settings 
      */
     public function __construct($settings){
-        if( !$settings|| !is_a($settings, 'Settings') ) throw new Error('StoragePdo requires a Settings', 500);
-        // determines what Settings must be passed
-        $settings_template = array(
-            'location' => Settings::MANDATORY,
-            'port' => Settings::OPTIONAL | Settings::NUMERIC,
-            'database' => Settings::MANDATORY,
-            'username' => Settings::OPTIONAL,
-            'password' => Settings::OPTIONAL
-        );
-        // accepts Settings
-        $settings->validate($settings_template);
-        // copy Settings into this
-        $this->Settings = $settings;   
+        // validate
+        BasicValidation::with($settings)
+                ->isSettings()
+                ->withProperty('location')->isString()
+                ->upAll()
+                ->withOptionalProperty('port')->isNumeric()
+                ->upAll()
+                ->withProperty('database')->isString()
+                ->upAll()
+                ->withProperty('username')->isString()
+                ->upAll()
+                ->withProperty('username')->isString();
+        // import settings
+        $settings->copyTo($this); 
         // make url
         $this->url = 'http://'.$settings->location.':';
         $this->url .= (@$settings->port) ? $settings->port : 5984;

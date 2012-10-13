@@ -41,22 +41,18 @@ class WebPage {
      * @param Settings $settings 
      */
     public function __construct($settings) {
-        // determines what Settings must be passed
-        $settings_template = array(
-            'file' => Settings::MANDATORY,
-            'content_type' => Settings::OPTIONAL,
-            'template' => Settings::OPTIONAL,
-            'ajax' => Settings::OPTIONAL | Settings::MULTIPLE
-        );
-        // accepts Settings
-        if (!$settings || !is_a($settings, 'Settings'))
-            throw new Error('Incorrect Settings given.', 500);
-        $settings->validate($settings_template);
-        // copy Settings into this
-        foreach ($this as $key => $value) {
-            if (isset($settings->$key))
-                $this->$key = $settings->$key;
-        }
+        // validate
+        BasicValidation::with($settings)
+                ->isSettings()
+                ->withProperty('file')->isPath()
+                ->upAll()
+                ->withOptionalProperty('content_type')->isString()
+                ->upAll()
+                ->withOptionalProperty('template')->isPath()
+                ->upAll()
+                ->withOptionalProperty('ajax')->isArray();
+        // import settings
+        $settings->copyTo($this);
     }
 
     /**
@@ -119,7 +115,7 @@ class WebPage {
         $class = $list->getItemType();
         $object = new $class;
         $html[] = "<tr class='head'>";
-        foreach(get_public_vars($object) as $property => $value){
+        foreach (get_public_vars($object) as $property => $value) {
             $html[] = "<th>{$property}</th>";
         }
         $html[] = "<th></th>";
@@ -132,8 +128,8 @@ class WebPage {
                 $property = htmlentities($property);
                 $value = htmlentities($value);
                 $html[] = "<td class='{$_uri}#{$property}'>{$value}</td>";
-             }
-            $html[] = "<td id='{$_uri}#links'>".self::getResourceLinks($item)."</td>";
+            }
+            $html[] = "<td id='{$_uri}#links'>" . self::getResourceLinks($item) . "</td>";
             $html[] = "</tr>";
         }
         // submit

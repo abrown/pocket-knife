@@ -12,7 +12,7 @@
 class StorageFile implements StorageInterface {
 
     /**
-     * Stores the path to the file directory f
+     * Stores the path to the file directory
      * @var string 
      */
     public $location;
@@ -47,21 +47,16 @@ class StorageFile implements StorageInterface {
      * @param Settings $settings 
      */
     public function __construct($settings) {
-        // check settings
-        if (!$settings || !is_a($settings, 'Settings'))
-            throw new Error('StorageFile requires a Settings object', 500);
         // determines what settings must be passed
         BasicValidation::with($settings)
+                ->isSettings()
                 ->withProperty('location')
                 ->isString()
                 ->upOne()
                 ->withProperty('format')
                 ->oneOf('json', 'php', 'config');
         // import settings
-        foreach ($this as $key => $value) {
-            if (isset($settings->$key))
-                $this->$key = $settings->$key;
-        }
+        $settings->copyTo($this);
         // ensure directory exists
         if (!is_dir($this->location)) {
             throw new Error("StorageFile requires a directory in which to store files; the current directory does not exist: '{$this->location}'.", 500);
@@ -363,19 +358,18 @@ class StorageFile implements StorageInterface {
         // return
         return $id;
     }
-    
+
     /**
      * Sort the files in a directory by 
      * @param string $a
      * @param string $b
      * @return int
      */
-    protected static function sort($a, $b){
+    protected static function sort($a, $b) {
         $time = filemtime($a) - filemtime($b);
-        if($time === 0){
+        if ($time === 0) {
             return strcmp($a, $b);
-        }
-        else{
+        } else {
             return $time;
         }
     }

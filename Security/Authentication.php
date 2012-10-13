@@ -55,6 +55,7 @@ abstract class SecurityAuthentication extends ResourceList {
     public function __construct($settings) {
         // validate
         BasicValidation::with($settings)
+                ->isSettings()
                 // https
                 ->withOptionalProperty('enforce_https')
                 ->isBoolean()
@@ -74,11 +75,7 @@ abstract class SecurityAuthentication extends ResourceList {
                 ->withProperty('type')
                 ->isString();
         // import settings
-        foreach ($this as $property => $value) {
-            if (isset($settings->$property)) {
-                $this->$property = $settings->$property;
-            }
-        }
+        $settings->copyTo($this);
         // enforce HTTPS
         if ($this->enforce_https) {
             $first = substr(WebUrl::getUrl(), 0, 5);
