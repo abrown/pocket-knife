@@ -429,6 +429,23 @@ class BasicValidation {
     }
 
     /**
+     * Check whether this value is an object or an array
+     * @return BasicValidation
+     */
+    public function isObjectOrArray() {
+        // is optional?
+        if ($this->isOptional()) {
+            return $this;
+        }
+        // test
+        if (!is_object($this->value) && !is_array($this->value)) {
+            throw new Error("'{$this->name}' is not an object or an array.", 416);
+        }
+        // return
+        return $this;
+    }
+
+    /**
      * Check whether the given value is not an object, array, or resoure
      * @return BasicValidation 
      */
@@ -657,7 +674,6 @@ class BasicValidation {
         // test
         if ($this->value === null || !is_a($this->value, 'Settings')) {
             throw new Error("'{$this->name}' is not a valid Settings object; the value being checked must be an instance of the Settings class.", 500);
-                
         }
         // return
         return $this;
