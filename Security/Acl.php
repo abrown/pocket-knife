@@ -11,7 +11,7 @@
  * @uses ResourceList, SecurityRule, BasicValidation
  */
 class SecurityAcl extends ResourceList {
-    
+
     /**
      * Do not cache the ACL
      * @var boolean
@@ -28,24 +28,23 @@ class SecurityAcl extends ResourceList {
      * Constructor
      * @param Settings $settings 
      */
+
     public function __construct($settings) {
-        // add default memory storage if settings is a list
+        // add default memory storage if settings is a list of rules
         if (is_array($settings)) {
-            $rules = $settings;
-            $settings = new Settings();
-            $settings->storage = new stdClass();
-            $settings->storage->type = 'memory';
-            $settings->storage->data = to_object($rules);
+            $this->storage = array('type' => 'memory', 'data'=> $settings);
         }
         // validate
-        BasicValidation::with($settings)
-                ->isSettings()
-                ->withProperty('storage')
-                ->isObject()
-                ->withProperty('type')
-                ->isString();
-        // import settings
-        $settings->copyTo($this);
+        else {
+            BasicValidation::with($settings)
+                    ->isSettings()
+                    ->withProperty('storage')
+                    ->isObject()
+                    ->withProperty('type')
+                    ->isString();
+            // import settings
+            $settings->copyTo($this);
+        }
         // execute ResourceList constructor
         parent::__construct();
         // reformat rules if necessary
