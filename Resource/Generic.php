@@ -31,20 +31,6 @@ class ResourceGeneric extends Resource {
     }
 
     /**
-     * Mark the resource changed; updates the cache and commits
-     * to storage. Must be called only after all storage 
-     * modifications are complete.
-     */
-    public function changed() {
-        // update cache
-        if ($this->isCacheable()) {
-            Cache::getInstance()->PUT($this);
-        }
-        // commit transaction
-        $this->getStorage()->commit();
-    }
-
-    /**
      * GET a resource; retrieves information identified by request URI
      * (RFC2616, p.53)
      * @return ResourceGeneric 

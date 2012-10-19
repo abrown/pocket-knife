@@ -25,23 +25,25 @@ class Cache extends Resource {
      */
     public function __construct($uri = null) {
         // set ID; * is a wildcard ID
-        if ($uri !== null) {
-            $this->setID($uri);
-        }
+        $this->setURI($uri);
         // start transaction processing
         $this->getStorage()->begin();
     }
 
     /**
-     * Allow static access to the cache
-     * @staticvar null $instance
+     * Allow static access to the cache; every use of this should include a URI.
+     * @param $uri the URI in the cache to interact with
+     * @staticvar Cache $instance
      * @return Cache
      */
-    static public function getInstance() {
+    static public function getInstance($uri) {
         static $instance = null;
         if ($instance === null) {
             $instance = new Cache();
         }
+        // set URI
+        $instance->setURI($uri);
+        // return
         return $instance;
     }
 
@@ -63,31 +65,38 @@ class Cache extends Resource {
 
     /**
      * Mark the resource changed; saves changes to the cache
-     * storage object.
+     * storage object. Overrides changed() in Resource, since that mostly deals
+     * with caching.
      */
-    public function changed() {
+    public function changed($method = null) {
         // commit transaction
         $this->getStorage()->commit();
     }
 
     /**
-     * GET the cached resource
+     * Returns a boolean message informing the client whether
+     * the Resource is cached or not.
+     * @return boolean 
+     */
+    public function HEAD() {
+        return $this->getStorage()->exists($this->getURI());
+    }
+
+    /**
+     * GET the cached resource; loads an instance of the resource into the 
+     * 'resource' property of Cache.
      * @return Resource
      */
-    public function GET($uri = null) {
-        if ($uri === null) {
-            if ($this->getURI() === null) {
-                throw new Error('No URI given to retrieve from cache.', 400);
-            }
-        } else {
-            $this->setURI($uri);
+    public function GET() {
+        // retrieve the cached resource, if it exists
+        if ($this->HEAD($this->getURI())) {
+            // retrieve from cache
+            $this->bind($this->getStorage()->read($this->getURI()));
+            // cast resource
+            $temp = $this->resource;
+            $this->resource = new $this->resource_type;
+            $this->resource->bind($temp);
         }
-        // retrieve from cache
-        $this->bind($this->getStorage()->read($this->getURI()));
-        // cast resource
-        $temp = $this->resource;
-        $this->resource = new $this->resource_type;
-        $this->resource->bind($temp);
         // return
         return $this->resource;
     }
@@ -126,10 +135,11 @@ class Cache extends Resource {
         if ($resource === null || !is_a($resource, 'Resource')) {
             throw new Error('No resource given to update', 400);
         }
+        $already_cached = $this->HEAD();
         // set ID
         $this->setURI($resource->getURI());
         // read
-        if ($this->HEAD()) {
+        if ($already_cached) {
             $this->GET();
         }
         // set properties
@@ -137,8 +147,12 @@ class Cache extends Resource {
         $this->modified = microtime(true);
         $this->resource = $resource;
         $this->resource_type = get_class($resource);
-        // update
-        $this->bind($this->getStorage()->update($this, $this->getURI()));
+        // update/create
+        if ($already_cached) {
+            $this->bind($this->getStorage()->update($this, $this->getURI()));
+        } else {
+            $this->bind($this->getStorage()->create($this, $this->getURI()));
+        }
         // mark changed
         $this->changed();
         // return
@@ -149,29 +163,16 @@ class Cache extends Resource {
      * DELETE a cached resource
      * @return Resource
      */
-    public function DELETE($uri = null) {
-        if ($uri === null) {
-            if ($this->getURI() === null) {
-                throw new Error('No URI given to retrieve from cache.', 400);
-            }
-        } else {
-            $this->setURI($uri);
+    public function DELETE() {
+        // delete the cached resource, if it exists
+        if ($this->HEAD($this->getURI())) {
+            // load the resource, then delete it
+            $this->bind($this->getStorage()->delete($this->getURI()));
+            // mark changed
+            $this->changed();
         }
-        // load the resource, then delete it
-        $this->bind($this->getStorage()->delete($this->getURI()));
-        // mark changed
-        $this->changed();
         // return
         return $this->resource;
-    }
-
-    /**
-     * Returns a boolean message informing the client whether
-     * the Resource is cached or not.
-     * @return boolean 
-     */
-    public function HEAD() {
-        return $this->getStorage()->exists($this->getURI());
     }
 
     /**
@@ -212,7 +213,7 @@ class Cache extends Resource {
      * Return the RFC2822 time the resource was last changed.
      * @return string
      */
-    public function getLastModified($uri) {
+    public function getLastModified() {
         return date('r', (int) $this->modified);
     }
 
@@ -223,7 +224,7 @@ class Cache extends Resource {
      */
     public function isClientCurrent() {
         // check etag
-        $etag = self::getEtag($uri);
+        $etag = self::getEtag($this->getURI());
         if (WebHttp::getIfNoneMatch() && WebHttp::getIfNoneMatch() == $etag) {
             return false;
         }

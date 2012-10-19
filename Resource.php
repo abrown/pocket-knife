@@ -26,13 +26,13 @@ abstract class Resource {
      * @var array
      */
     protected $storage = array('type' => 'json', 'location' => 'db.json');
-    
+
     /**
      * Used to store instantiated storage objects for later re-use.
      * @var StorageInterface 
      */
     protected $_storage;
-    
+
     /**
      * By default, resources are cached on the client-side using
      * ETags. Caching only takes effect on idempotent methods (GET,
@@ -83,7 +83,7 @@ abstract class Resource {
      */
     public function getStorage() {
         if (!property_exists($this, '_storage') || !$this->_storage) {
-            $settings = new Settings($this->storage);
+            $settings = new Settings((object) $this->storage);
             // check Settings
             if (!isset($settings->type))
                 throw new Error('Storage type is not defined', 500);
@@ -111,10 +111,17 @@ abstract class Resource {
      * events, this method can also be overriden to handle transaction-
      * based processing in the storage layer.
      */
-    public function changed() {
+    public function changed($method = null) {
+        // update cache
         if ($this->isCacheable()) {
-            Cache::getInstance()->DELETE($this->getURI());
+            if (WebHttp::getMethod() == 'DELETE') {
+                Cache::getInstance($this->getURI())->DELETE();
+            } else {
+                Cache::getInstance($this->getURI())->PUT($this);
+            }
         }
+        // commit transaction
+        $this->getStorage()->commit();
     }
 
     /**
@@ -129,6 +136,20 @@ abstract class Resource {
                     // todo
                 }
                 $this->$property = $object->$property;
+            }
+        }
+    }
+
+    /**
+     * Bind the given properties to $this; in constrast to bind() this method
+     * will bind to even protected properties, therefore it must be used with
+     * caution.
+     * @param stdClass|array $object
+     */
+    protected function bindProtected($object) {
+        foreach ($object as $property => $value) {
+            if (property_exists($this, $property)) {
+                $this->$property = $value;
             }
         }
     }

@@ -84,6 +84,12 @@ class Service {
      * @var type 
      */
     public $accept;
+    
+    /**
+     * If set true, no caching will occur
+     * @var boolean
+     */
+    public $debug = false;
 
     /**
      * Constructor
@@ -151,24 +157,30 @@ class Service {
             if (!method_exists($this->object, 'isCacheable')) {
                 throw new Error('Resource must display cacheability using isCacheable() method', 500);
             }
-            if (!$return_as_string && $this->object->isCacheable()) {
-                $uri = WebUrl::getURI();
-                $cache = Cache::getInstance();
-                $cache->GET($uri);
-                // if client has a current resource, use that
-                if ($cache->isClientCurrent()) {
-                    header('HTTP/1.1 304 Not Modified');
-                    exit();
-                } 
-                // if the action is GET, use the cached copy
-                elseif($this->action == 'GET') {
-                    $representation = new Representation($cache->resource, $this->accept);
-                    $representation = $this->executeOutputTriggers($cache->resource, $this->action, $representation);
-                    // send headers
-                    header('Etag: "' . $cache->getEtag() . '"');
-                    header('Last-Modified: ' . $cache->getLastModified());
-                    // send resource
-                    $representation->send();
+            if (!$return_as_string && !$this->debug && $this->object->isCacheable()) {
+                $cache = Cache::getInstance(WebUrl::getURI());
+                if ($cache->HEAD()) {
+                    $cache->GET();
+                    // if client has a current resource, use that
+                    if ($cache->isClientCurrent()) {
+                        header('HTTP/1.1 304 Not Modified');
+                        exit();
+                    }
+                    // if the action is GET, use the cached copy
+                    elseif ($this->action == 'GET') {
+                        $representation = new Representation($cache->resource, $this->accept);
+                        $representation = $this->executeOutputTriggers($cache->resource, $this->action, $representation);
+                        // send headers
+                        header('Etag: "' . $cache->getEtag() . '"');
+                        header('Last-Modified: ' . $cache->getLastModified());
+                        // send resource
+                        if ($return_as_string) {
+                            return (string) $representation;
+                        } else {
+                            $representation->send();
+                            return;
+                        }
+                    }
                 }
             }
 
@@ -201,18 +213,20 @@ class Service {
             // output
             if ($return_as_string) {
                 return (string) $representation;
-            } else {
+            } elseif(!$this->debug) {
                 // caching
                 if ($this->object->isCacheable() && $this->action == 'GET') {
-                    $cache = Cache::getInstance();
+                    $cache = Cache::getInstance(WebUrl::getURI());
                     $cache->PUT($this->object);
                     // send headers
                     header('Etag: "' . $cache->getEtag() . '"');
                     header('Last-Modified: ' . $cache->getLastModified());
+                } elseif ($this->object->isCacheable() && $this->action == 'DELETE') {
+                    $cache = Cache::getInstance(WebUrl::getURI());
+                    $cache->DELETE();
                 }
             }
             $representation->send();
-            
         } catch (Error $e) {
             if ($return_as_string) {
                 return (string) $e;
@@ -277,14 +291,14 @@ class Service {
             return true;
         }
         // add default memory storage if 'users' list exists
-        if (property_exists($settings->authentication, 'users') && is_array($settings->authentication->users)) {
-            $settings->authentication->storage = new stdClass();
-            $settings->authentication->storage->type = 'memory';
-            $settings->authentication->storage->data = to_object($settings->authentication->users);
-        }
+//        if (property_exists($settings->authentication, 'users') && is_array($settings->authentication->users)) {
+//            $settings->authentication->storage = new stdClass();
+//            $settings->authentication->storage->type = 'memory';
+//            $settings->authentication->storage->data = to_object($settings->authentication->users);
+//        }
         // load authentication
         $class = 'SecurityAuthentication' . ucfirst($settings->authentication->authentication_type);
-        $auth = new $class($settings->authentication);
+        $auth = new $class(new Settings($settings->authentication));
         // authenticate user
         if ($auth && !$auth->isLoggedIn()) {
             // get credentials
@@ -332,7 +346,7 @@ class Service {
         }
         return $representation;
     }
-    
+
     /**
      * Execute applicable output triggers in the given Resource
      * @param Resource $object
