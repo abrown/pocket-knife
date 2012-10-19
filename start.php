@@ -35,15 +35,15 @@ function autoload($class) {
     }
     // search include directories
     $includes = explode(PATH_SEPARATOR, get_include_path());
-    foreach($includes as $include){
-        $path = $include . DS. $relative_path;
-        if(is_file($path)){
+    foreach ($includes as $include) {
+        $path = $include . DS . $relative_path;
+        if (is_file($path)) {
             require $path;
             return true;
         }
     }
     // error
-    throw new Error("Class '{$class}' not found in either the pocket-knife or include directories; the relative path for the class is '{$relative_path}'. Use add_include_path() to add additional directories to search.", 404); 
+    throw new Error("Class '{$class}' not found in either the pocket-knife or include directories; the relative path for the class is '{$relative_path}'. Use add_include_path() to add additional directories to search.", 404);
     return true;
 }
 
