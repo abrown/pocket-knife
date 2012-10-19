@@ -36,7 +36,7 @@ class StorageMemory implements StorageInterface {
         BasicValidation::with($settings)
                 ->isSettings()
                 ->withOptionalProperty('data')
-                ->isObject();
+                ->isObjectOrArray();
         // import data
         if (isset($settings->data)) {
             $this->data = (array) $settings->data;
