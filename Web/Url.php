@@ -208,7 +208,7 @@ class WebUrl {
      * @param string $tokens
      * @param boolean $pass_get_variables
      */
-    public static function createAnchoredUrl($tokens, $pass_get_variables = true) {
+    public static function createAnchoredUrl($tokens, $pass_get_variables = false) {
         if (@$tokens[0] == '/')
             $tokens = substr($tokens, 1);
         $url = self::getLocationUrl() . '/' . $tokens;
