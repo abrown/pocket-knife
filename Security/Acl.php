@@ -43,13 +43,12 @@ class SecurityAcl extends ResourceList {
                     ->withProperty('type')
                     ->isString();
             // import settings
-            $settings->copyTo($this);
+            $this->bindProtected($settings->getData());
         }
         // execute ResourceList constructor
         parent::__construct();
         // reformat rules if necessary
         if (is_string($this->getStorage()->first())) {
-            //pr($this->getStorage());
             foreach ($this->getStorage()->all() as $id => $rule) {
                 $rule = self::parse($rule);
                 $this->getStorage()->update($rule, $id);

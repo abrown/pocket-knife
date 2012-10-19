@@ -53,6 +53,11 @@ abstract class SecurityAuthentication extends ResourceList {
      * @param Settings
      */
     public function __construct($settings) {
+        if (isset($settings->users) && is_array($settings->users)) {
+            $settings->storage = new stdClass();
+            $settings->storage->type = 'memory';
+            $settings->storage->data = $settings->users;
+        }
         // validate
         BasicValidation::with($settings)
                 ->isSettings()
@@ -70,12 +75,12 @@ abstract class SecurityAuthentication extends ResourceList {
                 ->upOne()->withOptionalProperty('password_security')
                 ->oneOf('plaintext', 'hashed', 'encrypted')
                 // storage
-                ->upOne()->withOptionalProperty('storage')
+                ->upOne()->withProperty('storage')
                 ->isObject()
                 ->withProperty('type')
                 ->isString();
         // import settings
-        $settings->copyTo($this);
+        $this->bindProtected($settings->getData());
         // enforce HTTPS
         if ($this->enforce_https) {
             $first = substr(WebUrl::getUrl(), 0, 5);
