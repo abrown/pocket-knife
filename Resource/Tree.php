@@ -314,10 +314,11 @@ class ResourceTree extends Resource {
             foreach ($this->allowed_children as $child) {
                 $response->children[$child] = $this->getChild()->OPTIONS();
             }
-        } else if ($this->allowed_children === true && $this->child !== null) {
+        }
+        /*else if ($this->allowed_children === true && $this->child !== null) {
             $class_name = get_class($this->getChild());
             $response->children[$class_name] = $this->getChild()->OPTIONS();
-        }
+        }*/
         // return
         return $response;
     }
