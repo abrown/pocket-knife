@@ -46,10 +46,17 @@ class Settings {
     protected $changed = false;
 
     /**
+     * Stores instance of StorageFile used to read/write files
+     * @var StorageFile
+     */
+    protected $_storage;
+
+    /**
      * Constructor; assume strings are paths, arrays/objects are configurations
      * @param mixed $list_or_file 
      */
     public function __construct($list_or_file = null) {
+        $this->data = new stdClass();
         if (is_string($list_or_file)) {
             // assume this is a path
             $this->load($list_or_file);
@@ -75,10 +82,10 @@ class Settings {
         }
         // check existence
         if (!is_file($this->path)) {
-            throw new Error('Could not find settings file: ' . $this->path . '. Ensure the file exists and is readable.', 404);
+            throw new Error('While trying to load the settings file, Settings could not open the file: ' . $this->path . '. Ensure the file exists and is readable.', 404);
         }
         // use StorageFile to get data
-        $this->data = $this->getStorage()->read($info['filename']);
+        $this->data = $this->getStorage()->read($this->getFileName());
     }
 
     /**
@@ -96,10 +103,12 @@ class Settings {
         }
         // check existence
         if (!is_file($this->path)) {
-            throw new Error('Could not find settings file: ' . $this->path . '. Ensure the file exists and is readable.', 404);
+            throw new Error('While trying to store the settings file, Settings could not open the file: ' . $this->path . '. Ensure the file exists and is readable.', 404);
         }
         // use StorageFile to get data
-        $this->data = $this->getStorage()->create($this->data, $info['filename']);
+        $this->getStorage()->begin();
+        $this->getStorage()->create($this->data, $this->getFileName());
+        $this->getStorage()->commit();
     }
 
     /**
@@ -111,7 +120,7 @@ class Settings {
         // add to object
         foreach ($this->getData() as $key => $value) {
             // check if property exists and add to the object
-            if (is_object($object) && property_exists($object, $key)) {
+            if (property_exists($object, $key)) {
                 $object->$key = $value;
             }
         }
@@ -123,7 +132,7 @@ class Settings {
      */
     public function reset() {
         $this->changed = true;
-        $this->data = null;
+        $this->data = new stdClass();
     }
 
     /**
@@ -140,9 +149,13 @@ class Settings {
      * @return boolean
      */
     public function setPath($path) {
-        if (!is_file($path))
-            throw new Error('Could not find Settings file given: ' . $path, 500);
-        $this->$path = $path;
+        if (!is_file($path)) {
+            throw new Error('While trying to set the path to a settings file, Settings could not find file given: ' . $path, 500);
+        }
+        // set new path
+        $this->path = realpath($path);
+        // unset storage so it is refreshed
+        $this->_storage = null;
     }
 
     /**
@@ -264,6 +277,16 @@ class Settings {
             $this->_storage = new StorageFile(new Settings(array('location' => $location, 'format' => $format)));
         }
         return $this->_storage;
+    }
+
+    /**
+     * Return name of the file, without directories or extensions; this is used
+     * as the record ID by StorageFile
+     * @return string
+     */
+    public function getFileName() {
+        $info = pathinfo($this->path);
+        return $info['filename'];
     }
 
 }
