@@ -17,7 +17,7 @@ class BasicBenchmarkTest extends TestCase{
         BasicBenchmark::endTimer();
         $expected = 1.0;
         $actual = BasicBenchmark::getTime();
-        $this->assertLessThan($expected - $actual, 0.0001);
+        $this->assertLessThan($expected - $actual, 0.001);
     }
 
     /**
