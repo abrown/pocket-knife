@@ -22,7 +22,7 @@ function autoload($class) {
     if (class_exists($class, false)) {
         return true;
     }
-    $replaced = preg_replace('/([a-z])([A-Z])/', '$1/$2', $class);
+    $replaced = preg_replace('/([a-z])([A-Z])/', '$1/$2', ucfirst($class));
     $replaced = str_replace('/', DS, $replaced);
     $relative_path = $replaced . '.php';
     // search pocket-knife directory
@@ -30,8 +30,6 @@ function autoload($class) {
     if (is_file($path)) {
         require $path;
         return true;
-        throw new Error('Class \'' . $class . '\' not found at \'' . $path . '\'', 404);
-        return false;
     }
     // search include directories
     $includes = explode(PATH_SEPARATOR, get_include_path());
