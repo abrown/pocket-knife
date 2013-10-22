@@ -582,9 +582,9 @@ class BasicValidation {
         if ($this->isOptional()) {
             return $this;
         }
-        // test
-        if (!is_file($this->value)) {
-            throw new Error("'{$this->name}' is not a valid path.", 416);
+        // test whether the file or folder is accessible
+        if (!file_exists($this->value)) {
+            throw new Error("'{$this->name}', with location '{$this->value}', is not a valid path.", 416);
         }
         // return
         return $this;
