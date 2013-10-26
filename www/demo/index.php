@@ -3,6 +3,8 @@
 /**
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
+ * In 148 lines of PHP and 60 of CSS, this demo builds a mock library system
+ * accessible by both browsers and JSON API clients
  */
 
 require '../../start.php';
