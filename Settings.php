@@ -117,6 +117,7 @@ class Settings {
      * @param mixed $object
      */
     public function copyTo(&$object) {
+        if(!$this->hasData()) return;
         // add to object
         foreach ($this->getData() as $key => $value) {
             // check if property exists and add to the object
@@ -141,6 +142,14 @@ class Settings {
      */
     public function getData() {
         return $this->data;
+    }
+    
+    /**
+     * Test whether data is set
+     * @return boolean
+     */
+    public function hasData(){
+        return is_object($this->getData()) || is_array($this->getData());
     }
 
     /**
