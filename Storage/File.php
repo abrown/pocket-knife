@@ -403,7 +403,7 @@ class StorageFile implements StorageInterface {
         // create necessary directories
         $dir = dirname($path);
         if ($dir !== $this->location) {
-            mkdir($dir, $permissions, true);
+            @mkdir($dir, $permissions, true);
         }
         // create file
         return (boolean) file_put_contents($path, '');
