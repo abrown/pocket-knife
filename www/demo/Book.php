@@ -58,7 +58,6 @@ class Book extends ResourceItem {
                 case 'PUT':
                 case 'POST':
                 case 'DELETE':
-                    Cache::getInstance('library')->DELETE();
                     WebHttp::redirect(WebUrl::createAnchoredUrl('library', false));
                     break;
             }

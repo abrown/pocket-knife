@@ -7,6 +7,7 @@
     <body>
         <header><h1><?php echo $resource->getURI(); ?></h1></header>
         <hr class="title"/>
+        <nav><a href="<?php echo WebUrl::createAnchoredUrl('library'); ?>">Back to Library</a></nav>
         <?php echo WebPage::getResourceTable($resource); ?>
     </body>
 </html>

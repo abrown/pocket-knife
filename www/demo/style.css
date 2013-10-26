@@ -60,3 +60,9 @@ input[type=text]{
 td{
     padding-right: 1em;
 }
+
+/** NAVIGATION **/
+nav{
+    float: right;
+    margin-top: -2em;
+}

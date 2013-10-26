@@ -17,7 +17,7 @@ catch(Error $e){
     WebHttp::redirect(WebUrl::createAnchoredUrl('library'));
 }
 
-// 
+// start service
 $configuration = new Settings();
 $configuration->load('config.json');
 $service = new Service($configuration);
