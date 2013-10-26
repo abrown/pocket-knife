@@ -25,14 +25,14 @@
  * echo $site->search('...'); 
  * @uses Settings, WebTemplate, Error, Error
  */
-class Site{
-    
+class Site {
+
     /**
      * Path to site files
      * @var string 
      */
     public $location = '.';
-    
+
     /**
      * Defines access to each page; set to true to allow all, 
      * false to deny all.
@@ -42,12 +42,12 @@ class Site{
     public $acl = true;
 
     /**
-     * Defines the storage method for storing the site map; see classes 
-     * in Storage for specific parameters required.
+     * Defines the storage method for storing the site map; by default, we point
+     * this to a folder in the current working directory
      * @example $this->storage = array('type'=>'mysql', 'username'=>'test', 'password'=>'password', 'location'=>'localhost', 'database'=>'db');
      * @var array
      * */
-    public $storage = array('type'=>'json', 'location'=>'site-map.json');
+    public $storage = array('type' => 'file', 'location' => 'pages', 'format' => 'raw');
 
     /**
      * Defines the output content-type of the response; setting 
@@ -62,49 +62,46 @@ class Site{
      * @var string
      * */
     public $template;
-    
+
     /**
      * Template to apply to the admin HTML content. If left false,
      * administration will be unavailable.
      * @var string
      */
-    public $admin;
-    
+    public $admin_template;
+
     /**
      * Constructor
      * @param Settings $settings 
      */
-    function __construct($settings){
-        // determines what settings must be passed
-        $settings_template = array(
-            'location' => Settings::MANDATORY | Settings::PATH,
-            'acl' => Settings::MANDATORY,
-            'storage' => Settings::MANDATORY | Settings::MULTIPLE,
-            'output' => Settings::OPTIONAL,
-            'template' => Settings::OPTIONAL | Settings::PATH,
-            'admin' => Settings::OPTIONAL | Settings::PATH
-        );
-        // accepts settings
-        if (!$settings || !is_a($settings, 'Settings'))
-            throw new Error('Incorrect settings given.', 500);
-        $settings->validate($settings_template);
-        // copy settings into this object
-        foreach ($this as $key => $value) {
-            if (isset($settings->$key))
-                $this->$key = $settings->$key;
+    function __construct($settings) {
+        // validate
+        try {
+            BasicValidation::with($settings)
+                    ->withProperty('location')->isPath()->upAll()
+                    ->withOptionalProperty('template')->isPath()->upAll()
+                    ->withOptionalProperty('admin_template')->isPath()->upAll()
+                    ->withOptionalProperty('authentication')->withProperty('authentication_type')->isString()->upAll()
+                    ->withOptionalProperty('representations')->isArray()->withKey(0)->isString();
+        } catch (Error $e) {
+            // send an HTTP response because validation errors may occur before execute() is ever run
+            $e->send(WebHttp::getAccept());
+            exit();
         }
+        // import settings
+        $settings->copyTo($this);
         // absolutize path
         $this->location = realpath($this->location);
     }
-    
+
     /**
      * Returns this object's URI
      * @return string
      */
-    public function getURI( $file = null ){
+    public function getURI($file = null) {
         return WebUrl::getLocationUrl(); // e.g. http://example.com/site.php
     }
-    
+
     /**
      * Executes the site server.
      * @example
@@ -113,82 +110,86 @@ class Site{
      * // 'clear' deletes all index entries to refresh the site map
      * http://example.com/dir/site.php/clear
      */
-    public function execute(){
-    	// send header (if necessary)
-    	if( $this->output ) header( 'Content-Type: '.$this->output );
+    public function execute() {
+        // send header (if necessary)
+        if ($this->output)
+            header('Content-Type: ' . $this->output);
         // get name, find file
         $name = WebUrl::getAnchoredUrl();
         // routing
-        switch($name){
-        	case 'admin':
-        		if( !$this->admin ) throw new Error('Site administration is disabled.', 404);
-        		// create
-        		$admin = new SiteAdministration($this, $this->admin);
-        		$content = $admin->execute();
-        		return;
-        		break;
-        	default:
-        		// get content
-        		$path = $this->find($name);
-		       	if( is_file($path) ) $content = file_get_contents($path);
-				else $content = null;
-				// do templating
-				if ($this->template) {
-					$this->getTemplate()->replace('content', $content);
-					$this->getTemplate()->setVariable('content', $content);
-					$this->getTemplate()->setVariable('name', $name);
-					$this->getTemplate()->setVariable('path', $path);
-					$this->getTemplate()->setVariable('site', $this);
-					$content = $this->getTemplate()->toString();
-				}
+        switch ($name) {
+            case 'admin':
+                if (!$this->admin_template)
+                    throw new Error('Site administration is disabled.', 404);
+                // create
+                $admin = new SiteAdministration($this, $this->admin_template);
+                $content = $admin->execute();
+                return;
+                break;
+            default:
+                // get content
+                $path = $this->find($name);
+                if (is_file($path))
+                    $content = file_get_contents($path);
+                else
+                    $content = null;
+                // do templating
+                if ($this->template) {
+                    $this->getTemplate()->replace('content', $content);
+                    $this->getTemplate()->setVariable('content', $content);
+                    $this->getTemplate()->setVariable('name', $name);
+                    $this->getTemplate()->setVariable('path', $path);
+                    $this->getTemplate()->setVariable('site', $this);
+                    $content = $this->getTemplate()->toString();
+                }
         }
         // output
         echo $content;
     }
-    
+
     /**
      * Invokes administration section
      * @return string
      */
-    public function executeAdmin(){
-    	return '<h2>TODO: Admin section</h2>';
+    public function executeAdmin() {
+        return '<h2>TODO: Admin section</h2>';
     }
-    
+
     /**
      * Clears the site map index and returns an HTML message.
      * @return string
      */
-    public function executeClearIndex(){
-    	$this->getStorage()->begin();
-    	$this->getStorage()->deleteAll();
-    	$this->getStorage()->commit();
-    	return '<h2>Site map index cleared.</h2>';
+    public function executeClearIndex() {
+        $this->getStorage()->begin();
+        $this->getStorage()->deleteAll();
+        $this->getStorage()->commit();
+        return '<h2>Site map index cleared.</h2>';
     }
-    
+
     /**
      * Returns an absolute path when given a filename relative 
      * to the site, e.g. folder/index.html
      * @param string $filename
      * @return string path to file
      */
-    public function find( $filename ){
-        $path = $this->location . DS. $filename;
+    public function find($filename) {
+        $path = $this->location . DS . $filename;
         // readability check
-        if( !is_readable($path) ) throw new Error("File {$path} is not readable.", 404);
+        if (!is_readable($path))
+            throw new Error("File {$path} is not readable.", 404);
         // access check, TODO
-        
         // return
         return $path;
     }
-    
+
     /**
      * Searches for a text string within the site
      * TODO:
      */
-    public function search( $query ){
+    public function search($query) {
         // TODO: implement index
     }
-    
+
     /**
      * Returns a site map: a list of all files located within 
      * $this->location. It will filter out all files beginning 
@@ -197,34 +198,35 @@ class Site{
      * the cache.
      * @return array
      */
-    public function getSiteMap(){
+    public function getSiteMap() {
         // run spider?
         $empty = $this->getStorage()->count() < 1;
         $stale = $empty ? true : time() > $this->getStorage()->getLastModified() + 86400; // more than a day old
-        if( $empty || $stale  ){
+        if ($empty || $stale) {
             // begin
             $this->getStorage()->begin();
             $this->getStorage()->deleteAll();
             // crawl through files
-            $stack = array( $this->location );
+            $stack = array($this->location);
             // iteratively search for files
-            while( $stack ){
-            	$current_directory = array_pop($stack);
-            	foreach( scandir($current_directory) as $file ){
-            		// filter
-            		if( $file[0] == '.' ) continue;
-            		// make absolute path
-            		$absolute_path = $current_directory.DS.$file;
-            		// case: directory
-            		if( is_dir($absolute_path) ){
-            			array_push($stack, $absolute_path);
-            		}
-            		// case: file
-            		if( is_file($absolute_path) ){
-				$relative_path = str_ireplace($this->location.DS, '', $absolute_path);
-            			$this->getStorage()->create($relative_path);
-            		}
-            	}
+            while ($stack) {
+                $current_directory = array_pop($stack);
+                foreach (scandir($current_directory) as $file) {
+                    // filter
+                    if ($file[0] == '.')
+                        continue;
+                    // make absolute path
+                    $absolute_path = $current_directory . DS . $file;
+                    // case: directory
+                    if (is_dir($absolute_path)) {
+                        array_push($stack, $absolute_path);
+                    }
+                    // case: file
+                    if (is_file($absolute_path)) {
+                        $relative_path = str_ireplace($this->location . DS, '', $absolute_path);
+                        $this->getStorage()->create($relative_path);
+                    }
+                }
             }
             // commit
             //$this->getStorage()->create(time(), '_updated');
@@ -233,7 +235,7 @@ class Site{
         // return
         return $this->getStorage()->all();
     }
-    
+
     /**
      * Creates and returns the applicable template for this request.
      * Must be public because it is accessed by SiteAdministration.
@@ -247,7 +249,7 @@ class Site{
         }
         return $object;
     }
-    
+
     /**
      * Returns the storage object for this request.
      * Must be public because it is accessed by SiteAdministration.
@@ -258,16 +260,17 @@ class Site{
         if (!$object) {
             $settings = new Settings($this->storage);
             // check Settings
-            if ( !isset($settings->type) )
+            if (!isset($settings->type))
                 throw new Error('Storage type is not defined', 500);
             // get class
-            $class = 'Storage'.ucfirst($settings->type);
+            $class = 'Storage' . ucfirst($settings->type);
             // check parents
             if (!in_array('StorageInterface', class_implements($class)))
-                throw new Error($class.' must implement StorageInterface.', 500);
+                throw new Error($class . ' must implement StorageInterface.', 500);
             // create object
             $object = new $class($settings);
         }
         return $object;
     }
+
 }

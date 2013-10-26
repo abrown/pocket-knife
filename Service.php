@@ -84,12 +84,6 @@ class Service {
      * @var type 
      */
     public $accept;
-    
-    /**
-     * If set true, no caching will occur
-     * @var boolean
-     */
-    public $debug = false;
 
     /**
      * Constructor
@@ -99,14 +93,9 @@ class Service {
         // validate
         try {
             BasicValidation::with($settings)
-                    ->withOptionalProperty('authentication')
-                    ->withProperty('authentication_type')
-                    ->isString()
-                    ->upAll()
-                    ->withProperty('representations')
-                    ->isArray()
-                    ->withKey(0)
-                    ->isString();
+                    ->withOptionalProperty('authentication');
+            //->withProperty('authentication_type')->isString()->upAll();
+            //->withOptionalProperty('representations')->isArray()->withKey(0)->isString();
         } catch (Error $e) {
             // send an HTTP response because validation errors may occur before execute() is ever run
             $e->send(WebHttp::getAccept());
@@ -152,22 +141,26 @@ class Service {
                 $resource_class = $this->resource;
                 $this->object = new $resource_class();
             }
+            // set object ID
+            if (isset($this->id) && method_exists($this->object, 'setID')) {
+                $this->object->setID($this->id);
+            }
 
-            // cache
+            // check cache
             if (!method_exists($this->object, 'isCacheable')) {
                 throw new Error('Resource must display cacheability using isCacheable() method', 500);
             }
-            if (!$return_as_string && !$this->debug && $this->object->isCacheable()) {
+            if (!$return_as_string && !DEBUGGING && $this->object->isCacheable()) {
                 $cache = Cache::getInstance(WebUrl::getURI());
-                if ($cache->HEAD()) {
+                if ($cache->HEAD() && $this->action == 'GET') {
                     $cache->GET();
                     // if client has a current resource, use that
                     if ($cache->isClientCurrent()) {
                         header('HTTP/1.1 304 Not Modified');
                         exit();
                     }
-                    // if the action is GET, use the cached copy
-                    elseif ($this->action == 'GET') {
+                    // otherwise, use the cached copy
+                    else {
                         $representation = new Representation($cache->resource, $this->accept);
                         $representation = $this->executeOutputTriggers($cache->resource, $this->action, $representation);
                         // send headers
@@ -190,10 +183,6 @@ class Service {
             // input triggers
             $representation = $this->executeInputTriggers($this->object, $this->action, $representation);
 
-            // set ID
-            if (isset($this->id) && method_exists($this->object, 'setID')) {
-                $this->object->setID($this->id);
-            }
             // call method
             if (!in_array($this->action, array('GET', 'PUT', 'POST', 'DELETE', 'HEAD', 'OPTIONS'))) {
                 throw new Error("Method '{$this->action}' is an invalid HTTP method; request OPTIONS for valid methods.", 405);
@@ -213,7 +202,7 @@ class Service {
             // output
             if ($return_as_string) {
                 return (string) $representation;
-            } elseif(!$this->debug) {
+            } elseif (!DEBUGGING) {
                 // caching
                 if ($this->object->isCacheable() && $this->action == 'GET') {
                     $cache = Cache::getInstance(WebUrl::getURI());
@@ -264,12 +253,10 @@ class Service {
      */
     public static function performSecurityCheck($settings, $request) {
         // validate settings
-        BasicValidation::with($settings)
-                ->withProperty('acl')
-                ->upAll()
-                ->withProperty('authentication')
-                ->withProperty('authentication_type')
-                ->oneOf('basic', 'digest', 'facebook', 'header', 'session');
+//        BasicValidation::with($settings)
+//                ->withOptionalProperty('acl')->upAll()
+//                ->withOptionalProperty('authentication')
+//                ->withOptionalProperty('authentication_type')->oneOf('basic', 'digest', 'facebook', 'header', 'session');
         // validate request
         BasicValidation::with($request)
                 ->withOptionalProperty('action')->isString()->upAll()
@@ -283,6 +270,10 @@ class Service {
         // test ACL for 'deny all'
         if ($settings->acl === false) {
             throw new Error("No users can perform the action '{$request->action}' on the resource '$uri'", 403);
+        }
+        // test ACL for 'allow all'
+        if ($settings->acl === true) {
+            return true;
         }
         // load ACL
         $acl = new SecurityAcl($settings->acl);
@@ -319,6 +310,43 @@ class Service {
         }
         // return 
         return true;
+    }
+
+    /**
+     * 
+     * @return type
+     * @throws Error
+     */
+    public static function checkCache($object) {
+        if (!method_exists($object, 'isCacheable')) {
+            throw new Error('Resource must display cacheability using isCacheable() method', 500);
+        }
+        if (!$return_as_string && $this->object->isCacheable()) {
+            $cache = Cache::getInstance(WebUrl::getURI());
+            if ($cache->HEAD() && $this->action == 'GET') {
+                $cache->GET();
+                // if client has a current resource, use that
+                if ($cache->isClientCurrent()) {
+                    header('HTTP/1.1 304 Not Modified');
+                    exit();
+                }
+                // otherwise, use the cached copy
+                else {
+                    $representation = new Representation($cache->resource, $this->accept);
+                    $representation = $this->executeOutputTriggers($cache->resource, $this->action, $representation);
+                    // send headers
+                    header('Etag: "' . $cache->getEtag() . '"');
+                    header('Last-Modified: ' . $cache->getLastModified());
+                    // send resource
+                    if ($return_as_string) {
+                        return (string) $representation;
+                    } else {
+                        $representation->send();
+                        return;
+                    }
+                }
+            }
+        }
     }
 
     /**

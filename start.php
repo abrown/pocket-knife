@@ -166,3 +166,10 @@ ERROR_REPORTING(E_ALL);
 if (!defined('DS')) {
     define('DS', DIRECTORY_SEPARATOR);
 }
+
+/**
+ * Set DEBUG
+ */
+if(!defined('DEBUGGING')){
+    define('DEBUGGING', 0);
+}

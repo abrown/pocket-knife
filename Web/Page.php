@@ -87,7 +87,7 @@ class WebPage {
     public static function getResourceForm(Resource $resource) {
         $uri = htmlentities($resource->getURI());
         $html = array();
-        $html[] = "<form method='POST' action='" . WebUrl::create($uri, false) . "'>";
+        $html[] = "<form method='POST' action='" . WebUrl::createAnchoredUrl($uri, false) . "'>";
         $html[] = "<table class='{$uri}'>";
         foreach (get_public_vars($resource) as $property => $value) {
             $property = htmlentities($property);
@@ -106,6 +106,11 @@ class WebPage {
         return implode("\n", $html);
     }
 
+    /**
+     * Return HTML list representing a ResourceList
+     * @param ResourceList $list
+     * @return string
+     */
     public static function getResourceList(ResourceList $list) {
         //$uri = htmlentities($list->getURI());
         $uri = 'list';
@@ -138,7 +143,7 @@ class WebPage {
     }
 
     /**
-     *
+     * Return HTML links for each of the available methods in a Resource
      * @param Resource $resource
      * @return type 
      */

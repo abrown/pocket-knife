@@ -19,10 +19,10 @@ class StorageFile implements StorageInterface {
 
     /**
      * Defines the format in which to store the data; one of
-     * [json, php, config]
+     * [json, php, config, raw]
      * @var string
      */
-    public $format;
+    public $format = 'json';
 
     /**
      * Current list of records to read/store
@@ -54,7 +54,7 @@ class StorageFile implements StorageInterface {
                 ->isString()
                 ->upOne()
                 ->withProperty('format')
-                ->oneOf('json', 'php', 'config');
+                ->oneOf('json', 'php', 'config', 'raw');
         // import settings
         $settings->copyTo($this);
         // ensure directory exists
@@ -98,6 +98,8 @@ class StorageFile implements StorageInterface {
                     self::writePhp($path, $record);
                 } elseif ($this->format == 'config') {
                     self::writeConfig($path, $record);
+                } elseif ($this->format == 'raw') {
+                    self::writeRaw($path, $record);
                 }
             }
         }
@@ -174,6 +176,8 @@ class StorageFile implements StorageInterface {
             return self::readPhp($path);
         } elseif ($this->format == 'config') {
             return self::readConfig($path);
+        } elseif ($this->format == 'raw') {
+            return self::readRaw($path);
         }
         // return
         return null;
@@ -731,4 +735,22 @@ class StorageFile implements StorageInterface {
         return $output;
     }
 
+    /**
+     * Read a file's contents
+     * @param string $path
+     * @return string
+     */
+    static public function readRaw($path){
+        return file_get_contents($path);
+    }
+    
+    /**
+     * Write anything to a file
+     * @param string $path
+     * @param any $entity
+     * @return boolean
+     */
+    static public function writeRaw($path, $entity){
+        return file_put_contents($path, (string) $entity);
+    }
 }

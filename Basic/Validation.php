@@ -144,6 +144,8 @@ class BasicValidation {
      * @return BasicValidation 
      */
     public function withKey($key) {
+        if($this->isOptional())
+            return $this;
         if ($this->hasKey($key)) {
             array_push($this->stack, array($this->name, $this->value));
             $this->name = $this->name . '.' . $key;

@@ -10,7 +10,7 @@ class Book extends ResourceItem {
     public $author;
     public $published;
     public $number_of_copies;
-    protected $storage = array('type' => 'json', 'location' => 'books.json');
+    protected $storage = array('type' => 'json', 'location' => '../data/books.json');
   
     
     public function GET(){
@@ -58,7 +58,8 @@ class Book extends ResourceItem {
                 case 'PUT':
                 case 'POST':
                 case 'DELETE':
-                    WebHttp::redirect(WebUrl::create('library', false));
+                    Cache::getInstance('library')->DELETE();
+                    WebHttp::redirect(WebUrl::createAnchoredUrl('library', false));
                     break;
             }
         }

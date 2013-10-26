@@ -9,7 +9,7 @@ class Library extends ResourceList {
     public $name = 'Savannah Public Library';
     public $location = '2002 Bull Street, Savannah, GA 31401';
     protected $item_type = 'Book';
-    protected $storage = array('type' => 'json', 'location' => 'books.json');
+    protected $storage = array('type' => 'json', 'location' => '../data/books.json');
 
     public function OUTPUT_TRIGGER(Representation $representation) {
         // filter HTML responses on HTTP method
@@ -24,7 +24,8 @@ class Library extends ResourceList {
                 case 'PUT':
                 case 'POST':
                 case 'DELETE':
-                    WebHttp::redirect(WebUrl::create('library', false));
+                    Cache::clearAll();
+                    WebHttp::redirect(WebUrl::createAnchoredUrl('library', false));
                     break;
             }
         }

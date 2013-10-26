@@ -96,6 +96,16 @@ class Cache extends Resource {
             $temp = $this->resource;
             $this->resource = new $this->resource_type;
             $this->resource->bind($temp);
+            // if necessary, set ID
+            if (is_a($this->resource, 'ResourceItem')) {
+                $pos = strpos($this->getURI(), '/');
+                if ($pos !== false) {
+                    $id = substr($this->getURI(), $pos + 1);
+                    if (is_numeric($id))
+                        $id = (int) $id;
+                    $this->resource->setID($id);
+                }
+            }
         }
         // return
         return $this->resource;
@@ -226,14 +236,22 @@ class Cache extends Resource {
         // check etag
         $etag = self::getEtag($this->getURI());
         if (WebHttp::getIfNoneMatch() && WebHttp::getIfNoneMatch() == $etag) {
-            return false;
+            return true;
         }
         // check last-modified time
-        if (WebHttp::getIfModifiedSince() && WebHttp::getIfModifiedSince() >= (int) $this->modified) {
-            return false;
+        if (WebHttp::getIfModifiedSince() && WebHttp::getIfModifiedSince() == (int) $this->modified) {
+            return true;
         }
         // else
-        return true;
+        return false;
+    }
+
+    /**
+     * Clear the entire cache
+     */
+    static public function clearAll() {
+        $this->getStorage()->deleteAll();
+        $this->changed();
     }
 
 }
