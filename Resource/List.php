@@ -23,7 +23,16 @@ class ResourceList extends Resource {
      * @var string 
      */
     protected $item_type = 'ResourceItem';
-    
+
+    /**
+     * We disable caching on ResourceLists by default because changes to 
+     * ResourceItems will require manual cache clearing of the ResourceList
+     * by developers (and there is currently no easy way to find the parent
+     * ResourceList for a ResourceItem.
+     * @var boolean 
+     */
+    protected $cacheable = false;
+
     /**
      * 
      * @var StorageInterface 
@@ -45,12 +54,12 @@ class ResourceList extends Resource {
     public function getURI() {
         return strtolower(get_class($this));
     }
-    
+
     /**
      * Returns the list's item type
      * @return ResourceItem
      */
-    public function getItemType(){
+    public function getItemType() {
         return $this->item_type;
     }
 
@@ -69,10 +78,10 @@ class ResourceList extends Resource {
         // get paged resources
         else if (WebHttp::getParameter('page')) {
             $page_size = (int) WebHttp::getParameter('page_size');
-            if( $page_size < 1 ){
+            if ($page_size < 1) {
                 throw new Error("Page size is outside of allowed range.", 416);
             }
-            if ($page_size === null ) {
+            if ($page_size === null) {
                 $page_size = 20;
             }
             $page = (int) WebHttp::getParameter('page');
@@ -147,7 +156,8 @@ class ResourceList extends Resource {
 
     /**
      * DELETE a resource; request to delete the resource identified by 
-     * the request URI (RFC2616, p.55)
+     * the request URI (RFC2616, p.55). Note that the developer may need to
+     * remove ResourceItem cache entries if this deletes the backing ResourceItem.
      * @return boolean whether the list was successfully deleted
      */
     public function DELETE() {

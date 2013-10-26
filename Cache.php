@@ -250,8 +250,9 @@ class Cache extends Resource {
      * Clear the entire cache
      */
     static public function clearAll() {
-        $this->getStorage()->deleteAll();
-        $this->changed();
+        $cache = self::getInstance();
+        $cache->getStorage()->deleteAll();
+        $cache->changed();
     }
 
 }
