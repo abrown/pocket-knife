@@ -7,20 +7,16 @@
  * accessible by both browsers and JSON API clients
  */
 
-require '../../start.php';
-require 'Book.php';
-require 'Library.php';
+require '../../start.php'; // load pocket-knife files
+require 'Book.php'; // load Book class
+require 'Library.php'; // load Library class
 
-// redirect if no tokens
-try{
-    WebUrl::getTokens();
-}
-catch(Error $e){
-    WebHttp::redirect(WebUrl::createAnchoredUrl('library'));
-}
+// if no tokens are added to the URL, the user probably wants to view the library
+try{ WebUrl::getTokens(); }
+catch(Error $e){ WebHttp::redirect(WebUrl::createAnchoredUrl('library')); }
 
 // start service
 $configuration = new Settings();
-$configuration->load('config.json');
+$configuration->load('config.json'); // load settings from a JSON file
 $service = new Service($configuration);
 $service->execute();

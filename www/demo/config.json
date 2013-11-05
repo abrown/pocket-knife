@@ -1,5 +1,5 @@
 {
     'acl': true,
-    'storage': {'type':'json', 'location': '../data/library.json'},
+    /* 'storage': {'type':'json', 'location': '../data/library.json'}, */
     'representations': ['text/html', 'application/json', 'text/xml']
 }

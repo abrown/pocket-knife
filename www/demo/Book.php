@@ -13,6 +13,12 @@ class Book extends ResourceItem {
     protected $storage = array('type' => 'json', 'location' => '../data/books.json');
   
     
+    /**
+     * Return a Book even if no ID is supplied; this allows GET requests
+     * with no ID to not return errors in a situation where an HTML client
+     * wants to create a Book with 'api.php/book'
+     * @return \Book
+     */
     public function GET(){
         if( !$this->getID() ){
             return $this;
