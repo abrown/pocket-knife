@@ -14,7 +14,8 @@ function get_base_dir() {
 }
 
 /**
- * Autoloads classes using camel-case
+ * Autoloads classes using camel-case; can make use of set_include_path() to
+ * add locations to search
  * @example Class 'ExampleClass' should be found in /base/directory/Class/Example.php
  * @param string $class 
  */
@@ -170,6 +171,6 @@ if (!defined('DS')) {
 /**
  * Set DEBUG
  */
-if(!defined('DEBUGGING')){
+if (!defined('DEBUGGING')) {
     define('DEBUGGING', 0);
 }
