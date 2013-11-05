@@ -159,6 +159,7 @@ class WebTemplate {
      * @return string
      */
     public function getFile($file) {
+        $file = realpath($file);
         // check file
         if (!is_file($file)) {
             throw new Error('Could not find ' . $file, 404);
@@ -226,6 +227,7 @@ class WebTemplate {
      */
     public function getPHPFile($file__hide__, $variables__hide__ = array()) {
         // check file
+        $file__hide__ = realpath($file__hide__);
         if (!is_file($file__hide__)) {
             throw new Error('Could not find ' . $file__hide__, 404);
         }
