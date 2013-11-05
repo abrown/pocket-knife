@@ -16,7 +16,8 @@ function get_base_dir() {
 /**
  * Autoloads classes using camel-case; can make use of set_include_path() to
  * add locations to search
- * @example Class 'ExampleClass' should be found in /base/directory/Class/Example.php
+ * @example Class 'ExampleClass' should be found in /base/directory/Class/Example.php;
+ * if base directory is not in the 'pocket-knife', add it with set_include_path('/base/directory').
  * @param string $class 
  */
 function autoload($class) {
