@@ -56,8 +56,8 @@ class ResourceList extends Resource {
     }
 
     /**
-     * Returns the list's item type
-     * @return ResourceItem
+     * Returns the list's item type, the class name of the item within this list
+     * @return string
      */
     public function getItemType() {
         return $this->item_type;
