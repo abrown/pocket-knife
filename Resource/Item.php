@@ -24,6 +24,9 @@ class ResourceItem extends Resource {
     public function __construct($id = null) {
         // set ID; * is a wildcard ID
         if ($id !== null && $id !== '*') {
+            if(strpos($id, $this->getURI()) === 0){
+                $id = substr($id, strlen($this->getURI()));
+            }
             $this->setID($id);
         }
         // start transaction processing
