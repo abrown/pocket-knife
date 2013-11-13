@@ -155,7 +155,7 @@ class WebPage {
             if (!ctype_upper($method))
                 continue;
             $_GET['method'] = $method;
-            $url = WebUrl::create($uri);
+            $url = WebUrl::createAnchoredUrl($uri);
             $html[] = "<a href='{$url}' title='{$uri}'>{$method}</a>";
         }
         $_GET['method'] = $original_method;
