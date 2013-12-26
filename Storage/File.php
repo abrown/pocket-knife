@@ -402,8 +402,8 @@ class StorageFile implements StorageInterface {
         $permissions = fileperms($this->location);
         // create necessary directories
         $dir = dirname($path);
-        if ($dir !== $this->location) {
-            @mkdir($dir, $permissions, true);
+        if ($dir !== $this->location && !is_dir($dir)) {
+            mkdir($dir, $permissions, true);
         }
         // create file
         return (boolean) file_put_contents($path, '');
