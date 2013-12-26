@@ -6,7 +6,8 @@
  */
 
 /**
- * Stores JSON records in a JSON file on the local server; uses indexes
+ * Stores JSON records in a JSON file on the local server; currently only will
+ * create the JSON database file inside an already-created directory.
  * @uses StorageInterface, BasicValidation, Settings, Error
  */
 class StorageJson implements StorageInterface {
