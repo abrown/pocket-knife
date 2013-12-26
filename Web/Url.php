@@ -166,7 +166,7 @@ class WebUrl {
             if ($anchored === false)
                 throw new Error('Anchor not found in URL', 400);
             $start = $anchored + strlen(self::getAnchor()) + 1;
-            $end = @strpos(self::getUrl(), '?', $start);
+            $end = ($start < strlen(self::getUrl())) ? strpos(self::getUrl(), '?', $start) : false;
             if ($end === false)
                 $end = strlen(self::getUrl());
             $anchored_url = substr(self::getUrl(), $start, $end - $start);
