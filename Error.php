@@ -18,6 +18,8 @@ class Error extends Exception {
     public $file;
     public $line;
     public $trace;
+    public $uncaught = false;
+    public $uncaught_from;
 
     /**
      * Returns a representation of the resource given a content type 
@@ -36,6 +38,10 @@ class Error extends Exception {
         $this->file = $this->getFile();
         $this->line = $this->getLine();
         $this->trace = explode("\n", $this->getTraceAsString());
+        // alert on uncaught exceptions
+        if($this->uncaught){
+            $this->uncaught_from->$this->getPrevious()->getTrace()[0];
+        }
         // create representation
         $representation = new Representation($this, $content_type);
         $representation->setCode($this->http_code);

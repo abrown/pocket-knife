@@ -70,5 +70,9 @@ foreach ($resource->trace as $line) {
     echo $line . "\n";
 }
 ?></pre>
+        <?php if($resource->uncaught){
+            echo '<p class="alert">This error was not caught by a try-block; it originated at:</p>'."\n";
+            echo '<pre>'.$resource->uncaught_from.'</pre>';
+        } ?>        
     </body>
 </html>

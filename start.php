@@ -6,7 +6,7 @@
  */
 
 /**
- * Finds the base directory of the pocket knife installation
+ * Find the base directory of the pocket knife installation
  * @return <type> 
  */
 function get_base_dir() {
@@ -175,3 +175,30 @@ if (!defined('DS')) {
 if (!defined('DEBUGGING')) {
     define('DEBUGGING', 0);
 }
+
+/**
+ * Set exception handler to grab uncaught errors
+ */
+set_exception_handler(function($error){
+    BasicLog::error('Uncaught exception: '.$error, 500);
+    if(is_a($error, 'Error')){
+        $error->send(WebHttp::getAccept());
+    }
+    else{
+        echo $error;
+    }
+    exit(1);
+});
+
+/**
+ * Set error handler to grab uncaught PHP errors
+ */
+set_error_handler(function($code, $message, $file, $line){
+    if(DEBUGGING){
+        echo $error;
+    }
+    else{
+        BasicLog::error("Uncaught PHP error: $message at $file ($line).", 500);
+    }
+    exit(1);
+});
