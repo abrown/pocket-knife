@@ -4,7 +4,7 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-define('CACHE_LOCATION', get_base_dir() . DS . 'cache');
+define('CACHE_LOCATION', get_base_dir() . DS . 'writeable' . DS . 'cache');
 
 /**
  * Caches resources using a prioritized list: APC, memcache, and
