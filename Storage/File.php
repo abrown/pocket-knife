@@ -416,6 +416,7 @@ class StorageFile implements StorageInterface {
      * @throws Error
      */
     protected function deletePath($path) {
+        $path = realpath($path);
         if (!file_exists($path)) {
             throw new Error("Path '{$path}' cannot be deleted because it cannot be found.", 404);
         }
@@ -426,7 +427,8 @@ class StorageFile implements StorageInterface {
         unlink($path);
         // delete directories
         $dir = dirname($path);
-        while ($dir != $this->location && @rmdir($dir)) {
+        while ($dir != $this->location && count(scandir($dir)) == 2 ) {
+            rmdir($dir);
             $dir = dirname($dir);
         }
         // return 
