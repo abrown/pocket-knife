@@ -40,7 +40,8 @@ class Error extends Exception {
         $this->trace = explode("\n", $this->getTraceAsString());
         // alert on uncaught exceptions
         if($this->uncaught){
-            $this->uncaught_from->$this->getPrevious()->getTrace()[0];
+            $trace = $this->getPrevious()->getTrace();
+            $this->uncaught_from = $trace[0];
         }
         // create representation
         $representation = new Representation($this, $content_type);
