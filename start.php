@@ -179,7 +179,8 @@ if (!defined('DEBUGGING')) {
 /**
  * Set exception handler to grab uncaught errors
  */
-set_exception_handler(function($error){
+set_exception_handler('uncaught_exception_handler');
+function uncaught_exception_handler($error){
     BasicLog::error('Uncaught exception: '.$error, 500);
     if(is_a($error, 'Error')){
         $error->send(WebHttp::getAccept());
@@ -188,12 +189,13 @@ set_exception_handler(function($error){
         echo $error;
     }
     exit(1);
-});
+}
 
 /**
  * Set error handler to grab uncaught PHP errors
  */
-set_error_handler(function($code, $message, $file, $line){
+set_error_handler('uncaught_error_handler');
+function uncaught_error_handler($code, $message, $file, $line){
     if(DEBUGGING){
         echo $error;
     }
@@ -201,4 +203,4 @@ set_error_handler(function($code, $message, $file, $line){
         BasicLog::error("Uncaught PHP error: $message at $file ($line).", 500);
     }
     exit(1);
-});
+}
