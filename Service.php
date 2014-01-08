@@ -361,14 +361,14 @@ class Service {
         $any_trigger = 'INPUT_TRIGGER';
         if (method_exists($this->object, $any_trigger)) {
             $representation = $this->object->$any_trigger($representation);
-            if (!is_a($representation, 'Representation')) {
+            if (!($representation instanceof Representation)) {
                 throw new Error('Input triggers must return a Representation', 500);
             }
         }
         $action_trigger = $this->action . '_INPUT_TRIGGER';
         if (method_exists($this->object, $action_trigger)) {
             $representation = $this->object->$action_trigger($representation);
-            if (!is_a($representation, 'Representation')) {
+            if (!($representation instanceof Representation)) {
                 throw new Error('Input triggers must return a Representation', 500);
             }
         }
@@ -387,14 +387,14 @@ class Service {
         $any_trigger = 'OUTPUT_TRIGGER';
         if (method_exists($this->object, $any_trigger)) {
             $representation = $this->object->$any_trigger($representation);
-            if (!is_a($representation, 'Representation')) {
+            if (!($representation instanceof Representation)) {
                 throw new Error('Input triggers must return a Representation', 500);
             }
         }
         $action_trigger = $this->action . '_OUTPUT_TRIGGER';
         if (method_exists($this->object, $action_trigger)) {
             $representation = $this->object->$action_trigger($representation);
-            if (!is_a($representation, 'Representation')) {
+            if (!($representation instanceof Representation)) {
                 throw new Error('Input triggers must return a Representation', 500);
             }
         }

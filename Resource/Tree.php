@@ -86,7 +86,7 @@ class ResourceTree extends Resource {
      * @throws Error 
      */
     public function setParent(&$parent) {
-        if (!is_a($parent, 'ResourceTree')) {
+        if (!($parent instanceof ResourceTree)) {
             throw new Error('Resource is not a tree.', 400);
         }
         $this->parent = &$parent;
@@ -106,7 +106,7 @@ class ResourceTree extends Resource {
      * @throws Error 
      */
     public function setChild(&$child) {
-        if (!is_a($child, 'ResourceTree')) {
+        if (!($child instanceof ResourceTree)) {
             throw new Error('Resource is not a tree.', 400);
         }
         // check if allowed

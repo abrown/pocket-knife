@@ -80,7 +80,7 @@ class SecurityRule {
      * @return int 
      */
     static public function compare($a, $b) {
-        if (!is_a($a, 'SecurityRule') || !is_a($b, 'SecurityRule')) {
+        if (!($a instanceof SecurityRule) || !($b instanceof SecurityRule)) {
             throw new Error('Only security rules may be compared', 500);
         }
         $result = 0;

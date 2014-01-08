@@ -26,7 +26,7 @@ class SiteAdministration{
 	 * @throws Error
 	 */
 	public function __construct($site, $template){
-		if( !is_a($site, 'Site') ) throw new Error('SiteAdministration must start with an active Site', 404);
+		if( !($site instanceof Site) ) throw new Error('SiteAdministration must start with an active Site', 404);
 		$this->site = &$site;
 		if( !$template ) throw new Error('SiteAdministration requires a template.', 404);
 		$this->template = $template;

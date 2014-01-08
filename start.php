@@ -182,7 +182,7 @@ if (!defined('DEBUGGING')) {
 set_exception_handler('uncaught_exception_handler');
 function uncaught_exception_handler($error){
     BasicLog::error('Uncaught exception: '.$error, 500);
-    if(is_a($error, 'Error')){
+    if($error instanceof Error){
         $error->send(WebHttp::getAccept());
     }
     else{

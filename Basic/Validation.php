@@ -674,7 +674,7 @@ class BasicValidation {
             return $this;
         }
         // test
-        if ($this->value === null || !is_a($this->value, 'Settings')) {
+        if ($this->value === null || !($this->value instanceof Settings)) {
             throw new Error("'{$this->name}' is not a valid Settings object; the value being checked must be an instance of the Settings class.", 500);
         }
         // return

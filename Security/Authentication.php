@@ -186,7 +186,7 @@ abstract class SecurityAuthentication extends ResourceList {
      */
     protected function getPassword($username) {
         $user = $this->getUser($username);
-        if (is_a($user, 'SecurityUser')) {
+        if ($user instanceof SecurityUser) {
             return $user->getPassword($this->password_security, $this->password_secret_key);
         }
         return null;

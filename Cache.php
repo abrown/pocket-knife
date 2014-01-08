@@ -97,7 +97,7 @@ class Cache extends Resource {
             $this->resource = new $this->resource_type;
             $this->resource->bind($temp);
             // if necessary, set ID
-            if (is_a($this->resource, 'ResourceItem')) {
+            if ($this->resource instanceof ResourceItem) {
                 $pos = strpos($this->getURI(), '/');
                 if ($pos !== false) {
                     $id = substr($this->getURI(), $pos + 1);
@@ -117,7 +117,7 @@ class Cache extends Resource {
      * @return mixed
      */
     public function POST($resource) {
-        if ($resource === null || !is_a($resource, 'Resource')) {
+        if ($resource === null || !($resource instanceof Resource)) {
             throw new Error('No resource given to update', 400);
         }
         // set ID
@@ -142,7 +142,7 @@ class Cache extends Resource {
      * @param stdClass $entity 
      */
     public function PUT($resource = null) {
-        if ($resource === null || !is_a($resource, 'Resource')) {
+        if ($resource === null || !($resource instanceof Resource)) {
             throw new Error('No resource given to update', 400);
         }
         $already_cached = $this->HEAD();
