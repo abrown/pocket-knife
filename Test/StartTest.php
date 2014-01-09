@@ -4,14 +4,20 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-class StartTest extends PHPUnit_Extensions_OutputTestCase {
+class StartTest extends \PHPUnit_Framework_TestCase {
 
     public static function setUpBeforeClass() {
-        // start pocket knife
-        $path = dirname(dirname(__FILE__));
-        require_once $path . '/start.php';
-        // load classes
+        $pocket_knife_path = dirname(dirname(__FILE__));
+        require $pocket_knife_path . '/Basic/Benchmark.php';
+        BasicBenchmark::startMemoryTest();
+        BasicBenchmark::startTimer();
+        // start pocket knife and benchmark it
+        require_once $pocket_knife_path . '/start.php';
         autoload('Error');
+        // display benchmark results
+        BasicBenchmark::endTimer();
+        BasicBenchmark::endMemoryTest();
+        echo 'Load: ' . BasicBenchmark::getTimeElapsed() . 's and ' . BasicBenchmark::getMemoryUsed();
     }
 
     public function testGetBaseDir() {
@@ -27,8 +33,8 @@ class StartTest extends PHPUnit_Extensions_OutputTestCase {
         autoload('Service');
         $this->assertContains('Service', get_declared_classes());
     }
-    
-    public function testAddIncludePath(){
+
+    public function testAddIncludePath() {
         add_include_path('/etc');
         $this->assertRegExp('#/etc#i', get_include_path());
     }
@@ -50,9 +56,12 @@ class StartTest extends PHPUnit_Extensions_OutputTestCase {
     }
 
     public function testToObject() {
-        
+        $array_thing = array('a' => 1, 'b' => 'two', 'c' => array(1, 'two', 3.0));
+        $object = to_object($array_thing);
+        $this->assertEquals(1, $object->a);
+        $this->assertEquals('two', $object->b);
+        $this->assertEquals(3.0, $object->c->{2});
     }
-
 }
 
 /**
