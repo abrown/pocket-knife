@@ -16,16 +16,19 @@ class BasicBenchmarkTest extends TestCase{
         sleep(1);
         BasicBenchmark::endTimer();
         $expected = 1.0;
-        $actual = BasicBenchmark::getTime();
-        $this->assertLessThan($expected - $actual, 0.001);
+        $actual = BasicBenchmark::getTimeElapsed();
+        $this->assertLessThan(0.001, $expected - $actual);
     }
 
     /**
      * Uses the memory functions available in BasicBenchmark
      */
     public function testMemory() {
-        $expected = BasicBenchmark::getMemory('kb');
-        $this->assertGreaterThan(0, $expected);
+        BasicBenchmark::startMemoryTest();
+        $string = str_pad('', 1024, 'x');
+        BasicBenchmark::endMemoryTest();
+        $this->assertEquals('1104b', BasicBenchmark::getMemoryUsed('b')); // extra 80 bytes... from where?
+        $this->assertEquals('1.078kb', BasicBenchmark::getMemoryUsed('kb'));
     }
 
 }
