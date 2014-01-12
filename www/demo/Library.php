@@ -38,6 +38,5 @@ class Library extends ResourceList {
                     break;
             }
         }
-        return $representation;
     }
 }

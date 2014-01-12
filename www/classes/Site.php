@@ -34,14 +34,6 @@ class Site {
     public $location = '.';
 
     /**
-     * Defines access to each page; set to true to allow all, 
-     * false to deny all.
-     * @example $this->acl = array('user/29 can access index.html');
-     * @var mixed
-     * */
-    public $acl = true;
-
-    /**
      * Defines the storage method for storing the site map; by default, we point
      * this to a folder in the current working directory
      * @example $this->storage = array('type'=>'mysql', 'username'=>'test', 'password'=>'password', 'location'=>'localhost', 'database'=>'db');
@@ -112,8 +104,9 @@ class Site {
      */
     public function execute() {
         // send header (if necessary)
-        if ($this->output)
+        if ($this->output){
             header('Content-Type: ' . $this->output);
+        }
         // get name, find file
         $name = WebUrl::getAnchoredUrl();
         // routing

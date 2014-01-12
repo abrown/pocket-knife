@@ -7,12 +7,12 @@
 
 // setup
 include('../start.php');
+include('classes/Site.php');
 
 // build settings
 $settings = new Settings(array(
 	'location' => 'docs',
-	'acl' => true,
-	'storage' => array('type'=>'json', 'location' => 'docs/api-map.json'),
+	'storage' => array('type'=>'json', 'location' => 'data/api-map.json'),
 	'template' => 'ui/site-template.php',
 	'admin' => 'ui/admin-template.php'
 ));
