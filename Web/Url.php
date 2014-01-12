@@ -9,12 +9,15 @@
  * Provides static methods to handle common URL-related tasks. 
  * These include all types of URL parsing, building, and 
  * normalizing.
+ * @example 
+ * WebUrl::getUrl(); // URL of current HTTP request
+ * 
  * @uses Error
  */
 class WebUrl {
 
     /**
-     * Returns the HTTP request URL
+     * Return the HTTP request URL; caches this URL so it can be called repeatedly
      * @staticvar string $url
      * @return string
      */
@@ -44,13 +47,13 @@ class WebUrl {
     }
 
     /**
-     * Returns the HTTP request URI; has been modified so it will
+     * Return the HTTP request URI; has been modified so it will
      * match the Resource::getURI() method--in other words, it
      * will return a unique but normalized descriptor for the 
      * resource requested. Similar to WebUrl::getAnchoredUrl().
      * @example
-     * For a URL like "http://www.example.com/s.php/Resource/14/Version:b?etc", the URI
-     * returned will be "resource/14/version:b".
+     * For a URL like "http://www.example.com/s.php/Resource/14/Version:b?etc", 
+     * the URI returned will be "resource/14/version:b".
      * @return string
      */
     static function getURI() {
@@ -58,7 +61,7 @@ class WebUrl {
     }
 
     /**
-     * Returns the URL anchor. This is hardcoded to be '.php' because
+     * Return the URL anchor. This is hardcoded to be '.php' because
      * the intended practice is to use PHP files as web service endpoints.
      * Optionally, the developer can use .htaccess redirects to remove
      * this from the URL.
@@ -190,7 +193,7 @@ class WebUrl {
      */
     public static function create($relative_url) {
         if (strlen($relative_url) && $relative_url[0] == '/') {
-            return self::getSiteUrl() . $relative_url;
+            return self::getSiteUrl() . substr($relative_url, 1); // getSiteUrl() must leave a trailing slash
         } else {
             return self::getDirectoryUrl() . $relative_url;
         }
@@ -229,11 +232,10 @@ class WebUrl {
             // split and remove empty
             $tokens = explode('/', $token_string);
             foreach ($tokens as $index => $token) {
-                if (strlen($token) < 1)
+                if (strlen($token) < 1){
                     unset($tokens[$index]);
+                }
             }
-            if (!$tokens)
-                throw new Error('No URL tokens', 400);
         }
         return $tokens;
     }

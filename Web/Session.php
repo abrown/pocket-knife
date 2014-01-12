@@ -5,9 +5,11 @@
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
 
-// start session
-session_name('pocket-knife');
-session_start();
+// start session, but only if not running from the command line (caused errors with PHPUnit)
+if (php_sapi_name() !== 'cli') {
+    session_name('pocket-knife');
+    session_start();
+}
 
 /**
  * Provides static methods to help with web sessions.
@@ -21,7 +23,7 @@ session_start();
 class WebSession {
 
     /**
-     * Returns a session key. This method is a wrapper for the PHP
+     * Return a session key. This method is a wrapper for the PHP
      * $_SESSION array.
      * @param mixed $key
      * @return mixed
@@ -34,7 +36,7 @@ class WebSession {
     }
 
     /**
-     * Saves a session key. This method is a wrapper for the PHP
+     * Save a session key. This method is a wrapper for the PHP
      * $_SESSION array.
      * @param string $key
      * @param mixed $value
@@ -42,17 +44,16 @@ class WebSession {
     static public function put($key, $value) {
         $_SESSION[$key] = $value;
     }
-    
+
     /**
-     * Clears a session key or the entire session
+     * Clear a session key (if key name given) or the entire session
      * @param mixed $key 
      */
-    static public function clear($key = null){
-        if( is_null($key)){
+    static public function clear($key = null) {
+        if (is_null($key)) {
             $_SESSION = array();
             session_destroy();
-        }
-        else{
+        } else {
             unset($_SESSION[$key]);
         }
     }

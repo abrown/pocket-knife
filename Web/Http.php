@@ -17,7 +17,7 @@ class WebHttp {
      * Stores HTTP codes for WebHttp::request();
      * @var int 
      */
-    private static $response_code;
+    private static $responseCode;
 
     /**
      * Returns HTTP request method. Checks the request URI 
@@ -31,8 +31,21 @@ class WebHttp {
         if (array_key_exists('method', $_GET)) {
             return $_GET['method'];
         }
+        // check server 
+        if (array_key_exists('REQUEST_METHOD', $_SERVER)) {
+            return $_SERVER['REQUEST_METHOD'];
+        }
         // else:
-        return $_SERVER['REQUEST_METHOD'];
+        return null;
+    }
+
+    /**
+     * Determine if the HTTP method exists
+     * @param string $method
+     * @return boolean
+     */
+    static function isValidMethod($method) {
+        return in_array($method, array('GET', 'PUT', 'POST', 'DELETE', 'HEAD', 'OPTIONS'));
     }
 
     /**
@@ -80,6 +93,8 @@ class WebHttp {
         if (array_key_exists('CONTENT_TYPE', $_SERVER) && $_SERVER['CONTENT_TYPE']) {
             return trim(strtok($_SERVER['CONTENT_TYPE'], ';'));
         }
+        // otherwise, pull from the Accept header
+        return self::getAccept();
         // else
         return null;
     }
@@ -161,7 +176,7 @@ class WebHttp {
     }
 
     /**
-     * Performs HTTP request
+     * Perform an HTTP request, returning the 
      * @example To grab a page: WebHttp::request('www.google.com')
      * @param string $url
      * @param string $method, one of [GET, POST, PUT, DELETE, HEAD, LIST]
@@ -170,6 +185,7 @@ class WebHttp {
      * @param array $headers additional headers, see http://us2.php.net/manual/en/context.http.php
      */
     static function request($url, $method = 'GET', $content = '', $content_type = 'text/html', $headers = array()) {
+        self::$responseCode = null; // reset after any previous requests
         $method = strtoupper($method);
         $_headers = array_merge(array('Content-type: ' . $content_type), $headers);
         $options = array('http' =>
@@ -181,33 +197,49 @@ class WebHttp {
         );
         $context = stream_context_create($options);
         // do request
+        set_error_handler(array('WebHttp', 'handleHTTPRequestFailure'));
         $response = file_get_contents($url, false, $context);
-        // check errors
+        restore_error_handler();
+        // check for errors
         if ($response === false) {
             throw new Error('Could not open url: ' . $url, 404);
         }
-        // save response code
+        // attempt to find and save the HTTP response code
         if (!isset($http_response_header)) {
             throw new Error('No HTTP request was made', 400);
         }
         $lines = preg_grep('#HTTP/#i', $http_response_header);
-        self::$response_code = 0;
         foreach ($lines as $line) {
             if (preg_match('#HTTP/\d.\d (\d\d\d)#i', $line, $matches)) {
-                self::$response_code = intval($matches[1]);
+                self::$responseCode = intval($matches[1]);
                 break;
             }
         }
         // return 
         return $response;
     }
+    
+    /**
+     * Since the file_get_contents() above in request() may fail, we catch
+     * the error here, merely setting the response code to 400 Bad Request 
+     * and allowing request() to finish.
+     * @param int $code
+     * @param string $message
+     * @param string $file
+     * @param int $line
+     * @return boolean
+     */
+    private static function handleHTTPRequestFailure($code, $message, $file, $line){
+        self::$responseCode = 400;
+        return true;
+    }
 
     /**
-     * Returns HTTP code from last HTTP request made using WebHttp::request()
+     * Returns HTTP code from last HTTP request made using WebHttp::request().
      * @return int 
      */
     static function getRequestCode() {
-        return self::$response_code;
+        return self::$responseCode;
     }
 
 }
