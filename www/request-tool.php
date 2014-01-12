@@ -12,6 +12,10 @@ include('../start.php');
         <link href="<?php echo WebUrl::getDirectoryUrl(); ?>/styles/reset.css" media="all" type="text/css" rel="stylesheet" />
         <link href="<?php echo WebUrl::getDirectoryUrl(); ?>/styles/base.css" media="all" type="text/css" rel="stylesheet" />
         <style type="text/css">
+            label{
+                font-family: 'Arial', 'Helvetica', 'Verdana', 'Tahoma', sans-serif;
+                font-weight: bold;
+            }
             div.request{
                 margin-bottom: 1em;
             }
@@ -22,11 +26,20 @@ include('../start.php');
             }
             input[type=text], textarea{
                 width: 100%;
-                background-color: #D9CECE;
+                background-color: #999;
                 border: 1px solid #282626;
+                padding: 0.25em;
+                font-family: 'Arial', 'Helvetica', 'Verdana', 'Tahoma', sans-serif;
+            }
+            button, input[type=submit]{
+                padding: 0.25em;
+                font-family: 'Arial', 'Helvetica', 'Verdana', 'Tahoma', sans-serif;
             }
             textarea{
                 height: 10em;
+            }
+            textarea#response-body{
+                height: 20em;
             }
         </style>
         <!--<link href="/pocket-knife/www/styles/vertical-rhythm.css" media="all" type="text/css" rel="stylesheet" />-->
@@ -43,7 +56,7 @@ include('../start.php');
             <form>
                 <!-- URL -->
                 <label class="major" for="url">URL</label>
-                <input type="text" name="url" value="<?php echo WebUrl::getDirectoryUrl(); ?>" id="url" />
+                <input type="text" name="url" value="<?php echo WebUrl::create('demo/index.php'); ?>" id="url" />
                 <!-- METHOD -->
                 <label class="major">METHOD</label>
                 <input type="radio" name="method" value="GET" id="method-get"/> <label for="method-get">GET</label>
@@ -53,7 +66,7 @@ include('../start.php');
                 <input type="radio" name="method" value="OPTIONS" id="method-options"/> <label for="method-options">OPTIONS</label>
                 <input type="radio" name="method" value="HEAD" id="method-head"/> <label for="method-head">HEAD</label>
                 <!-- CONTENT-TYPE -->
-                <label class="major" for="content-type">CONTENT-TYPE</label>
+                <label class="major" for="content-type">Accept MIME Type</label>
                 <input type="text" name="content-type" value="application/json" id="content-type" />
                 <!-- BODY -->
                 <label class="major" for="request-body">HTTP BODY</label>
@@ -69,6 +82,7 @@ include('../start.php');
         <h3>Response</h3>
         <div class="response">
             <textarea name="body" id="response-body"></textarea>
+            <div id="response-time"></div>
         </div>
 
         <!-- SCRIPT -->
@@ -81,13 +95,20 @@ include('../start.php');
                 else e.stopPropagation();
                 // action
                 var callback = function(request){
-                    console.log();
+                    // end timer
+                    endTime = new Date();
+                    var time = endTime.getTime() - startTime.getTime();
+                    $('response-time').innerHTML = 'Time elapsed: ' + time + 'ms; estimated RPS: ' + Math.round(1000/time);
+                    // display HTTP response
                     var text = request.getAllResponseHeaders();
                     text += "\n";
                     text += request.responseText;
                     $('response-body').value = text;
                     console.log(request);
                 }
+                // time AJAX request
+                var startTime = new Date();
+                var endTime = null;
                 ajax($('url').value, radio('method'), $('content-type').value, $('request-body').value, callback);
                 // return
                 return false;
@@ -152,7 +173,7 @@ include('../start.php');
                     // request
                     req.open(this.method, this.url, true);
                     req.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-                    req.setRequestHeader('Content-type', this.contentType);
+                    req.setRequestHeader('Accept', this.contentType);
                     req.setRequestHeader('Connection', 'close');
                     req.send(this.contentBody);
                     console.log(req);
