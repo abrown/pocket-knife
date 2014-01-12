@@ -45,7 +45,7 @@ class StorageCouch implements StorageInterface{
                 ->upAll()
                 ->withProperty('username')->isString()
                 ->upAll()
-                ->withProperty('username')->isString();
+                ->withProperty('password')->isString();
         // import settings
         $settings->copyTo($this); 
         // make url
@@ -61,7 +61,6 @@ class StorageCouch implements StorageInterface{
         // test
         $json = WebHttp::request($this->url);
         $info = json_decode($json);
-        //if( !$info->doc_count ) throw new Error('Could not connect to database', 400);
     }
     
     /**

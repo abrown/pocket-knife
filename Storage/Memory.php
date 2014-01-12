@@ -227,7 +227,6 @@ class StorageMemory implements StorageInterface {
      */
     public function last() {
         $id = $this->getLastID();
-        pr($id);
         return $this->data[$id];
     }
 

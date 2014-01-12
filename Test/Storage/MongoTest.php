@@ -4,23 +4,26 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-require_once '../start.php';
-
 class StorageMongoTest extends StorageGeneric {
 
     /**
      * Set up before class
      */
     public static function setUpBeforeClass() {
-        test_autoload('StorageMongo');
         // create settings
         $settings = new Settings(array(
-                    'location' => 'localhost',
-                    'database' => 'test',
-                    'collection' => 'test'
-                ));
+            'location' => 'localhost',
+            'database' => 'test',
+            'collection' => 'test',
+            'username' => 'test',
+            'property' => 'test'
+        ));
         // create instance
-        self::$instance = new StorageCouch($settings);
+        try {
+            self::$instance = new StorageMongo($settings);
+        } catch (Error $e) {
+            self::markTestSkipped('The Mongo extension must be turned on to test StorageMongo.');
+        }
     }
 
     /**

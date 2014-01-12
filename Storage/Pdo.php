@@ -12,46 +12,58 @@
 class StoragePdo implements StorageInterface {
 
     /**
+     * PDO driver to use: mysql, sqlite...
+     * @var string
+     */
+    public $driver = 'mysql';
+
+    /**
      * Database location
      * @var string
      */
-    protected $location;
+    public $location;
 
     /**
      * Database name
      * @var string 
      */
-    protected $database;
+    public $database;
 
     /**
      * Database username
      * @var string 
      */
-    private $username;
+    public $username;
 
     /**
      * Database password
      * @var string
      */
-    private $password;
+    public $password;
 
     /**
      * Database table
      * @var string
      */
-    protected $table;
+    public $table;
 
     /**
      * Primary key
      * @var string 
      */
-    protected $primary;
+    public $primary;
 
     /**
      * Whether the request changes the data
      * @var boolean 
      */
-    public $isChanged = false;
+    protected $isChanged = false;
+
+    /**
+     * List of fields in this table
+     * @var array
+     */
+    protected $fields = array();
 
     /**
      * Whether to use database DESCRIBE command to setup fields
@@ -79,6 +91,8 @@ class StoragePdo implements StorageInterface {
         // validate
         BasicValidation::with($settings)
                 ->isSettings()
+                ->withProperty('driver')->oneOf('mysql', 'sqlite')
+                ->upAll()
                 ->withProperty('location')->isString()
                 ->upAll()
                 ->withProperty('database')->isString()
@@ -98,7 +112,9 @@ class StoragePdo implements StorageInterface {
      * Prepare for action
      */
     public function begin() {
-        $this->getDatabase()->beginTransaction();
+        if (!$this->getDatabase()->inTransaction()) {
+            $this->getDatabase()->beginTransaction();
+        }
     }
 
     /**
@@ -130,25 +146,30 @@ class StoragePdo implements StorageInterface {
      * @return stdClass 
      */
     public function create($record, $id = null) {
-        // prepare fields
-        $fields = array();
-        if ($id) {
-            $fields[] = "`$this->primary` = :__id";
-        } // if ID specified
-        foreach ($record as $field => $value) {
-            $fields[] = "`$field` = :__$field";
+        // force to object
+        if (!is_object($record)) {
+            $record = $this->forceToSchema($record);
         }
-        $fields = implode(', ', $fields);
-        // prepare statement
-        $sql = $this->getDatabase()->prepare("INSERT INTO `{$this->table}` SET {$fields}");
-        // bind values
+        // build columns and values
+        $_columns = array();
+        $_placeholders = array();
         if ($id) {
-            $sql->bindParam('__id', $id);
-        } // if ID specified
-        foreach ($record as $field => $value) {
-            if (!is_scalar($value))
-                $record->$field = json_encode($value);
-            $sql->bindParam(':__' . $field, $record->$field);
+            $record->{$this->primary} = $id;
+        }
+        foreach ($record as $column => $value) {
+            $_columns[] = $column;
+            $_placeholders[] = ":__$column";
+        }
+        $columns = implode(', ', $_columns);
+        $placeholders = implode(', ', $_placeholders);
+        // prepare statement
+        $sql = $this->prepare("INSERT INTO `{$this->table}` ({$columns}) VALUES({$placeholders})");
+        // bind values
+        foreach ($record as $column => $value) {
+            if ($value && !is_scalar($value)) {
+                $record->$column = 'JSON:' . json_encode($value);
+            }
+            $sql->bindParam(':__' . $column, $record->$column);
         }
         // execute
         $sql->execute();
@@ -158,13 +179,8 @@ class StoragePdo implements StorageInterface {
         }
         // object changed
         $this->isChanged = true;
-        // TODO: delete cache (for enumerate)
-        // if( $this->__cache ) Cache::delete($this->getEnumerateCacheKey());
         // return
-        if ($id)
-            return $id;
-        else
-            return $this->getDatabase()->lastInsertID();
+        return ($id) ? $id : $this->getDatabase()->lastInsertID();
     }
 
     /**
@@ -173,25 +189,15 @@ class StoragePdo implements StorageInterface {
      * @return StdClass 
      */
     public function read($id) {
-        if (is_null($id))
+        if (is_null($id)) {
             throw new Error('READ action requires an ID', 400);
-        // TODO: caching
-        /*
-          $key = $this->getCacheKey($id);
-          if( !$this->__cache || !Cache::valid($key) ){
-          $result = $this->__read($query);
-          if( $this->__cache ) Cache::write($key, $result);
-          }
-          else{
-          $result = Cache::read($key);
-          }
-         */
+        }
         // build query
         $query = "SELECT `{$this->table}`.*\n" .
                 "FROM `{$this->table}`\n" .
                 "WHERE `{$this->table}`.`{$this->primary}` = ?";
         // prepare statement
-        $sql = $this->getDatabase()->prepare($query);
+        $sql = $this->prepare($query);
         $sql->bindParam(1, $id);
         $sql->execute();
         // get result
@@ -199,6 +205,12 @@ class StoragePdo implements StorageInterface {
         // check result
         if ($result === false) {
             throw new Error('Could not find record to read', 404);
+        }
+        // convert any JSON fields
+        foreach ($result as $column => $value) {
+            if (strpos($value, 'JSON:') === 0) {
+                $result->$column = json_decode(substr($value, 5));
+            }
         }
         // return
         return $result;
@@ -211,12 +223,9 @@ class StoragePdo implements StorageInterface {
      * @return stdClass 
      */
     public function update($record, $id) {
-        if (is_null($id))
+        if (is_null($id)) {
             throw new Error('UPDATE action requires an ID', 400);
-        // check if exists
-        // if( !$this->exists() ){ throw new Error('Could not find record to update', 404); }
-        // TODO: delete cache
-        // if( $this->__cache ) Cache::delete($this->getCacheKey($id));
+        }
         // prepare fields
         $fields = array();
         foreach ($record as $field => $value) {
@@ -224,12 +233,13 @@ class StoragePdo implements StorageInterface {
         }
         $fields = implode(', ', $fields);
         // prepare statement
-        $sql = $this->getDatabase()->prepare("UPDATE `{$this->table}` SET {$fields} WHERE `{$this->primary}` = :__id");
+        $sql = $this->prepare("UPDATE `{$this->table}` SET {$fields} WHERE `{$this->primary}` = :__id");
         $sql->bindParam(':__id', $id);
         // fill fields
         foreach ($record as $field => $value) {
-            if (!is_scalar($value))
-                $record->$field = json_encode($value);
+            if (!is_scalar($value)) {
+                $record->$field = 'JSON:' . json_encode($value);
+            }
             $sql->bindParam(':__' . $field, $record->$field);
         }
         // execute
@@ -251,18 +261,11 @@ class StoragePdo implements StorageInterface {
     public function delete($id) {
         $record = $this->read($id);
         // prepare statement
-        $sql = $this->getDatabase()->prepare("DELETE FROM `{$this->table}` WHERE `{$this->primary}` = ?");
+        $sql = $this->prepare("DELETE FROM `{$this->table}` WHERE `{$this->primary}` = ?");
         $sql->bindParam(1, $id);
         $sql->execute();
         // assume changes
         $this->isChanged = true;
-        // TODO: delete cache
-        /**
-          if( $this->__cache ){
-          Cache::delete($this->getCacheKey());
-          Cache::delete($this->getEnumerateCacheKey());
-          }
-         */
         // return
         return $record;
     }
@@ -277,8 +280,8 @@ class StoragePdo implements StorageInterface {
                 "FROM `{$this->table}`\n" .
                 "WHERE `{$this->table}`.`{$this->primary}` = ?";
         // prepare statement
-        $sql = $this->getDatabase()->prepare($query);
-        $sql->bindParam(1, $this->$id());
+        $sql = $this->prepare($query);
+        $sql->bindParam(1, $id);
         $sql->execute();
         // get result
         $result = $sql->fetch();
@@ -289,20 +292,9 @@ class StoragePdo implements StorageInterface {
 
     /**
      * Lists all records in a table
-     * @return <array>
+     * @return array
      */
     public function all($number_of_records = null, $page = null) {
-        // TODO: cache
-        /**
-          $key = $this->getEnumerateCacheKey();
-          if( !$this->__cache || !Cache::valid($key) ){
-          $results = $this->__enumerate($query);
-          if($this->__cache) Cache::write($key, $results);
-          }
-          else{
-          $results = Cache::read($key);
-          }
-         */
         // build query
         $query = "SELECT `{$this->table}`.*\n" .
                 "FROM `{$this->table}`";
@@ -316,7 +308,7 @@ class StoragePdo implements StorageInterface {
             $query .= $number_of_records;
         }
         // prepare statement
-        $sql = $this->getDatabase()->prepare($query);
+        $sql = $this->prepare($query);
         $sql->execute();
         // get result
         $results = array();
@@ -333,12 +325,12 @@ class StoragePdo implements StorageInterface {
      * @return boolean 
      */
     public function deleteAll() {
-        $sql = $this->getDatabase()->prepare("DELETE FROM `{$this->table}`");
+        $sql = $this->prepare("DELETE FROM `{$this->table}`");
         $sql->execute();
         // changes
         $this->isChanged = true;
         // error
-        if (!$sql->rowCount()) {
+        if ($sql->errorCode() != '00000') {
             $error = $sql->errorInfo();
             throw new Error('Failed to delete all records: ' . $error[2], 400);
         }
@@ -352,10 +344,10 @@ class StoragePdo implements StorageInterface {
      */
     public function count() {
         // build query
-        $query = "SELECT COUNT(`{$this->table}`.*)\n" .
+        $query = "SELECT COUNT(*)\n" .
                 "FROM `{$this->table}`";
         // prepare statement
-        $sql = $this->getDatabase()->prepare($query);
+        $sql = $this->prepare($query);
         $sql->execute();
         // get result
         $result = $sql->fetch();
@@ -371,18 +363,29 @@ class StoragePdo implements StorageInterface {
      * @return array 
      */
     public function search($key, $value) {
+        if (!in_array($key, $this->getFields())) {
+            return array();
+        }
         // build query
-        $query = "SELECT COUNT(`{$this->table}`.*)\n" .
+        $query = "SELECT `{$this->table}`.*\n" .
                 "FROM `{$this->table}`\n" .
-                "WHERE `{$this->table}`.`$key` LIKE `%$value%' OR `{$this->table}`.`$key` = '$value'";
+                "WHERE `{$this->table}`.`$key` = :__query OR `{$this->table}`.`$key` LIKE :__like";
         // prepare statement
-        $sql = $this->getDatabase()->prepare($query);
+        $sql = $this->prepare($query);
+        $sql->bindParam(':__query', $value);
+        $like = '%' . $value . '%'; // why? see http://us1.php.net/manual/en/pdostatement.bindparam.php#99698
+        $sql->bindParam(':__like', $like);
         $sql->execute();
         // get result
         $results = array();
         while ($row = $sql->fetch(PDO::FETCH_OBJ)) {
             $id = $row->{$this->primary};
             $results[$id] = $row;
+            foreach ($row as $column => $value) {
+                if (strpos($value, 'JSON:') === 0) {
+                    $results[$id]->$column = json_decode(substr($value, 5));
+                }
+            }
         }
         // return
         return $results;
@@ -398,7 +401,7 @@ class StoragePdo implements StorageInterface {
                 "FROM `{$this->table}`\n" .
                 "LIMIT 0, 1";
         // prepare statement
-        $sql = $this->getDatabase()->prepare($query);
+        $sql = $this->prepare($query);
         $sql->execute();
         // get result
         $result = $sql->fetch(PDO::FETCH_OBJ);
@@ -418,10 +421,10 @@ class StoragePdo implements StorageInterface {
         // build query
         $query = "SELECT `{$this->table}`.*\n" .
                 "FROM `{$this->table}`\n" .
-                "ORDER BY `{$this->table}`.`{$this->primary}` DESC" .
+                "ORDER BY `{$this->table}`.`{$this->primary}` DESC\n" .
                 "LIMIT 0, 1";
         // prepare statement
-        $sql = $this->getDatabase()->prepare($query);
+        $sql = $this->prepare($query);
         $sql->execute();
         // get result
         $result = $sql->fetch(PDO::FETCH_OBJ);
@@ -434,73 +437,27 @@ class StoragePdo implements StorageInterface {
     }
 
     /**
-     * With: relates an object to other objects based on a foreign key
-     * Foreign keys are of the form: protected __foreign = array( 'tablename'=>'foreign_key', ...);
-     * @return <Object>
-     */
-    /**
-      public function with(){
-      if( !$this->__foreign ) throw new Error('Class is configured without a foreign key.', 500);
-      // get object class
-      $inflector = new Inflection( Routing::getToken(4) );
-      $pluralname = $inflector->toLowerCase()->toString();
-      $classname = $inflector->toSingular()->toCamelCaseStyle()->toString();
-      pr($classname);
-      // get id
-      if( count(Routing::getTokens()) > 4 ) $id = Routing::getToken(5);
-      else $id = null;
-      // check new object
-      $action = new AppAction($classname);
-      $object = $action->getObject();
-      // do foreign key
-      $key = null;
-      foreach($this->__foreign as $table => $_key){
-      if( $table == $object->__table ) $key = $_key;
-      }
-      if( $key === null ) throw new Error('No foreign key defined for '.$classname.' in '.get_class($this), 500);
-      // get data
-      $this->read();
-      $object->{$key} = $this->id;
-      $result = null;
-      if( $id ){
-      $object->__setID($id);
-      $result = $object->read();
-      }
-      else{
-      $result = $object->enumerate();
-      }
-      $this->{$pluralname} = $result;
-      // return
-      return $this;
-      }
-     * 
-     */
-
-    /**
      * Gets field names from DB
      * @return <array>
      */
-    protected function describe() {
+    public function describe() {
+        $fields = array();
         // prepare statement
-        $sql = $this->getDatabase()->query("DESCRIBE `{$this->__table}`");
-        if (!$sql) {
-            throw new Error('Could not find table to describe', 404);
-        }
-        foreach ($sql as $row) {
-            $property = $row['Field'];
-            $this->$property = null;
-            $this->__fields[] = $property;
-        }
-        // check if any extra fields have been defined in class
-        $properties = array_keys(get_public_vars($this));
-        foreach ($properties as $property) {
-            if (!in_array($property, $this->__fields)) {
-                $this->$property = null;
-                $this->__fields[] = $property;
+        if ($this->driver == 'mysql') {
+            $sql = $this->getDatabase()->query("DESCRIBE `{$this->table}`");
+            foreach ($sql as $row) {
+                $fields[] = $row['Field'];
             }
+        } elseif ($this->driver == 'sqlite') {
+            $sql = $this->getDatabase()->query("PRAGMA table_info(`{$this->table}`)");
+            foreach ($sql as $row) {
+                $fields[] = $row['name'];
+            }
+        } else {
+            throw new Error('Cannot describe this database. Implement more driver support.', 500);
         }
         // return
-        return $this->__fields;
+        return $fields;
     }
 
     /**
@@ -508,23 +465,44 @@ class StoragePdo implements StorageInterface {
      * @return <array>
      */
     protected function getFields() {
-        if (!$this->__fields) {
+        if (!$this->fields) {
             // get fields using Cache and DB tables
-            if ($this->__describe) {
-                $key = get_class($this) . '-' . 'Fields';
-                if (Cache::valid($key)) {
-                    $this->__fields = Cache::read($key);
-                } else {
-                    $this->describe();
-                    Cache::write($key, $this->__fields);
+            $this->fields = $this->describe();
+        }
+        return $this->fields;
+    }
+
+    /**
+     * Force the given data to fit the fields from this table
+     * @param mixed $thing
+     * @return \stdClass
+     */
+    public function forceToSchema($thing) {
+        $object = new stdClass();
+        $i = 0;
+        foreach ($this->getFields() as $property) {
+            $object->$property = null;
+            // arrays
+            if (is_array($thing)) {
+                if (array_key_exists($property, $thing)) {
+                    $object->$property = $thing[$property]; // take associative array values and match them to the table fields
+                } elseif (isset($thing[$i])) {
+                    $object->$property = $thing[$i++]; // fill the table fields sequentially from a non-associative array
                 }
             }
-            // get public fields
-            else {
-                $this->__fields = array_keys(get_public_vars($this));
+            // objects
+            elseif (is_object($thing) && property_exists($thing, $property)) {
+                $object->$property = $thing->$property; // use an object to fill table fields
+            }
+            // ... and the rest
+            elseif (is_scalar($thing)) {
+                if ($property !== $this->primary) {
+                    $object->$property = $thing; // fill the first table field (but not an ID) if not an object or array
+                    break;
+                }
             }
         }
-        return $this->__fields;
+        return $object;
     }
 
     /**
@@ -537,7 +515,15 @@ class StoragePdo implements StorageInterface {
         if (!$instance) {
             // create PDO instance
             try {
-                $dsn = "mysql:dbname={$this->database};host={$this->location}";
+                // build DSN
+                if ($this->driver === 'sqlite') {
+                    $dsn = "{$this->driver}:{$this->location}";
+                } elseif ($this->driver === 'mysql') {
+                    $dsn = "{$this->driver}:dbname={$this->database};host={$this->location}";
+                } else {
+                    throw new Error("Could not create a DSN string for driver '{$this->driver}'.", 500);
+                }
+                // create instance
                 $instance = new PDO($dsn, $this->username, $this->password);
             } catch (PDOError $e) {
                 throw new Error($e->getMessage(), 500);
@@ -547,7 +533,22 @@ class StoragePdo implements StorageInterface {
     }
 
     /**
-     * Displays last error information
+     * Prepare a PDO statement and check that it works
+     * @param string $query
+     * @return PDOStatement
+     * @throws Error
+     */
+    protected function prepare($query) {
+        $pdoStatement = $this->getDatabase()->prepare($query);
+        if (!$pdoStatement) {
+            $error = $this->getDatabase()->errorInfo();
+            throw new Error("This SQL statement could not be prepared: {$query}. Additionally, the database returned '{$error[2]}'.", 500);
+        }
+        return $pdoStatement;
+    }
+
+    /**
+     * Display last error information
      * @param type $sql 
      */
     static protected function debug($sql) {

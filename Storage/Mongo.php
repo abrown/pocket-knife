@@ -51,7 +51,7 @@ class StorageMongo implements StorageInterface {
                 ->upAll()
                 ->withProperty('username')->isString()
                 ->upAll()
-                ->withProperty('username')->isString();
+                ->withProperty('property')->isString();
         // import settings
         $settings->copyTo($this);
         // connect to server

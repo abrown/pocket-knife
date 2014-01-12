@@ -4,8 +4,12 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-require_once dirname(__DIR__).'/start.php';
 
+/**
+ * This generic test is not meant to be run; it should be extended by the 
+ * actual storage classes so that all storage methods are tested in the
+ * same way.
+ */
 class StorageGeneric extends PHPUnit_Framework_TestCase {
 
     public static $instance;
@@ -45,7 +49,7 @@ class StorageGeneric extends PHPUnit_Framework_TestCase {
      * Return the test object
      * @return stdClass
      */
-    private function getObject() {
+    protected function getObject() {
         $object = new stdClass();
         $object->property = 'value';
         $object->{'array'} = array('1', 2, 'three');
@@ -59,10 +63,10 @@ class StorageGeneric extends PHPUnit_Framework_TestCase {
      */
     public function testRollback() {
         self::$instance->begin();
-        self::$instance->create('...', 'ROLLBACK');
+        self::$instance->create('...', 999);
         self::$instance->rollback();
         // test
-        $this->assertEquals(false, self::$instance->exists('ROLLBACK'));
+        $this->assertEquals(false, self::$instance->exists(999));
     }
 
     /**
@@ -86,10 +90,10 @@ class StorageGeneric extends PHPUnit_Framework_TestCase {
     public function testRead() {
         // create
         self::$instance->begin();
-        self::$instance->create($this->getObject(), 'ID');
+        self::$instance->create($this->getObject(), 999);
         self::$instance->commit();
         // read one
-        $object = self::$instance->read('ID');
+        $object = self::$instance->read(999);
         // test
         $this->assertEquals($this->getObject(), $object);
     }
@@ -161,6 +165,9 @@ class StorageGeneric extends PHPUnit_Framework_TestCase {
         // delete
         $deleted_object = self::$instance->delete($id);
         // test
+        $this->assertObjectHasAttribute('object', $deleted_object);
+        $this->assertInstanceOf('stdClass', $deleted_object->object);
+        $this->assertObjectHasAttribute('property2', $deleted_object->object);
         $this->assertEquals('value2', $deleted_object->object->property2);
         // throw Error
         $this->setExpectedException('Error');
