@@ -4,9 +4,7 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-require_once dirname(__DIR__).'/start.php';
-
-class BasicValidationTest extends TestCase {
+class BasicValidationTest extends PHPUnit_Framework_TestCase {
 
     public function testValidateObject() {
         $object = new stdClass();

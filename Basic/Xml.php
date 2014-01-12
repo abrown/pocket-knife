@@ -48,7 +48,7 @@ class BasicXml {
      * @throws Error
      */
     private static function _xml_encode($thing, $name, $writer) {
-        if (is_scalar($thing)) {
+        if (is_scalar($thing) || is_null($thing)) {
             $writer->startElement($name);
             $writer->startAttribute('type');
             $writer->text(gettype($thing));
@@ -96,7 +96,8 @@ class BasicXml {
      */
     public static function xml_decode($string) {
         if( empty($string) ) return null;
-        $reader = @XMLReader::XML($string);
+        $reader = new XMLReader();
+        $reader->XML($string);
         $reader->read();
         $variable = BasicXml::_xml_decode($reader);
         return $variable;

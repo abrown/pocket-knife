@@ -4,9 +4,7 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-require_once dirname(__DIR__).'/start.php';
-
-class BasicClassTest extends TestCase {
+class BasicClassTest extends PHPUnit_Framework_TestCase {
 
     /**
      * When __autoload is not working, for some reason or 

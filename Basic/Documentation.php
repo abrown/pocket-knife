@@ -63,7 +63,7 @@ class BasicDocumentation {
      */
     function __construct($class) {
         if (!class_exists($class, false)) {
-            __autoload($class); // ?
+            autoload($class);
         }
         // check existence
         if (!class_exists($class))
@@ -156,19 +156,26 @@ class BasicDocumentation {
                     $html[] = sprintf('<p><b>Deprecated:</b> %s</p>', trim($a['text']));
                     break;
                 case '@var':
-                    @list($type, $description) = explode(' ', trim($a['text']), 2);
+                    $parts = explode(' ', trim($a['text']), 2);
+                    $type = $parts[0];
+                    $description = (isset($parts[1])) ? $parts[1] : '';
                     if (!$description)
                         break;
                     $html[] = sprintf('<p>Property is %s</p>', $description);
                     break;
                 case '@return':
-                    @list($type, $description) = explode(' ', trim($a['text']), 2);
+                    $parts = explode(' ', trim($a['text']), 2);
+                    $type = $parts[0];
+                    $description = (isset($parts[1])) ? $parts[1] : '';
                     if (!$description)
                         break;
                     $html[] = sprintf('<p>Return %s</p>', $description);
                     break;
                 case '@param':
-                    @list($type, $name, $description) = explode(' ', trim($a['text']), 3);
+                    $parts = explode(' ', trim($a['text']), 3);
+                    $type = $parts[0];
+                    $name = (isset($parts[1])) ? $parts[1] : '';
+                    $description = (isset($parts[2])) ? $parts[2] : '';
                     if (!$description)
                         break;
                     $html[] = sprintf('<p>Parameter %s is %s</p>', $name, $description);

@@ -4,27 +4,12 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-require_once dirname(__DIR__) . '/start.php';
+class BasicLogTest extends PHPUnit_Framework_TestCase {
 
-class BasicLogTest extends TestCase {
-
-    /**
-     * Set up before class
-     */
-    public static function setUpBeforeClass() {
-        test_autoload('BasicLog');
-    }
-
-    /**
-     * Tear down after class
-     */
-    public static function tearDownAfterClass() {
-    }
-    
     /**
      * Test appending
      */
-    public function testAppend(){
+    public function testAppend() {
         $file = get_writeable_dir() . DS . 'test.log';
         BasicLog::append('...', $file);
         $this->assertFileExists($file);

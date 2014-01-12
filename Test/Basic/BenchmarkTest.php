@@ -1,12 +1,10 @@
 <?php
+
 /**
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-
-require_once dirname(__DIR__).'/start.php';
-
-class BasicBenchmarkTest extends TestCase{
+class BasicBenchmarkTest extends PHPUnit_Framework_TestCase {
 
     /**
      * Uses the timing functions available in BasicBenchmark

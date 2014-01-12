@@ -4,9 +4,7 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-require_once dirname(__DIR__).'/start.php';
-
-class BasicXmlTest extends TestCase {
+class BasicXmlTest extends PHPUnit_Framework_TestCase {
 
     /**
      * xml_encode should produce an XML-representation of an object
