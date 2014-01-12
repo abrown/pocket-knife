@@ -43,20 +43,14 @@ function autoload($class) {
         }
     }
     // error
-    throw new Error("Class '{$class}' not found in either the pocket-knife or include directories; the relative path for the class is '{$relative_path}'. Use add_include_path() to add additional directories to search.", 404);
+    //throw new Error("Class '{$class}' not found in either the pocket-knife or include directories; the relative path for the class is '{$relative_path}'. Use add_include_path() to add additional directories to search.", 404);
     return true;
 }
 
 /**
  * Hooks autoload function into PHP __autoload; will not work in PHP CLI mode
  */
-if (!function_exists('__autoload')) {
-
-    function __autoload($class) {
-        return autoload($class);
-    }
-
-}
+spl_autoload_register('autoload');
 
 /**
  * Add an include path; used by autoload() to find classes
@@ -180,12 +174,13 @@ if (!defined('DEBUGGING')) {
  * Set exception handler to grab uncaught errors
  */
 set_exception_handler('uncaught_exception_handler');
-function uncaught_exception_handler($error){
-    BasicLog::error('Uncaught exception: '.$error, 500);
-    if($error instanceof Error){
-        $error->send(WebHttp::getAccept());
-    }
-    else{
+
+function uncaught_exception_handler($error) {
+    BasicLog::error('Uncaught exception: ' . $error, 500);
+    if ($error instanceof Error) {
+        $contentType = (WebHttp::getAccept()) ? WebHttp::getAccept() : 'text/html';
+        $error->send($contentType);
+    } else {
         echo $error;
     }
     exit(1);
@@ -195,11 +190,12 @@ function uncaught_exception_handler($error){
  * Set error handler to grab uncaught PHP errors
  */
 set_error_handler('uncaught_error_handler');
-function uncaught_error_handler($code, $message, $file, $line){
-    if(DEBUGGING){
-        echo $error;
-    }
-    else{
+
+function uncaught_error_handler($code, $message, $file, $line) {
+    if (DEBUGGING) {
+        echo "Uncaught PHP error: $message at $file ($line). Trace from: \n";
+        debug_print_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+    } else {
         BasicLog::error("Uncaught PHP error: $message at $file ($line).", 500);
     }
     exit(1);
