@@ -15,91 +15,132 @@
  * ));
  * $service = new Service($settings);
  * $service->execute();
- * @uses Settings, WebHttp, WebTemplate, Error, Error
+ * @uses Settings, Error, Client, Route, Representation, Cache, Acl, Authentication
  */
 class Service {
 
     /**
-     * Settings for the authentication section; see Authentication.php
-     * @var Settings 
+     * Represents the client consuming this web service; see Client.php
+     * @example
+     * $this->client->getUserName(); // a name string for authenticated users or null otherwise
+     * $this->client->isMobile(); // test if the client is mobile
+     * @var Client 
      */
-    public $authentication = false;
+    public $client;
 
     /**
-     * Settings for the ACL section; see Acl.php.
-     * Defines access to each object/method/id combination; set to true to allow all, false to deny all
-     * @example 
-     * $this->acl = array('admin can * posts/*');
-     * $this->acl = array('user/53 cannot POST posts/29');
-     * @var mixed
-     * */
-    public $acl = true;
+     * Defines how to the web service authenticates clients; see 
+     * Authentication.php. By default this is turned off and does not
+     * authenticate clients.
+     * @var Authentication 
+     */
+    public $authentication;
 
     /**
-     * 
-     * @var mixed
+     * Route for the current HTTP request
+     * @var Route 
+     */
+    public $route;
+
+    /**
+     * Allowed representations for this web service; see Representation.php
+     * @example
+     * $this->representations = array('application/json', 'text/plain');
+     * @var array list of content-type representations or '*' to allow all
      */
     public $representations = '*';
 
     /**
-     * Defines the resource to interact with; typically set by WebRouting, 
+     * Current incoming HTTP Representation
+     * @var Representation
+     */
+    public $representation;
+
+    /**
+     * The access control list for this web service; see Acl.php.
+     * Defines access to each object/method/id combination; by default it is 
+     * turned off and allows all requests.
+     * @example 
+     * $this->acl = new Acl('...');
+     * @var Acl
+     * */
+    public $acl;
+
+    /**
+     * List of custom or allowed routes ... ?
+     * @var Route
+     */
+    public $routes;
+
+    /**
+     * The resource loaded 
+     * @var Resource
+     */
+    public $resource;
+    public $cache;
+
+    /**
+     * Defines the Resource to interact with; typically set by WebRouting, 
      * but can be overriden manually; is the same as the class name extending
      * ResourceInterface
      * @example $this->class = 'book'; // can be lower-cased
      * @var string
      * */
-    public $resource;
+    //public $resource;
 
     /**
      * Instance of class; typically set during normal execution
      * @example $this->object = new ClassName(...);
      * @var object
      * */
-    public $object;
+    //public $object;
 
     /**
      * Defines the action to perform on the object; must be a public method of the object instance
      * @example $this->action = 'new_action';
      * @var string
      * */
-    public $action;
+    //public $action;
 
     /**
      * Defines the ID for the object; to use this feature, the object constructor must look like "function __construct($id){...}"
      * @example $this->id = $new_id;
      * @var mixed
      * */
-    public $id;
+    //public $id;
 
     /**
      * Defines the MIME type for the incoming data; is set by
      * the client in the HTTP Content-Type header
      * @var string 
      */
-    public $content_type;
+    //public $content_type;
 
     /**
      * Defines the MIME type for the outgoing data; is set
      * by the client in the HTTP Accept header
      * @var type 
      */
-    public $accept;
+    //public $accept;
 
     /**
      * Constructor
      * @param Settings $settings
      */
-    public function __construct($settings) {
-        // validate
-        try {
-            BasicValidation::with($settings)
-                    ->withOptionalProperty('authentication');
-            //->withProperty('authentication_type')->isString()->upAll();
-            //->withOptionalProperty('representations')->isArray()->withKey(0)->isString();
-        } catch (Error $e) {
-            // send an HTTP response because validation errors may occur before execute() is ever run
-            $e->send(WebHttp::getAccept());
-            exit();
+    public function __construct(Settings $settings) {
+        // validate during debugging stage
+        if (DEBUGGING) {
+            try {
+                //BasicValidation::with($settings)
+                //->withOptionalProperty('authentication');
+                //->withProperty('authentication_type')->isString()->upAll();
+                //->withOptionalProperty('representations')->isArray()->withKey(0)->isString();
+            } catch (Error $e) {
+                // send an HTTP response because validation errors may occur before execute() is ever run
+                $contentType = (WebHttp::getAccept()) ? WebHttp::getAccept() : 'text/plain';
+                $e->send($contentType);
+                exit();
+            }
         }
         // import settings
         $settings->copyTo($this);
@@ -108,7 +149,122 @@ class Service {
     /**
      * Handles requests, creates instances, and returns result
      */
-    public function execute($return_as_string = false) {
+    public function execute() {
+        try {
+            // setup; note that you can set authentication
+            $this->client = (!$this->client) ? new Client() : $this->client;
+            $this->route = (!$this->route) ? new Route() : $this->route;
+            $this->representation = (!$this->representation) ? $this->buildRepresentation($this->route) : $this->representation;
+            // security-related checks
+            if ($this->authentication && !$this->authentication->identify($this->client)) {
+                throw new Error("$this->client is not authenticated.", 403);
+            }
+            if ($this->acl && !$this->acl->allowed($this->client, $this->route)) {
+                throw new Error("$this->client cannot access $this->route.", 403);
+            }
+            // test cache
+            $this->cache = (!$this->cache) ? new Cache() : $this->cache;
+            if ($this->cache->HEAD($this->route) && !DEBUGGING) {
+                return $this->cache->GET($this->route); // caching is disabled while debugging; this prevents the cache from filling up unnecessarily
+            }
+            // 
+            $this->resource = (!$this->resource) ? $this->buildResource($this->route) : $this->resource;
+            $resultRepresentation = $this->consumeResource($this->resource, $this->representation, $this->route->method);
+            // more caching
+            $this->cache->PUT($this->route, $resultRepresentation);
+            // return
+            $resultRepresentation->send(200, $this->client->getAcceptableContentType($this->route->contentType));
+            return $resultRepresentation;
+        } catch (Error $e) {
+            $e->send($this->client->getAcceptableContentType($this->route->contentType));
+        }
+    }
+
+    /**
+     * Build a representation of incoming data from the HTTP request based on
+     * the current route. This method defaults to the application/json content
+     * type when it cannot discover it from the HTTP Content-Type or Accept
+     * headers.
+     * @param Route $route
+     * @return Representation
+     */
+    public function buildRepresentation(Route $route) {
+        $representation = new Representation();
+        $representation->setContentType($route->contentType);
+        $representation->receive();
+        // return
+        return $representation;
+    }
+
+    /**
+     * Build a resource from the given route. This method does not perform
+     * security checks on what methods can be built; these checks must be
+     * performed before in ACL.
+     * @param Route $route
+     * @throws Error
+     */
+    public function buildResource(Route $route) {
+        $class = $route->getResource();
+        if (!$class) {
+            throw new Error("No resource identified by this request. The URI is '{$route}' but should be '[resource]/.../...'.", 400);
+        }
+        if (!class_exists($class)) {
+            $message = "Could not find the Resource class '{$class}'.";
+            if (DEBUGGING) {
+                $message .= ' The include paths are: ' . get_include_path();
+            }
+            throw new Error($message, 404);
+        }
+        if (!is_subclass_of($class, 'Resource')) {
+            throw new Error("The given class is not a Resource; all exposed resources must descend from Resource.", 500);
+        }
+        $resource = new $class();
+        $resource->bindFromRoute($route);
+        return $resource;
+    }
+
+    /**
+     * Consume the resource, returning an output representation of the result;
+     * triggers callbacks. The input data coming from the HTTP request is passed
+     * to the HTTP method (e.g. GET, POST...) in the resource as a single 
+     * standard PHP object.
+     * @param Resource $resource
+     * @param string $method HTTP method
+     * @param Representation $input
+     * @return Representation
+     */
+    public function consumeResource(Resource $resource, Representation $input, $method = 'GET') {
+        // input triggers
+        $this->trigger($resource, 'INPUT_TRIGGER', $input);
+        $this->trigger($resource, $method . '_INPUT_TRIGGER', $input);
+        // execute HTTP method: GET, POST, PUT, etc.
+        if (!method_exists($resource, $method)) {
+            throw new Error("Method '{$method}' does not exist for this resource; request OPTIONS for valid methods.", 405);
+        }
+        $_output = $resource->$method($input->getData()); // TODO: possibly use call_user_func_array() to pass a list of parameters?
+        $output = new Representation($_output, $input->getContentType()); // match the input content type by default
+        // output triggers
+        $this->trigger($resource, 'OUTPUT_TRIGGER', $output);
+        $this->trigger($resource, $method . '_OUTPUT_TRIGGER', $output);
+        // return
+        return $output;
+    }
+
+    /**
+     * Trigger a callback method within the Resource class; this method should
+     * modify the given representation directly as these changes will allow 
+     * @param Resource $resource
+     * @param string $name
+     * @param Representation $representation
+     */
+    public function trigger(Resource $resource, $name, Representation $representation) {
+        if (method_exists($resource, $name)) {
+            $resource->$name($representation);
+        }
+    }
+
+    public function old_execute($return_as_string = false) {
+
         // handle request
         try {
             // get input/output MIME types
@@ -293,7 +449,7 @@ class Service {
         // authenticate user
         if ($auth && !$auth->isLoggedIn()) {
             // get credentials
-            $credentials = $auth->receive($request->content_type);
+            $credentials = $auth->receive($request->contentType);
             // challenge, if necessary
             if (!$auth->isValidCredential($credentials)) {
                 $auth->send($request->accept);
@@ -317,175 +473,35 @@ class Service {
      * @return type
      * @throws Error
      */
-    public static function checkCache($object) {
-        if (!method_exists($object, 'isCacheable')) {
-            throw new Error('Resource must display cacheability using isCacheable() method', 500);
-        }
-        if (!$return_as_string && $this->object->isCacheable()) {
-            $cache = Cache::getInstance(WebUrl::getURI());
-            if ($cache->HEAD() && $this->action == 'GET') {
-                $cache->GET();
-                // if client has a current resource, use that
-                if ($cache->isClientCurrent()) {
-                    header('HTTP/1.1 304 Not Modified');
-                    exit();
-                }
-                // otherwise, use the cached copy
-                else {
-                    $representation = new Representation($cache->resource, $this->accept);
-                    $representation = $this->executeOutputTriggers($cache->resource, $this->action, $representation);
-                    // send headers
-                    header('Etag: "' . $cache->getEtag() . '"');
-                    header('Last-Modified: ' . $cache->getLastModified());
-                    // send resource
-                    if ($return_as_string) {
-                        return (string) $representation;
-                    } else {
-                        $representation->send();
-                        return;
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Execute applicable input triggers in the given Resource
-     * @param Resource $object
-     * @param string $action
-     * @param Representation $representation
-     * @return Representation
-     * @throws Error
-     */
-    public function executeInputTriggers($object, $action, $representation) {
-        $any_trigger = 'INPUT_TRIGGER';
-        if (method_exists($this->object, $any_trigger)) {
-            $representation = $this->object->$any_trigger($representation);
-            if (!($representation instanceof Representation)) {
-                throw new Error('Input triggers must return a Representation', 500);
-            }
-        }
-        $action_trigger = $this->action . '_INPUT_TRIGGER';
-        if (method_exists($this->object, $action_trigger)) {
-            $representation = $this->object->$action_trigger($representation);
-            if (!($representation instanceof Representation)) {
-                throw new Error('Input triggers must return a Representation', 500);
-            }
-        }
-        return $representation;
-    }
-
-    /**
-     * Execute applicable output triggers in the given Resource
-     * @param Resource $object
-     * @param string $action
-     * @param Representation $representation
-     * @return Representation
-     * @throws Error
-     */
-    public function executeOutputTriggers($object, $action, $representation) {
-        $any_trigger = 'OUTPUT_TRIGGER';
-        if (method_exists($this->object, $any_trigger)) {
-            $representation = $this->object->$any_trigger($representation);
-            if (!($representation instanceof Representation)) {
-                throw new Error('Input triggers must return a Representation', 500);
-            }
-        }
-        $action_trigger = $this->action . '_OUTPUT_TRIGGER';
-        if (method_exists($this->object, $action_trigger)) {
-            $representation = $this->object->$action_trigger($representation);
-            if (!($representation instanceof Representation)) {
-                throw new Error('Input triggers must return a Representation', 500);
-            }
-        }
-        return $representation;
-    }
-
-    /**
-     * Returns object/method/id for this Http request
-     * @return array
-     * */
-    static public function getRouting() {
-        static $routing = null;
-        if (is_null($routing)) {
-            $tokens = WebUrl::getTokens();
-            // get object (always first)
-            reset($tokens);
-            $object = current($tokens);
-            // get id
-            $id = next($tokens);
-            // get method
-            $method = WebHttp::getMethod();
-            // do not count '*' as id
-            if ($id == '*')
-                $id = null;
-            // set routing
-            $routing = array($object, $id, $method);
-        }
-        // return
-        return $routing;
-    }
-
-    /**
-     * Calculate the MIME type of the data the client is sending; this setting
-     * is affected by the 'representations' property--this list of MIME types will
-     * limit allowed Content-Types. If no type is given in the HTTP request, the 
-     * application will default to the first type given in 'representations'.
-     * @return string
-     * @throws Error 
-     */
-    public function getContentType() {
-        // get content-type
-        $content_type = WebHttp::getContentType();
-        // ensure a representation is available
-        if (!array_key_exists($content_type, Representation::$MAP)) {
-            $content_type = 'text/html';
-        }
-        // test for wildcard
-        if ($this->representations == '*') {
-            return $content_type;
-        }
-        // test for header existence
-        if (!$content_type) {
-            return $this->representations[0];
-        }
-        // test if header is valid
-        if (!in_array($content_type, $this->representations)) {
-            throw new Error("This application does not allow the following Content-Type: {$content_type}", 400);
-        }
-        // return
-        return $content_type;
-    }
-
-    /**
-     * Calculate the MIME type to send to the client; this setting
-     * is affected by the 'representations' property--this list of MIME types will
-     * limit allowed Accept types. If no type is given in the HTTP request, the 
-     * application will default to the first type given in 'representations'.
-     * @return string
-     * @throws Error 
-     */
-    public function getAccept() {
-        // get content-type
-        $accept = WebHttp::getAccept();
-        // ensure a representation is available
-        if (!array_key_exists($accept, Representation::$MAP)) {
-            $accept = 'text/html';
-        }
-        // test for wildcard
-        if ($this->representations == '*') {
-            return $accept;
-        }
-        // test for header existence
-        if (!$accept) {
-            return $this->representations[0];
-        }
-        // test if header is valid
-        if (!in_array($accept, $this->representations)) {
-            throw new Error("This application does not allow the following Accept: {$accept}", 400);
-        }
-        // return
-        return $accept;
-    }
-
+//    public static function checkCache($object) {
+//        if (!method_exists($object, 'isCacheable')) {
+//            throw new Error('Resource must display cacheability using isCacheable() method', 500);
+//        }
+//        if (!$return_as_string && $this->object->isCacheable()) {
+//            $cache = Cache::getInstance(WebUrl::getURI());
+//            if ($cache->HEAD() && $this->action == 'GET') {
+//                $cache->GET();
+//                // if client has a current resource, use that
+//                if ($cache->isClientCurrent()) {
+//                    header('HTTP/1.1 304 Not Modified');
+//                    exit();
+//                }
+//                // otherwise, use the cached copy
+//                else {
+//                    $representation = new Representation($cache->resource, $this->accept);
+//                    $representation = $this->executeOutputTriggers($cache->resource, $this->action, $representation);
+//                    // send headers
+//                    header('Etag: "' . $cache->getEtag() . '"');
+//                    header('Last-Modified: ' . $cache->getLastModified());
+//                    // send resource
+//                    if ($return_as_string) {
+//                        return (string) $representation;
+//                    } else {
+//                        $representation->send();
+//                        return;
+//                    }
+//                }
+//            }
+//        }
+//    }
 }

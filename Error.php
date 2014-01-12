@@ -26,11 +26,12 @@ class Error extends Exception {
      * and data; should be overloaded in descendant classes to 
      * accommodate content type differences and possible 
      * resource-to-data binding
-     * @param string $content_type
+     * @param string $contentType
      */
-    public function send($content_type) {
-        if (!array_key_exists($content_type, Representation::$MAP))
-            trigger_error('415 Unsupported media type in Error code: ' . $content_type, E_USER_ERROR);
+    public function send($contentType) {
+        if (!Representation::isValidContentType($contentType)){
+            trigger_error('415 Unsupported media type in Error code: ' . $contentType, E_USER_ERROR);
+        }
         // set variables
         $this->http_code = $this->getCode();
         $this->http_message = $this->getHttpMessage($this->http_code);
@@ -44,14 +45,13 @@ class Error extends Exception {
             $this->uncaught_from = $trace[0];
         }
         // create representation
-        $representation = new Representation($this, $content_type);
-        $representation->setCode($this->http_code);
+        $representation = new Representation($this, $contentType);
         // special cases
-        if ($content_type == 'text/html') {
+        if ($contentType == 'text/html') {
             $representation->setTemplate(get_base_dir() . DS . 'error-template.php', WebTemplate::PHP_FILE);
         }
         // send
-        $representation->send();
+        $representation->send($this->http_code);
     }
 
     /**

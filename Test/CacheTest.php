@@ -75,7 +75,14 @@ class CacheTest extends PHPUnit_Framework_TestCase {
         $this->setExpectedException('Error');
         $this->instance->GET('dog');
     }
-
+    
+    /**
+     * Test cache with actual HTTP requests
+     */
+    public function testHTTPRequest(){
+        fake_request('test-api.php/dog/1');
+        fake_request('test-api.php/dog/1');
+    }
 }
 
 /**

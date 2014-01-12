@@ -10,7 +10,7 @@
  * restricting/permitting access to resources
  * @uses ResourceList, SecurityRule, BasicValidation
  */
-class SecurityAcl extends ResourceList {
+class Acl extends ResourceList {
 
     /**
      * Do not cache the ACL

@@ -20,6 +20,8 @@
  */
 abstract class Resource {
 
+    protected $route = null;
+    
     /**
      * Defines storage method for the resource; see classes in Storage for specific parameters required
      * @example $this->storage = array('type'=>'mysql', 'username'=>'test', 'password'=>'password', 'location'=>'localhost', 'database'=>'db');
@@ -123,7 +125,27 @@ abstract class Resource {
         // commit transaction
         $this->getStorage()->commit();
     }
-
+  
+    /**
+     * Bind values from the RESTful URL to the Resource; a common example would
+     * be setting an ID
+     * @example 
+     * // in a ResourceItem
+     * protected $id;
+     * protected $route = 'resource/[id]';
+     * // and a URL like
+     * http://example.com/api.php/book/27/version...
+     * // would set the $id property to the number 27
+     * @param Route $route
+     */
+    public function bindFromRoute(Route $route){
+        if (isset($this->route)) {
+            $template = new Route($route->method, $this->route, $route->contentType);
+            $values = $route->extractValuesWith($template);
+            $this->bindProtected($values);
+        }
+    }
+    
     /**
      * Bind the given properties to $this; checks if properties exist and
      * if values are valid according to the validation scheme
@@ -153,5 +175,6 @@ abstract class Resource {
             }
         }
     }
+
 
 }

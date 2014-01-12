@@ -31,6 +31,52 @@ class Cache extends Resource {
     }
 
     /**
+     * Test if the client has a current copy of the requested resource; this
+     * method uses HTTP ETags combined with the HTTP If-None-Match and
+     * If-Modified-Since headers to determine the client's response;
+     * @param Route $route
+     * @return boolean
+     */
+    public function isCurrent(Route $route) {
+        // check etag
+        $etag = self::getEtag($route->uri);
+        if (WebHttp::getIfNoneMatch() && WebHttp::getIfNoneMatch() == $etag) {
+            return true;
+        }
+        // check last-modified time
+        if (WebHttp::getIfModifiedSince() && WebHttp::getIfModifiedSince() == (int) $this->modified) {
+            return true;
+        }
+        // else
+        return false;
+    }
+    
+//        if ($route->method == 'GET' && $this->HEAD($route)) {
+//            $cache->GET();
+//            // if client has a current resource, use that
+//            if ($cache->isClientCurrent()) {
+//                header('HTTP/1.1 304 Not Modified');
+//                exit();
+//            }
+//            // otherwise, use the cached copy
+//            else {
+//                $representation = new Representation($cache->resource, $this->accept);
+//                $representation = $this->executeOutputTriggers($cache->resource, $this->action, $representation);
+//                // send headers
+//                header('Etag: "' . $cache->getEtag() . '"');
+//                header('Last-Modified: ' . $cache->getLastModified());
+//                // send resource
+//                if ($return_as_string) {
+//                    return (string) $representation;
+//                } else {
+//                    $representation->send();
+//                    return;
+//                }
+//            }
+//        }
+//    }
+
+    /**
      * Allow static access to the cache; every use of this should include a URI.
      * @param $uri the URI in the cache to interact with
      * @staticvar Cache $instance
@@ -74,13 +120,29 @@ class Cache extends Resource {
     }
 
     /**
-     * Returns a boolean message informing the client whether
-     * the Resource is cached or not.
+     * Return a boolean message showing whether the given route is cached or
+     * not. Requires input.
+     * @param mixed a Route or a string URI
      * @return boolean 
      */
-    public function HEAD() {
-        return $this->getStorage()->exists($this->getURI());
+    public function HEAD($routeOrUri = null) {
+        if($routeOrUri ===  null){
+            throw new Error('Cache HEAD must receive a URI string or Route.', 400); 
+        }
+        if($routeOrUri instanceof Route){
+            return $this->getStorage()->exists($routeOrUri->uri);
+        }
+        return $this->getStorage()->exists($routeOrUri);
     }
+    
+    /**
+     * Proxy method for HEAD; easier to read.
+     * @param string $routeOrUri
+     */
+    public function isCached($routeOrUri = null){
+        return $this->HEAD($routeOrUri);
+    }
+    
 
     /**
      * GET the cached resource; loads an instance of the resource into the 
@@ -143,13 +205,13 @@ class Cache extends Resource {
      */
     public function PUT($resource = null) {
         if ($resource === null || !($resource instanceof Resource)) {
-            throw new Error('No resource given to update', 400);
+            return null;
         }
-        $already_cached = $this->HEAD();
+        $already_cached = $this->isCached($resource->getURI());
         // set ID
         $this->setURI($resource->getURI());
         // read
-        if ($already_cached) {
+        if ($this->isCached($resource->getURI())) {
             $this->GET();
         }
         // set properties

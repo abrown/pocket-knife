@@ -4,35 +4,10 @@
  * @copyright Copyright 2011 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-
-/**
- * Override 'get_http_body' to mock HTTP inputs
- */
-if (!function_exists('get_http_body')) {
-    function get_http_body() {
-        return RepresentationTest::$REQUEST_BODY;
-    }
-}
-
-/**
- * Get autoload ready for Library example class
- */
-$path = dirname(dirname(__FILE__));
-require_once $path . '/start.php';
-autoload('BasicClass');
-BasicClass::autoloadAll('Representation');
-
 class RepresentationTest extends PHPUnit_Framework_TestCase {
 
-    public static $REQUEST_BODY;
-
     public static function setUpBeforeClass() {
-        // start pocket knife
-        $path = dirname(dirname(__FILE__));
-        require_once $path . '/start.php';
-        // get code
-        autoload('BasicClass');
-        BasicClass::autoloadAll('Representation');
+        
     }
 
     public function setUp() {
@@ -40,6 +15,7 @@ class RepresentationTest extends PHPUnit_Framework_TestCase {
         $this->expected->a = 1;
         $this->expected->b = new stdClass();
         $this->expected->b->two = 'some text';
+        $this->expected->b->three = new stdClass();
         $this->expected->b->three->c = false;
         $this->expected->b->three->d = true;
     }
@@ -47,16 +23,13 @@ class RepresentationTest extends PHPUnit_Framework_TestCase {
     /**
      * Demonstrates use of a file representation
      */
-    public function testFile() {
-        $this->markTestSkipped('Requires $_FILES to be populated and file_get_contents() overriden');
-        /**
-          self::$REQUEST_BODY = "c29tZSB0ZXh0";
-          $expected = "some text";
-          $f = new RepresentationFile();
-          $f->receive();
-          $actual = $f->getData();
-          $this->assertEquals($expected, $actual);
-         */
+    public function testOctetStream() {
+        $_SERVER['REQUEST_BODY'] = "c29tZSB0ZXh0";
+        $_SERVER['REQUEST_HEADERS'][] = 'Content-Disposition:  attachment; filename="transfer.file"';
+        $f = new Representation(null, 'application/octet-stream');
+        $f->receive();
+        $this->assertEquals('transfer.file', $f->getData()->filename);
+        $this->assertEquals('some text', $f->getData()->contents);
     }
 
     /**
@@ -64,7 +37,7 @@ class RepresentationTest extends PHPUnit_Framework_TestCase {
      */
     public function testForm() {
         $_SERVER['REQUEST_METHOD'] = 'PUT';
-        self::$REQUEST_BODY = "a=1&b[two]=some+text&b[three][c]=false&b[three][d]=true";
+        $_SERVER['REQUEST_BODY'] = "a=1&b[two]=some+text&b[three][c]=false&b[three][d]=true";
         $f = new Representation(null, 'application/x-www-form-urlencoded');
         $f->receive();
         $actual = $f->getData();
@@ -75,7 +48,7 @@ class RepresentationTest extends PHPUnit_Framework_TestCase {
      * Demonstrates use of the HTML representation
      */
     public function testHtml() {
-        self::$REQUEST_BODY = "sample text";
+        $_SERVER['REQUEST_BODY'] = "sample text";
         $expected = "sample text";
         $f = new Representation(null, 'text/html');
         $f->receive();
@@ -87,7 +60,7 @@ class RepresentationTest extends PHPUnit_Framework_TestCase {
      * Demonstrates use of the JSON representation
      */
     public function testJson() {
-        self::$REQUEST_BODY = '{"a": 1, "b": {"two":"some text", "three":{"c":false, "d":true}}}';
+        $_SERVER['REQUEST_BODY'] = '{"a": 1, "b": {"two":"some text", "three":{"c":false, "d":true}}}';
         $f = new Representation(null, 'application/json');
         $f->receive();
         $actual = $f->getData();
@@ -98,7 +71,7 @@ class RepresentationTest extends PHPUnit_Framework_TestCase {
      * Demonstrates use of the text representation
      */
     public function testText() {
-        self::$REQUEST_BODY = "sample text";
+        $_SERVER['REQUEST_BODY'] = "sample text";
         $expected = "sample text";
         $f = new Representation(null, 'text/plain');
         $f->receive();
@@ -116,21 +89,23 @@ class RepresentationTest extends PHPUnit_Framework_TestCase {
         $_FILES['test_file'] = array();
         $_FILES['test_file']['error'] = false;
         $_FILES['test_file']['name'] = "testfile.txt";
+        $_FILES['test_file']['type'] = "text/plain";
         $_FILES['test_file']['tmp_name'] = $file;
         // test upload
         $expected = 'sample text';
         $f = new Representation(null, 'multipart/form-data');
         $f->receive();
-        $actual = $f->getData();
-        $this->assertEquals($expected, $actual);
         // test name
-        $this->assertEquals('testfile.txt', $f->getName());
+        $this->assertEquals('testfile.txt', $f->getData()->files->test_file->name);
+        $this->assertEquals('text/plain', $f->getData()->files->test_file->type);
+        $this->assertEquals('sample text', $f->getData()->files->test_file->contents);
+        $this->assertEquals(strlen('sample text'), $f->getData()->files->test_file->size);
         // teardown
         unlink($file);
     }
 
     public function testXml() {
-        self::$REQUEST_BODY = '<?xml version="1.0" ?>' .
+        $_SERVER['REQUEST_BODY'] = '<?xml version="1.0" ?>' .
                 '<object type="stdClass"><a type="integer">1</a>' .
                 '<b type="stdClass"><two type="string">some text</two>' .
                 '<three type="stdClass"><c type="boolean">false</c>' .
@@ -139,6 +114,18 @@ class RepresentationTest extends PHPUnit_Framework_TestCase {
         $f->receive();
         $actual = $f->getData();
         $this->assertEquals($this->expected, $actual);
+    }
+
+    public function testSendJson() {
+        $f = new Representation(new Dog('Barky', 'yellow', 1), 'application/json');
+        $this->expectOutputString('{"name":"Barky","color":"yellow","age":1}');
+        $f->send(200);
+    }
+
+    public function testSendText() {
+        $f = new Representation(new Dog('Barky', 'yellow', 1), 'application/json');
+        $this->expectOutputString('A yellow animal called Barky is 1.');
+        $f->send(200, 'text/plain');
     }
 
 }

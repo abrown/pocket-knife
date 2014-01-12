@@ -17,7 +17,9 @@ class ResourceItem extends Resource {
      * @var type 
      */
     protected $id;
-
+    
+    protected $route = 'resource/[id]';
+    
     /**
      * Constructor
      */

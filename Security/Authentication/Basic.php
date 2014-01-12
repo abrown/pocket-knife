@@ -57,8 +57,7 @@ class SecurityAuthenticationBasic extends SecurityAuthentication{
         header('WWW-Authenticate: Basic realm="' . $this->message . '"');
         // return representation
         $representation = new Representation('Access denied: login with HTTP Basic Authentication.', $content_type);
-        $representation->setCode(401);
-        $representation->send();
+        $representation->send(401);
     }
 
 }

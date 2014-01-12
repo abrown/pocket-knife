@@ -14,19 +14,19 @@
 class Representation {
 
     /**
-     * Maps content types to representation types
+     * Describes HTTP content types the framework can currently represent; 
+     * may add application/rss+xml and application/soap+xml in the future.
      * @var array
      */
-    public static $MAP = array(
-        'application/json' => 'RepresentationJson',
-        'application/octet-stream' => 'RepresentationFile',
-        //'application/rss+xml' => 'RepresentationRss',
-        //'application/soap+xml' => 'RepresentationSoap',
-        'application/xml' => 'RepresentationXml',
-        'application/x-www-form-urlencoded' => 'RepresentationForm',
-        'multipart/form-data' => 'RepresentationUpload',
-        'text/html' => 'RepresentationHtml',
-        'text/plain' => 'RepresentationText'
+    public static $TYPES = array(
+        '*/*', // defaults to application/json
+        'application/json',
+        'application/octet-stream',
+        'application/xml',
+        'application/x-www-form-urlencoded',
+        'multipart/form-data',
+        'text/html',
+        'text/plain'
     );
 
     /**
@@ -39,13 +39,7 @@ class Representation {
      * The HTTP content-type
      * @var string
      */
-    protected $content_type = 'application/json';
-
-    /**
-     * The HTTP code
-     * @var string 
-     */
-    protected $code = 200;
+    protected $contentType;
 
     /**
      * A template to be used for text/html responses
@@ -56,80 +50,11 @@ class Representation {
     /**
      * Constructor
      * @param any $data 
+     * @param string $contentType
      */
-    public function __construct($data, $content_type) {
+    public function __construct($data = null, $contentType = 'application/json') {
         $this->setData($data);
-        $this->setContentType($content_type);
-    }
-
-    /**
-     * Accesses data object
-     * @return any
-     */
-    public function getData() {
-        return $this->data;
-    }
-
-    /**
-     * Modifies data object
-     * @param any $data
-     */
-    public function setData($data) {
-        $this->data = $data;
-    }
-
-    /**
-     * Return HTTP Content-Type
-     * @return string 
-     */
-    public function getContentType() {
-        return $this->content_type;
-    }
-
-    /**
-     * Modify HTTP Content-Type
-     * @param string $content_type
-     * @throws Error 
-     */
-    public function setContentType($content_type) {
-        if (!array_key_exists($content_type, self::$MAP)) {
-            throw new Error("Content-type '{$content_type} does not exist.", 415);
-        }
-        $this->content_type = $content_type;
-    }
-
-    /**
-     * Return HTTP code
-     * @return int 
-     */
-    public function getCode() {
-        return $this->code;
-    }
-
-    /**
-     * Set HTTP code
-     * @param int $code
-     */
-    public function setCode($code) {
-        $this->code = intval($code);
-    }
-
-    /**
-     * Set template
-     * @param string $input see WebTemplate for description
-     * @param int $type one of WebTemplate::[STRING, FILE, PHP_STRING, PHP_FILE]
-     */
-    public function setTemplate($input, $type = self::FILE) {
-        $this->template = new WebTemplate($input, $type);
-    }
-
-    /**
-     * Return template
-     * @return WebTemplate
-     * @throws Error 
-     */
-    public function getTemplate() {
-        return $this->template;
+        $this->setContentType($contentType);
     }
 
     /**
@@ -138,11 +63,18 @@ class Representation {
      */
     public function __toString() {
         switch ($this->getContentType()) {
+            case '*/*':
             case 'application/json':
                 return json_encode($this->getData());
                 break;
             case 'application/octet-stream':
-                return file_get_contents($this->getData());
+                if (isset($this->getData()->contents)) {
+                    return base64_encode($this->getData()->contents);
+                } elseif (isset($this->getData()->filename)) {
+                    return base64_encode(file_get_contents($this->getData()->filename));
+                } else {
+                    return $this->getData();
+                }
                 break;
             case 'application/xml':
                 return BasicXml::xml_encode($this->getData());
@@ -161,12 +93,13 @@ class Representation {
                     $this->getTemplate()->replace('resource', $resource);
                     return $this->getTemplate()->toString();
                 }
+            // if no template defined, expect a __toString() in Resource
             case 'text/plain':
             default:
                 if (is_object($this->getData()) && !method_exists($this->getData(), '__toString')) {
-                     throw new Error(get_class($this->getData()) . ' has no __toString() method.', 501);
+                    throw new Error('To accurately return as plain text, ' . get_class($this->getData()) . ' should declare a __toString() method.', 501);
                 }
-                return $this->getData();
+                return (string) $this->getData();
         }
     }
 
@@ -175,15 +108,17 @@ class Representation {
      * @throws Error 
      */
     public function receive() {
-        if (!$this->getContentType())
-            throw new Error('No content type set for representation.', 500);
+        if (!$this->getContentType()) {
+            throw new Error('No content type set for this representation.', 500);
+        }
         switch ($this->getContentType()) {
+            case '*/*':
             case 'application/json':
                 $this->setData(json_decode(get_http_body()));
                 break;
             case 'multipart/form-data':
                 // grab POST variables
-                $data = to_object($_POST);
+                $data = ($_POST) ? to_object($_POST) : new stdClass();
                 // grab all POST uploaded files
                 $data->files = new stdClass();
                 foreach ($_FILES as $name => $file) {
@@ -198,7 +133,7 @@ class Representation {
                     $data->files->$name->contents = file_get_contents($file['tmp_name']);
                     $data->files->$name->size = strlen($data->files->$name->contents);
                     // check size
-                    if ($data->files->$name->size != $file['size']) {
+                    if (isset($file['size']) && $data->files->$name->size != $file['size']) {
                         throw new Error("File corrupted: " . $file['name'], 400);
                     }
                 }
@@ -206,24 +141,24 @@ class Representation {
                 break;
             case 'application/octet-stream':
                 // create new property 'filename' on the fly
-                $this->filename = md5(date('r'));
-                if (function_exists('apache_ request_ headers')) {
+                $data = new stdClass();
+                $data->filename = md5(date('r'));
+                $data->contents = base64_decode(get_http_body());
+                // attempt to set filename
+                if (function_exists('apache_request_headers')) {
                     $headers = apache_request_headers();
                     foreach ($headers as $key => $value) {
                         if ($key == 'Content-Disposition') {
                             $start = strpos($value, 'filename=');
                             if ($start !== false) {
                                 $start += strlen('filename=');
-                                $this->filename = substr($value, $start);
+                                $data->filename = trim(substr($value, $start), '"' . " \t\n\r\0\x0B");
                             }
                             break;
                         }
                     }
-                } else {
-                    // @todo avoid this
-                    throw new Error('File uploads work best with Apache.', 501);
                 }
-                $this->setData(base64_decode(get_http_body()));
+                $this->setData($data);
                 break;
             case 'application/xml':
                 $this->setData(BasicXml::xml_decode(get_http_body()));
@@ -251,18 +186,87 @@ class Representation {
     /**
      * Send HTTP response to client 
      */
-    public function send() {
-        WebHttp::setCode($this->getCode());
-        WebHttp::setContentType($this->getContentType());
-        // extra headers
-        if ($this->getContentType() == 'application/octet-stream') {
-            $filename = pathinfo($this->getData(), PATHINFO_FILENAME);
-            header('Content-Disposition: attachment; filename=' . $filename);
-            header('Content-Transfer-Encoding: binary');
-            header('Content-Length: ' . filesize($this->getData()));
+    public function send($code, $contentType = null) {
+        // set content type 
+        if ($contentType !== null) {
+            $this->setContentType($contentType);
         }
-        // body
+        // send headers
+        if (!headers_sent()) {
+            WebHttp::setCode($code);
+            WebHttp::setContentType($this->getContentType());
+            // extra headers
+            if ($this->getContentType() == 'application/octet-stream') {
+                $filename = pathinfo($this->getData(), PATHINFO_FILENAME);
+                header('Content-Disposition: attachment; filename=' . $filename);
+                header('Content-Transfer-Encoding: binary');
+                header('Content-Length: ' . filesize($this->getData()));
+            }
+        }
+        // send response body
         echo $this->__toString();
+    }
+
+    /**
+     * Accesses data object
+     * @return any
+     */
+    public function getData() {
+        return $this->data;
+    }
+
+    /**
+     * Modifies data object
+     * @param any $data
+     */
+    public function setData($data) {
+        $this->data = $data;
+    }
+
+    /**
+     * Return the HTTP Content-Type of this representation
+     * @return string
+     */
+    public function getContentType() {
+        return $this->contentType;
+    }
+
+    /**
+     * Modify HTTP Content-Type
+     * @param string $contentType
+     * @throws Error 
+     */
+    public function setContentType($contentType) {
+        if (!self::isValidContentType($contentType)) {
+            throw new Error("The content type '{$contentType}' is not supported.", 415);
+        }
+        $this->contentType = $contentType;
+    }
+
+    /**
+     * Determine if the HTTP Content-Type can be processed
+     * @param string $contentType
+     * @return boolean
+     */
+    static public function isValidContentType($contentType) {
+        return in_array($contentType, self::$TYPES, true);
+    }
+
+    /**
+     * Return template
+     * @return WebTemplate
+     */
+    public function getTemplate() {
+        return $this->template;
+    }
+
+    /**
+     * Set template
+     * @param string $input see Web/Template.php for description
+     * @param int $type one of WebTemplate::[STRING, FILE, PHP_STRING, PHP_FILE]
+     */
+    public function setTemplate($input, $type = self::FILE) {
+        $this->template = new WebTemplate($input, $type);
     }
 
 }

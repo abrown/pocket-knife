@@ -92,8 +92,7 @@ class SecurityAuthenticationDigest extends SecurityAuthentication {
         header('WWW-Authenticate: Digest ' . implode(',', $options));
         // return representation
         $representation = new Representation('Access denied: login with HTTP Digest Authentication.', $content_type);
-        $representation->setCode(401);
-        $representation->send();
+        $representation->send(401);
     }
 
 }

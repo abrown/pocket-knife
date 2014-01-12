@@ -87,8 +87,7 @@ class SecurityAuthenticationHeader extends SecurityAuthentication {
         }
         // return representation
         $representation = new Representation($data, $content_type);
-        $representation->setCode(401);
-        $representation->send();
+        $representation->send(401);
     }
 
 }

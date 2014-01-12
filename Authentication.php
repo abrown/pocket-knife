@@ -6,10 +6,14 @@
  */
 
 /**
- * Provides a system for authenticating users
+ * Provides a system for authenticating clients. Exposes the list of users
+ * registered for this web service as a RESTful ResourceList; to interact with
+ * the user resources through HTTP requests, allow this route in the ACL.
+ * @example 
+ * ...
  * @uses BasicValidation, ResourceList, SecurityUser, WebUrl
  */
-abstract class SecurityAuthentication extends ResourceList {
+abstract class Authentication extends ResourceList {
     
     /**
      * Do not cache the ACL
@@ -93,13 +97,14 @@ abstract class SecurityAuthentication extends ResourceList {
         // execute ResourceList constructor
         parent::__construct();
     }
-
+    
     /**
-     * Returns the URI for the authentication resource
-     * @return string 
+     * Identify the client, returning true if it authenticates or false 
+     * otherwise. Will set the client's username parameter once it succeeds.
+     * @param Client $client
      */
-    public function getURI() {
-        return 'authentication';
+    public function identify(Client $client){
+        return false;
     }
 
     /**
@@ -127,6 +132,8 @@ abstract class SecurityAuthentication extends ResourceList {
      */
     abstract public function getCurrentUser();
 
+
+    
     /**
      * Tests credentials; credentials are returned by fromRepresentation()
      * and should contain a username and password.
