@@ -9,12 +9,12 @@ function get_test_dir() {
 }
 
 /**
- * Return the location of the test folder to write to; use get_writeable_dir()
+ * Return the location of the test folder to write to; use get_writable_dir()
  * throughout test classes when reading/writing to files is required.
  * @return string
  */
-function get_writeable_dir() {
-    return get_test_dir() . DS . 'Sandbox' . DS . 'writeable';
+function get_writable_dir() {
+    return get_test_dir() . DS . 'Sandbox' . DS . 'writable';
 }
 
 /**

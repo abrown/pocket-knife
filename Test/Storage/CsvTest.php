@@ -10,7 +10,7 @@ class StorageCsvTest extends StorageGeneric {
      * Set up before class
      */
     public static function setUpBeforeClass() {
-        $file = get_writeable_dir() . DS . 'StorageCsv.csv';
+        $file = get_writable_dir() . DS . 'StorageCsv.csv';
         // delete file before we even begin, in case of prior errors
         if (file_exists($file)) {
             unlink($file);
@@ -28,7 +28,7 @@ class StorageCsvTest extends StorageGeneric {
      * Tear down after class
      */
     public static function tearDownAfterClass() {
-        unlink(get_writeable_dir() . DS . 'StorageCsv.csv');
+        unlink(get_writable_dir() . DS . 'StorageCsv.csv');
     }
 
     /**

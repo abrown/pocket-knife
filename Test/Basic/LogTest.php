@@ -10,7 +10,7 @@ class BasicLogTest extends PHPUnit_Framework_TestCase {
      * Test appending
      */
     public function testAppend() {
-        $file = get_writeable_dir() . DS . 'test.log';
+        $file = get_writable_dir() . DS . 'test.log';
         BasicLog::append('...', $file);
         $this->assertFileExists($file);
         unlink($file);
@@ -20,7 +20,7 @@ class BasicLogTest extends PHPUnit_Framework_TestCase {
      * Test error log
      */
     public function testErrorLog() {
-        $file = get_writeable_dir() . DS . 'error.log';
+        $file = get_writable_dir() . DS . 'error.log';
         BasicLog::setFile($file, 'error');
         $this->assertEquals($file, BasicLog::getFile('error'));
         BasicLog::error("Could not find file.", 404);

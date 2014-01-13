@@ -12,7 +12,7 @@ class StorageJsonTest extends StorageGeneric {
     public static function setUpBeforeClass() {
         // create settingsF
         $settings = new Settings(array(
-            'location' => get_writeable_dir() . DS . 'StorageJson.json'
+            'location' => get_writable_dir() . DS . 'StorageJson.json'
         ));
         // create instance
         self::$instance = new StorageJson($settings);
@@ -22,7 +22,7 @@ class StorageJsonTest extends StorageGeneric {
      * Tear down after class
      */
     public static function tearDownAfterClass() {
-        unlink(get_writeable_dir() . DS . 'StorageJson.json');
+        unlink(get_writable_dir() . DS . 'StorageJson.json');
     }
 
     /**
@@ -36,7 +36,7 @@ class StorageJsonTest extends StorageGeneric {
      * Verify that the JSON file has been created
      */
     public function testLocationExists() {
-        $this->assertFileExists(get_writeable_dir() . DS . 'StorageJson.json');
+        $this->assertFileExists(get_writable_dir() . DS . 'StorageJson.json');
     }
 
 }

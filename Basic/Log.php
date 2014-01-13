@@ -4,7 +4,7 @@
  * @copyright Copyright 2013 Andrew Brown. All rights reserved.
  * @license GNU/GPL, see 'help/LICENSE.html'.
  */
-define('LOG_LOCATION', get_base_dir() . DS . 'writeable' . DS . 'logs');
+define('LOG_LOCATION', get_base_dir() . DS . 'writable' . DS . 'logs');
 
 /**
  * Provides logging capabilities
@@ -91,7 +91,7 @@ class BasicLog {
     }
 
     /**
-     * Return the log file; defaults to 'writeable/logs/...'
+     * Return the log file; defaults to 'writable/logs/...'
      * @param $name [error|request|response|...]
      * @return string 
      */
@@ -120,7 +120,7 @@ class BasicLog {
      * @throws Error
      */
     static private function checkOrCreateFile($file) {
-        if (is_file($file) && is_writeable($file)) {
+        if (is_file($file) && is_writable($file)) {
             return true;
         }
         // make directories
@@ -137,9 +137,9 @@ class BasicLog {
                 throw new Error("Unable to create log '{$file}'.", 500);
             }
         }
-        // check writeable
-        if (!is_writeable($file)) {
-            throw new Error("Could not write to log '{$file}'; ensure the file is writeable.", 500);
+        // check writable
+        if (!is_writable($file)) {
+            throw new Error("Could not write to log '{$file}'; ensure the file is writable.", 500);
         }
         // return
         return true;

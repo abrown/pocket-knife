@@ -12,7 +12,7 @@ class StorageFileTest extends StorageGeneric {
     public static function setUpBeforeClass() {
         // create settings
         $settings = new Settings(array(
-            'location' => get_writeable_dir(),
+            'location' => get_writable_dir(),
             'format' => 'json'
         ));
         // create instance

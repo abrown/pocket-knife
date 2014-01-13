@@ -18,7 +18,7 @@ class StoragePdoTest extends StorageGeneric {
         // create settings
         $settings = new Settings(array(
             'driver' => 'sqlite',
-            'location' => get_writeable_dir() . DS . 'pdo-sqlite.db',
+            'location' => get_writable_dir() . DS . 'pdo-sqlite.db',
             'username' => 'root',
             'password' => '',
             'database' => 'pocket_knife_test',
@@ -56,7 +56,7 @@ class StoragePdoTest extends StorageGeneric {
         $settings = self::$settings;
         self::db()->query("DROP TABLE `{$settings->test}`");
         // delete SQLite file?
-        //unlink(get_writeable_dir().DS.'pdo-sqlite.db');
+        //unlink(get_writable_dir().DS.'pdo-sqlite.db');
     }
 
     /**

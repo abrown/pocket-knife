@@ -77,7 +77,7 @@ class StorageCsv implements StorageInterface {
         }
         // ensure location is accessible
         if (!is_writable($this->location)) {
-            throw new Error("The file '$this->location' is not writeable and could not be created.", 500);
+            throw new Error("The file '$this->location' is not writable and could not be created.", 500);
         }
         // initialize database
         $this->begin();
