@@ -11,7 +11,7 @@ database.
 Example
 -------
 
-Because it is RESTful, it is simple enough to understand at a glance: 
+Because it is RESTful, it is simple to understand at a glance: 
 
 _pocket-knife_ links this ```http://example.com/api.php/thing/1``` (allowing 
 GET, PUT, POST, DELETE actions) to this:
